@@ -1,0 +1,195 @@
+"use server";
+
+import bcrypt from "bcryptjs";
+import { AuthError } from "next-auth";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { signIn, signOut } from "@/auth";
+import { requireUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/db/prisma";
+import { rateLimit } from "@/lib/security/rate-limit";
+import { getClientIp, assertSameOrigin } from "@/lib/security/request";
+import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
+import { addressSchema, passwordRecoverySchema, registerSchema } from "@/lib/validations";
+
+export type ActionState = {
+  ok: boolean;
+  message: string;
+};
+
+export async function loginWithCredentials(_: ActionState, formData: FormData): Promise<ActionState> {
+  await assertSameOrigin();
+  const ip = await getClientIp();
+  const limit = rateLimit(`login:${ip}`, 8, 60_000);
+
+  if (!limit.ok) {
+    return { ok: false, message: "Muitas tentativas. Aguarde alguns instantes." };
+  }
+
+  try {
+    await signIn("credentials", {
+      email: String(formData.get("email") ?? ""),
+      password: String(formData.get("password") ?? ""),
+      redirectTo: "/cliente",
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { ok: false, message: "E-mail ou senha inválidos." };
+    }
+
+    throw error;
+  }
+
+  return { ok: true, message: "Login efetuado." };
+}
+
+export async function registerCustomer(_: ActionState, formData: FormData): Promise<ActionState> {
+  await assertSameOrigin();
+  const ip = await getClientIp();
+  const limit = rateLimit(`register:${ip}`, 5, 60_000);
+
+  if (!limit.ok) {
+    return { ok: false, message: "Muitas tentativas. Aguarde alguns instantes." };
+  }
+
+  const parsed = registerSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  const existing = await prisma.user.findUnique({
+    where: { email: parsed.data.email },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return { ok: false, message: "Já existe uma conta com este e-mail." };
+  }
+
+  await prisma.user.create({
+    data: {
+      name: sanitizeText(parsed.data.name),
+      email: parsed.data.email,
+      phone: sanitizeText(parsed.data.phone),
+      passwordHash: await bcrypt.hash(parsed.data.password, 12),
+    },
+  });
+
+  await signIn("credentials", {
+    email: parsed.data.email,
+    password: parsed.data.password,
+    redirectTo: "/cliente",
+  });
+
+  return { ok: true, message: "Cadastro criado." };
+}
+
+export async function logout() {
+  await signOut({ redirectTo: "/" });
+}
+
+export async function requestPasswordRecovery(_: ActionState, formData: FormData): Promise<ActionState> {
+  await assertSameOrigin();
+  const ip = await getClientIp();
+  const limit = rateLimit(`recovery:${ip}`, 4, 60_000);
+
+  if (!limit.ok) {
+    return { ok: false, message: "Muitas tentativas. Aguarde alguns instantes." };
+  }
+
+  const parsed = passwordRecoverySchema.safeParse({
+    email: formData.get("email"),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, message: "Informe um e-mail válido." };
+  }
+
+  const token = crypto.randomUUID();
+  await prisma.verificationToken.create({
+    data: {
+      identifier: `password-reset:${parsed.data.email}`,
+      token,
+      expires: new Date(Date.now() + 1000 * 60 * 30),
+    },
+  });
+
+  return {
+    ok: true,
+    message: "Se o e-mail existir, um link de recuperação será enviado pela integração de e-mail configurada.",
+  };
+}
+
+export async function updateProfile(formData: FormData) {
+  await assertSameOrigin();
+  const user = await requireUser();
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      name: sanitizeText(String(formData.get("name") ?? "")),
+      phone: sanitizeOptionalText(String(formData.get("phone") ?? "")),
+      document: sanitizeOptionalText(String(formData.get("document") ?? "")),
+    },
+  });
+
+  revalidatePath("/cliente/perfil");
+}
+
+export async function createAddress(formData: FormData) {
+  await assertSameOrigin();
+  const user = await requireUser();
+  const parsed = addressSchema.safeParse({
+    label: formData.get("label"),
+    recipient: formData.get("recipient"),
+    zipCode: formData.get("zipCode"),
+    street: formData.get("street"),
+    number: formData.get("number"),
+    complement: formData.get("complement"),
+    district: formData.get("district"),
+    city: formData.get("city"),
+    state: formData.get("state"),
+    reference: formData.get("reference"),
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Endereço inválido.");
+  }
+
+  await prisma.address.create({
+    data: {
+      ...parsed.data,
+      complement: sanitizeOptionalText(parsed.data.complement),
+      reference: sanitizeOptionalText(parsed.data.reference),
+      userId: user.id,
+      isDefault: (await prisma.address.count({ where: { userId: user.id } })) === 0,
+    },
+  });
+
+  revalidatePath("/cliente/enderecos");
+}
+
+export async function deleteAddress(formData: FormData) {
+  await assertSameOrigin();
+  const user = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  await prisma.address.delete({
+    where: {
+      id,
+      userId: user.id,
+    },
+  });
+
+  revalidatePath("/cliente/enderecos");
+}
+
+export async function redirectToLogin() {
+  redirect("/login");
+}
