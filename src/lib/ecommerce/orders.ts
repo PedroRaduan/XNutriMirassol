@@ -77,7 +77,16 @@ export async function createOrderFromCheckout(formData: FormData) {
       return sum + (toNumber(item.product.price) + toNumber(item.variant?.priceAdjustment ?? 0)) * item.quantity;
     }, 0);
     const shippingCost = data.shippingType === "PICKUP" ? 0 : cart.shippingCost;
-    const discount = calculateDiscount(dbCart.coupon, subtotal, shippingCost);
+    const discount = calculateDiscount(
+      dbCart.coupon,
+      subtotal,
+      shippingCost,
+      dbCart.items.map((item) => ({
+        productId: item.productId,
+        categoryId: item.product.categoryId,
+        total: (toNumber(item.product.price) + toNumber(item.variant?.priceAdjustment ?? 0)) * item.quantity,
+      })),
+    );
     const total = Math.max(subtotal + shippingCost - discount, 0);
 
     let addressId: string | undefined;

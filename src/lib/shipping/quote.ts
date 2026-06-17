@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { fallbackPickup } from "@/lib/fallback/catalog";
 import { validateCep } from "@/lib/shipping/cep";
 import { toNumber } from "@/lib/utils";
 
@@ -21,7 +22,36 @@ export async function quoteShipping(zipCode: string, subtotal: number): Promise<
   const methods = await prisma.shippingMethod.findMany({
     where: { active: true },
     orderBy: [{ provider: "asc" }, { basePrice: "asc" }],
-  });
+  }).catch(() => [
+    {
+      id: "fallback-manual",
+      name: "Frete Manual Mirassol e Região",
+      code: "manual-regional",
+      provider: "MANUAL" as const,
+      active: true,
+      basePrice: 14.9,
+      freeAbove: 199,
+      deliveryDaysMin: 1,
+      deliveryDaysMax: 2,
+      settings: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "fallback-sedex",
+      name: "Correios Sedex",
+      code: "correios-sedex",
+      provider: "CORREIOS" as const,
+      active: true,
+      basePrice: 39.9,
+      freeAbove: 399,
+      deliveryDaysMin: 1,
+      deliveryDaysMax: 3,
+      settings: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ]);
 
   return methods
     .filter((method) => method.provider !== "PICKUP")
@@ -49,5 +79,5 @@ export async function getPickupOptions() {
   return prisma.pickupLocation.findMany({
     where: { active: true },
     orderBy: { name: "asc" },
-  });
+  }).catch(() => [fallbackPickup]);
 }

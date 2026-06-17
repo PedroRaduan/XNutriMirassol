@@ -11,6 +11,12 @@ enum UserRole {
   ADMIN
 }
 
+enum AdminRole {
+  ADMIN
+  MANAGER
+  VIEWER
+}
+
 enum ProductStatus {
   DRAFT
   ACTIVE
@@ -27,9 +33,11 @@ enum OrderStatus {
   PENDING
   PAID
   PREPARING
+  AWAITING_PICKUP
   SHIPPED
   DELIVERED
   CANCELED
+  REFUNDED
 }
 
 enum ShippingType {
@@ -326,6 +334,8 @@ model Coupon {
   value           Decimal    @db.Decimal(10, 2)
   minSubtotal     Decimal?   @db.Decimal(10, 2)
   maxDiscount     Decimal?   @db.Decimal(10, 2)
+  productIds      String[]   @default([])
+  categoryIds     String[]   @default([])
   startsAt        DateTime?
   endsAt          DateTime?
   usageLimit      Int?
@@ -548,6 +558,7 @@ model CartItem {
 model AdminUser {
   id          String   @id @default(cuid())
   userId      String   @unique
+  role        AdminRole @default(ADMIN)
   permissions Json
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -576,7 +587,7 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-model Setting {
+model StoreSetting {
   id          String   @id @default(cuid())
   key         String   @unique
   value       Json

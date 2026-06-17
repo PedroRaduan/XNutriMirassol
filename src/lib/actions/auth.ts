@@ -10,12 +10,18 @@ import { prisma } from "@/lib/db/prisma";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getClientIp, assertSameOrigin } from "@/lib/security/request";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
-import { addressSchema, passwordRecoverySchema, registerSchema } from "@/lib/validations";
+import { addressSchema, loginSchema, passwordRecoverySchema, registerSchema } from "@/lib/validations";
 
 export type ActionState = {
   ok: boolean;
   message: string;
 };
+
+function isDatabaseUnavailable(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const text = "message" in error ? String(error.message) : String(error);
+  return text.includes("ECONNREFUSED") || text.includes("Can't reach database") || text.includes("Connection refused");
+}
 
 export async function loginWithCredentials(_: ActionState, formData: FormData): Promise<ActionState> {
   await assertSameOrigin();
@@ -41,6 +47,84 @@ export async function loginWithCredentials(_: ActionState, formData: FormData): 
   }
 
   return { ok: true, message: "Login efetuado." };
+}
+
+export async function loginAdminWithCredentials(_: ActionState, formData: FormData): Promise<ActionState> {
+  await assertSameOrigin();
+  const ip = await getClientIp();
+  const limit = rateLimit(`admin-login:${ip}`, 8, 60_000);
+
+  if (!limit.ok) {
+    return { ok: false, message: "Muitas tentativas. Aguarde alguns instantes." };
+  }
+
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Dados invalidos." };
+  }
+
+  let admin;
+
+  try {
+    admin = await prisma.adminUser.findFirst({
+      where: {
+        active: true,
+        user: {
+          email: parsed.data.email,
+          role: "ADMIN",
+        },
+      },
+      include: { user: true },
+    });
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) {
+      return {
+        ok: false,
+        message: "Banco de dados offline. Inicie o PostgreSQL e rode as migrations antes de entrar no admin.",
+      };
+    }
+
+    throw error;
+  }
+
+  if (!admin?.user.passwordHash) {
+    return { ok: false, message: "Acesso administrativo nao autorizado." };
+  }
+
+  const passwordMatches = await bcrypt.compare(parsed.data.password, admin.user.passwordHash);
+  if (!passwordMatches) {
+    return { ok: false, message: "Acesso administrativo nao autorizado." };
+  }
+
+  const callbackUrl = String(formData.get("callbackUrl") ?? "/admin");
+  const redirectTo = callbackUrl.startsWith("/admin") && callbackUrl !== "/admin/login" ? callbackUrl : "/admin";
+
+  try {
+    await signIn("credentials", {
+      email: parsed.data.email,
+      password: parsed.data.password,
+      redirectTo,
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { ok: false, message: "Acesso administrativo nao autorizado." };
+    }
+
+    if (isDatabaseUnavailable(error)) {
+      return {
+        ok: false,
+        message: "Banco de dados offline. Inicie o PostgreSQL e tente novamente.",
+      };
+    }
+
+    throw error;
+  }
+
+  return { ok: true, message: "Login administrativo efetuado." };
 }
 
 export async function registerCustomer(_: ActionState, formData: FormData): Promise<ActionState> {

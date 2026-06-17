@@ -40,16 +40,34 @@ export function statusLabel(status: string) {
   const labels: Record<string, string> = {
     PENDING: "Pendente",
     PAID: "Pago",
-    PREPARING: "Em preparação",
+    PREPARING: "Em preparacao",
+    AWAITING_PICKUP: "Aguardando retirada",
     SHIPPED: "Enviado",
     DELIVERED: "Entregue",
     CANCELED: "Cancelado",
+    REFUNDED: "Reembolsado",
     APPROVED: "Aprovado",
     REJECTED: "Recusado",
-    REFUNDED: "Estornado",
   };
 
   return labels[status] ?? status;
+}
+
+export function statusBadgeClass(status: string) {
+  const classes: Record<string, string> = {
+    PENDING: "status-badge status-pending",
+    PAID: "status-badge status-paid",
+    PREPARING: "status-badge status-preparing",
+    AWAITING_PICKUP: "status-badge status-pickup",
+    SHIPPED: "status-badge status-shipped",
+    DELIVERED: "status-badge status-delivered",
+    CANCELED: "status-badge status-canceled",
+    REFUNDED: "status-badge status-refunded",
+    APPROVED: "status-badge status-paid",
+    REJECTED: "status-badge status-canceled",
+  };
+
+  return classes[status] ?? "status-badge";
 }
 
 export function generateOrderNumber() {

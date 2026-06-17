@@ -30,6 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 dev-server*.log
+pglite*.log
+
+# local lightweight postgres used only for development
+.pglite/
 
 # env files (can opt-in for committing if needed)
 .env*

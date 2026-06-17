@@ -1,11 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ProductVariant } from "@prisma/client";
 import { AddToCartButton } from "@/components/product/add-to-cart";
 import { formatCurrency, toNumber } from "@/lib/utils";
 
-type Variant = ProductVariant & {
+type Variant = {
+  id: string;
+  name: string;
+  sku: string;
+  priceAdjustment?: number | string | { toString(): string };
   inventory: { quantity: number; reserved: number } | null;
 };
 
@@ -15,9 +18,10 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
   const selected = useMemo(() => variants.find((variant) => variant.id === variantId) ?? variants[0], [variantId, variants]);
   const available = selected?.inventory ? selected.inventory.quantity - selected.inventory.reserved : 0;
   const price = basePrice + toNumber(selected?.priceAdjustment ?? 0);
+  const isFallbackProduct = productId.startsWith("fallback-");
 
   return (
-    <div className="surface space-y-5 p-5">
+    <div className="surface space-y-4 p-4 md:space-y-5 md:p-5">
       <div>
         <label className="text-sm font-black">Variação</label>
         <select className="field mt-2" value={variantId} onChange={(event) => setVariantId(event.target.value)}>
@@ -45,15 +49,15 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
           <strong>{available} unidades</strong>
         </div>
       </div>
-      <div className="flex items-end justify-between gap-4">
+      <div className="grid gap-3 sm:flex sm:items-end sm:justify-between sm:gap-4">
         <div>
           <span className="text-xs font-bold uppercase text-[var(--muted)]">Preço</span>
           <strong className="block text-3xl">{formatCurrency(price)}</strong>
         </div>
-        {available > 0 && selected ? (
-          <AddToCartButton productId={productId} variantId={selected.id} quantity={quantity} className="btn btn-primary min-w-40" />
+        {available > 0 && selected && !isFallbackProduct ? (
+          <AddToCartButton productId={productId} variantId={selected.id} quantity={quantity} className="btn btn-primary w-full sm:min-w-40 sm:w-auto" />
         ) : (
-          <span className="btn btn-secondary min-w-40">Indisponível</span>
+          <span className="btn btn-secondary w-full sm:min-w-40 sm:w-auto">{isFallbackProduct ? "Banco pendente" : "Indisponível"}</span>
         )}
       </div>
     </div>

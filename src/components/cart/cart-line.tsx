@@ -21,20 +21,20 @@ type CartLineProps = {
 
 export function CartLine({ cartId, item }: CartLineProps) {
   return (
-    <div className="grid gap-4 border-b border-[var(--line)] py-5 sm:grid-cols-[96px_1fr_auto]">
+    <div className="grid grid-cols-[82px_1fr] gap-3 border-b border-[var(--line)] py-4 sm:grid-cols-[96px_1fr_auto] sm:gap-4 sm:py-5">
       <Link href={`/produto/${item.slug}`} className="relative aspect-square overflow-hidden rounded-md bg-[#f0efed]">
         {item.imageUrl && <Image src={item.imageUrl} alt={item.name} fill sizes="96px" className="object-cover" />}
       </Link>
-      <div>
-        <Link href={`/produto/${item.slug}`} className="font-black hover:text-[var(--brand)]">
+      <div className="min-w-0">
+        <Link href={`/produto/${item.slug}`} className="line-clamp-2 font-black leading-snug hover:text-[var(--brand)]">
           {item.name}
         </Link>
-        <p className="mt-1 text-sm text-[var(--muted)]">
-          {item.variantName} · SKU {item.sku}
+        <p className="mt-1 line-clamp-1 text-xs text-[var(--muted)] sm:text-sm">
+          {item.variantName} · <span className="hidden sm:inline">SKU {item.sku}</span>
         </p>
-        <p className="mt-3 font-black">{formatCurrency(item.unitPrice)}</p>
+        <p className="mt-2 font-black sm:mt-3">{formatCurrency(item.unitPrice)}</p>
       </div>
-      <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+      <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-1 sm:flex-col sm:items-end">
         <div className="flex items-center rounded-md border border-[var(--line)] bg-white">
           <form action={updateCartItem}>
             <input type="hidden" name="cartId" value={cartId} />
@@ -54,7 +54,7 @@ export function CartLine({ cartId, item }: CartLineProps) {
             </button>
           </form>
         </div>
-        <strong>{formatCurrency(item.total)}</strong>
+        <strong className="ml-auto sm:ml-0">{formatCurrency(item.total)}</strong>
         <form action={removeCartItem}>
           <input type="hidden" name="cartId" value={cartId} />
           <input type="hidden" name="itemId" value={item.id} />

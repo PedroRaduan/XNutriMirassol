@@ -1,7 +1,4 @@
 import type { Metadata } from "next";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { organizationJsonLd } from "@/lib/seo/json-ld";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,7 +8,7 @@ export const metadata: Metadata = {
     template: "%s | XNutri",
   },
   description:
-    "E-commerce da XNutri em Mirassol-SP com suplementos, whey protein, creatina, pré-treinos, vitaminas, roupas e acessórios fitness.",
+    "E-commerce da XNutri em Mirassol-SP com suplementos, whey protein, creatina, pre-treinos, vitaminas, roupas e acessorios fitness.",
   openGraph: {
     title: "XNutri",
     description: "Suplementos e fitness para treinos reais em Mirassol-SP.",
@@ -27,12 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="h-full antialiased">
-      <body className="min-h-full">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }} />
-        <Header />
-        <main>{children}</main>
-        <Footer />
-      </body>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

@@ -1,7 +1,11 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import { config as loadEnv } from "dotenv";
 import slugify from "slugify";
+
+loadEnv({ path: ".env", quiet: true });
+loadEnv({ path: ".env.local", override: true, quiet: true });
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -36,32 +40,39 @@ type SeedProduct = {
 
 const categorySeeds = [
   {
-    key: "whey",
+    key: "suplementos",
+    name: "Suplementos",
+    description: "Whey, creatina, pre-treinos, vitaminas e itens de apoio para performance.",
+    imageUrl:
+      "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    key: "whey-protein",
     name: "Whey Protein",
-    description: "Proteinas para ganho de massa, recuperacao muscular e praticidade diaria.",
+    description: "Proteinas para pos-treino, receitas e metas diarias.",
     imageUrl:
       "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "creatina",
     name: "Creatina",
-    description: "Creatinas monohidratadas e blends para performance de alta intensidade.",
+    description: "Creatinas e blends para forca, potencia e consistencia.",
     imageUrl:
-      "https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1596357395217-80de13130e92?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "pre-treino",
     name: "Pre-treino",
-    description: "Energia, foco e vasodilatacao para treinos intensos.",
+    description: "Energia, foco e pump para treinos mais intensos.",
     imageUrl:
-      "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1558611848-73f7eb4001a1?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "vitaminas",
     name: "Vitaminas",
-    description: "Saude, imunidade e rotina completa para atletas e praticantes.",
+    description: "Vitaminas, minerais e bem-estar para rotina ativa.",
     imageUrl:
-      "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "roupas-fitness",
@@ -71,11 +82,32 @@ const categorySeeds = [
       "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80",
   },
   {
-    key: "acessorios",
-    name: "Acessorios Fitness",
-    description: "Itens de apoio para treino, hidratacao e organizacao.",
+    key: "masculino",
+    name: "Masculino",
+    description: "Roupas e acessorios fitness masculinos.",
     imageUrl:
-      "https://images.unsplash.com/photo-1599058917212-d750089bc07e?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    key: "feminino",
+    name: "Feminino",
+    description: "Roupas e acessorios fitness femininos.",
+    imageUrl:
+      "https://images.unsplash.com/photo-1518310383802-640c2de311b2?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    key: "acessorios",
+    name: "Acessorios",
+    description: "Coqueteleiras, straps e itens de apoio para treino.",
+    imageUrl:
+      "https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    key: "promocoes",
+    name: "Promocoes",
+    description: "Ofertas, combos e queimas de estoque da XNutri.",
+    imageUrl:
+      "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80",
   },
 ];
 
@@ -84,7 +116,7 @@ const clothingSizes = ["PP", "P", "M", "G", "GG"];
 
 const products: SeedProduct[] = [
   {
-    category: "whey",
+    category: "suplementos",
     name: "Whey Protein Isolado XNutri 900g",
     sku: "XN-WHEY-ISO-900",
     price: 169.9,
@@ -93,7 +125,7 @@ const products: SeedProduct[] = [
     description:
       "Formula premium para quem busca recuperacao muscular eficiente, alta digestibilidade e excelente perfil de aminoacidos por dose.",
     imageUrl:
-      "https://images.unsplash.com/photo-1622818428149-650f0b7fc386?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=1200&q=80",
     featured: true,
     bestSeller: true,
     promotion: true,
@@ -106,7 +138,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "whey",
+    category: "suplementos",
     name: "Whey Protein Concentrado XNutri 1kg",
     sku: "XN-WHEY-CON-1KG",
     price: 119.9,
@@ -126,7 +158,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "whey",
+    category: "suplementos",
     name: "Whey 3W XNutri Performance 900g",
     sku: "XN-WHEY-3W-900",
     price: 149.9,
@@ -145,7 +177,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "whey",
+    category: "suplementos",
     name: "Whey Zero Lactose XNutri 750g",
     sku: "XN-WHEY-ZL-750",
     price: 139.9,
@@ -163,7 +195,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "whey",
+    category: "suplementos",
     name: "Protein Blend XNutri Night 800g",
     sku: "XN-BLEND-NIGHT-800",
     price: 134.9,
@@ -181,7 +213,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "whey",
+    category: "suplementos",
     name: "Whey Protein Sachê XNutri Pack 12un",
     sku: "XN-WHEY-SACHE-12",
     price: 79.9,
@@ -200,7 +232,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "creatina",
+    category: "suplementos",
     name: "Creatina Monohidratada XNutri 300g",
     sku: "XN-CREA-MONO-300",
     price: 89.9,
@@ -222,7 +254,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "creatina",
+    category: "suplementos",
     name: "Creatina Creapure XNutri 250g",
     sku: "XN-CREA-CREA-250",
     price: 119.9,
@@ -241,7 +273,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "creatina",
+    category: "suplementos",
     name: "Creatina Gummies XNutri 60un",
     sku: "XN-CREA-GUM-60",
     price: 74.9,
@@ -259,7 +291,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "creatina",
+    category: "suplementos",
     name: "Creatina + Beta Alanina XNutri 300g",
     sku: "XN-CREA-BA-300",
     price: 99.9,
@@ -277,7 +309,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "pre-treino",
+    category: "suplementos",
     name: "Pre-Treino XPump XNutri 300g",
     sku: "XN-PRE-XPUMP-300",
     price: 109.9,
@@ -298,7 +330,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "pre-treino",
+    category: "suplementos",
     name: "Pre-Treino Caffeine Free XNutri 250g",
     sku: "XN-PRE-FREE-250",
     price: 94.9,
@@ -316,7 +348,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "pre-treino",
+    category: "suplementos",
     name: "Energy Shot XNutri 12un",
     sku: "XN-SHOT-12",
     price: 59.9,
@@ -335,7 +367,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "pre-treino",
+    category: "suplementos",
     name: "Pump Caps XNutri 120 caps",
     sku: "XN-PUMP-CAPS-120",
     price: 84.9,
@@ -353,7 +385,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "vitaminas",
+    category: "suplementos",
     name: "Multivitaminico XNutri Daily 120 caps",
     sku: "XN-VIT-MULTI-120",
     price: 64.9,
@@ -373,7 +405,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "vitaminas",
+    category: "suplementos",
     name: "Omega 3 XNutri Ultra 90 caps",
     sku: "XN-VIT-OMEGA-90",
     price: 79.9,
@@ -392,7 +424,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "vitaminas",
+    category: "suplementos",
     name: "Vitamina D3 + K2 XNutri 60 caps",
     sku: "XN-VIT-D3K2-60",
     price: 54.9,
@@ -410,7 +442,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "vitaminas",
+    category: "suplementos",
     name: "Magnesio Dimalato XNutri 120 tabs",
     sku: "XN-VIT-MAG-120",
     price: 69.9,
@@ -428,7 +460,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "vitaminas",
+    category: "suplementos",
     name: "Vitamina C + Zinco XNutri 90 caps",
     sku: "XN-VIT-CZ-90",
     price: 44.9,
@@ -521,7 +553,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "acessorios",
+    category: "suplementos",
     name: "Coqueteleira XNutri 700ml",
     sku: "XN-ACESS-SHAKER-700",
     price: 29.9,
@@ -540,7 +572,7 @@ const products: SeedProduct[] = [
     })),
   },
   {
-    category: "acessorios",
+    category: "suplementos",
     name: "Strap de Treino XNutri Pro",
     sku: "XN-ACESS-STRAP-PRO",
     price: 39.9,
@@ -579,7 +611,7 @@ async function cleanDatabase() {
   await prisma.product.deleteMany();
   await prisma.banner.deleteMany();
   await prisma.newsletterSubscriber.deleteMany();
-  await prisma.setting.deleteMany();
+  await prisma.storeSetting.deleteMany();
   await prisma.coupon.deleteMany();
   await prisma.shippingMethod.deleteMany();
   await prisma.pickupLocation.deleteMany();
@@ -605,9 +637,23 @@ async function main() {
       adminProfile: {
         create: {
           active: true,
+          role: "ADMIN",
           permissions: {
             all: true,
-            modules: ["dashboard", "produtos", "estoque", "cupons", "pedidos", "clientes", "relatorios", "banners"],
+            modules: [
+              "dashboard",
+              "products",
+              "categories",
+              "inventory",
+              "coupons",
+              "orders",
+              "customers",
+              "reports",
+              "content",
+              "shipping",
+              "settings",
+              "audit",
+            ],
           },
         },
       },
@@ -767,17 +813,38 @@ async function main() {
     ],
   });
 
-  await prisma.setting.createMany({
+  await prisma.storeSetting.createMany({
     data: [
       {
         key: "store",
         description: "Dados públicos da loja",
         value: {
           name: "XNutri",
+          legalName: "XNutri Comercio de Suplementos",
+          phone: "(17) 99700-0000",
           city: "Mirassol",
           state: "SP",
+          address: "Rua 9 de Julho, 1250 - Centro",
+          businessHours: "Segunda a sexta das 9h as 18h. Sabado das 9h as 13h.",
           whatsapp: "5517997000000",
           email: "contato@xnutri.com.br",
+          instagram: "https://instagram.com/xnutri",
+        },
+      },
+      {
+        key: "home",
+        description: "Conteudo editavel da home",
+        value: {
+          heroTitle: "Performance, saude e estilo em um so lugar.",
+          heroSubtitle:
+            "Suplementos, roupas fitness e acessorios para quem treina de verdade. Compre online e retire na loja em Mirassol.",
+          heroPrimaryLabel: "Ver produtos",
+          heroPrimaryHref: "/catalogo",
+          heroSecondaryLabel: "Retirar na loja",
+          heroSecondaryHref: "/retirada-na-loja",
+          institutionalText:
+            "Suplementos, vitaminas, roupas e acessorios fitness com compra online, retirada na loja e suporte proximo em Mirassol-SP.",
+          footerText: "Treino, saude e estilo com atendimento local.",
         },
       },
       {
@@ -787,6 +854,29 @@ async function main() {
           currency: "BRL",
           pickupProtocolPrefix: "XN",
           lowStockThresholdDefault: 5,
+          defaultPickupMessage:
+            "Retire seu pedido apresentando documento com foto e o protocolo gerado no checkout.",
+        },
+      },
+      {
+        key: "delivery",
+        description: "Configuracoes gerais de entrega",
+        value: {
+          pickupEnabled: true,
+          manualShippingEnabled: true,
+          correiosEnabled: true,
+          freeShippingMinValue: 299,
+          estimatedDeliveryText: "Entrega regional em 1 a 2 dias uteis. Correios conforme CEP.",
+        },
+      },
+      {
+        key: "payments",
+        description: "Informacoes publicas de pagamento",
+        value: {
+          provider: "Mercado Pago",
+          pixEnabled: true,
+          creditCardEnabled: true,
+          instructions: "Pagamentos sao processados pelo Mercado Pago.",
         },
       },
     ],

@@ -12,69 +12,86 @@ export async function getCartCookie() {
 }
 
 export async function getCartForDisplay() {
-  const user = await getCurrentUser();
-  const sessionId = await getCartCookie();
+  try {
+    const user = await getCurrentUser();
+    const sessionId = await getCartCookie();
 
-  const cart = await prisma.cart.findFirst({
-    where: user?.id ? { userId: user.id } : sessionId ? { sessionId } : { id: "__empty__" },
-    include: {
-      coupon: true,
-      shippingMethod: true,
-      pickupLocation: true,
-      items: {
-        include: {
-          product: {
-            include: {
-              images: { orderBy: { sortOrder: "asc" }, take: 1 },
+    const cart = await prisma.cart.findFirst({
+      where: user?.id ? { userId: user.id } : sessionId ? { sessionId } : { id: "__empty__" },
+      include: {
+        coupon: true,
+        shippingMethod: true,
+        pickupLocation: true,
+        items: {
+          include: {
+            product: {
+              include: {
+                images: { orderBy: { sortOrder: "asc" }, take: 1 },
+              },
+            },
+            variant: {
+              include: { inventory: true },
             },
           },
-          variant: {
-            include: { inventory: true },
-          },
+          orderBy: { createdAt: "asc" },
         },
-        orderBy: { createdAt: "asc" },
       },
-    },
-  });
+    });
 
-  const items =
-    cart?.items.map((item) => {
-      const unitPrice = toNumber(item.product.price) + toNumber(item.variant?.priceAdjustment ?? 0);
-      const quantity = item.quantity;
-      return {
-        id: item.id,
-        productId: item.productId,
-        variantId: item.variantId,
-        name: item.product.name,
-        slug: item.product.slug,
-        sku: item.variant?.sku ?? item.product.sku,
-        imageUrl: item.product.images[0]?.url,
-        variantName: item.variant?.name,
-        quantity,
-        unitPrice,
-        total: unitPrice * quantity,
-        availableStock: item.variant?.inventory?.quantity ?? 0,
-      };
-    }) ?? [];
+    const items =
+      cart?.items.map((item) => {
+        const unitPrice = toNumber(item.product.price) + toNumber(item.variant?.priceAdjustment ?? 0);
+        const quantity = item.quantity;
+        return {
+          id: item.id,
+          productId: item.productId,
+          categoryId: item.product.categoryId,
+          variantId: item.variantId,
+          name: item.product.name,
+          slug: item.product.slug,
+          sku: item.variant?.sku ?? item.product.sku,
+          imageUrl: item.product.images[0]?.url,
+          variantName: item.variant?.name,
+          quantity,
+          unitPrice,
+          total: unitPrice * quantity,
+          availableStock: item.variant?.inventory?.quantity ?? 0,
+        };
+      }) ?? [];
 
-  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const shippingCost = cart ? toNumber(cart.shippingCost) : 0;
-  const discount = calculateDiscount(cart?.coupon ?? null, subtotal, shippingCost);
-  const total = Math.max(subtotal + shippingCost - discount, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+    const shippingCost = cart ? toNumber(cart.shippingCost) : 0;
+    const discount = calculateDiscount(cart?.coupon ?? null, subtotal, shippingCost, items);
+    const total = Math.max(subtotal + shippingCost - discount, 0);
 
-  return {
-    id: cart?.id,
-    items,
-    coupon: cart?.coupon ?? null,
-    shippingMethod: cart?.shippingMethod ?? null,
-    pickupLocation: cart?.pickupLocation ?? null,
-    shippingZipCode: cart?.shippingZipCode ?? null,
-    subtotal,
-    shippingCost,
-    discount,
-    total,
-    count: items.reduce((sum, item) => sum + item.quantity, 0),
-  };
+    return {
+      id: cart?.id,
+      items,
+      coupon: cart?.coupon ?? null,
+      shippingMethod: cart?.shippingMethod ?? null,
+      pickupLocation: cart?.pickupLocation ?? null,
+      shippingZipCode: cart?.shippingZipCode ?? null,
+      subtotal,
+      shippingCost,
+      discount,
+      total,
+      count: items.reduce((sum, item) => sum + item.quantity, 0),
+    };
+  } catch {
+    return {
+      id: undefined,
+      items: [],
+      coupon: null,
+      shippingMethod: null,
+      pickupLocation: null,
+      shippingZipCode: null,
+      subtotal: 0,
+      shippingCost: 0,
+      discount: 0,
+      total: 0,
+      count: 0,
+    };
+  }
 }
 
 export async function getMutableCart() {

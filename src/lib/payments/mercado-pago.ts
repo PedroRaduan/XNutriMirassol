@@ -132,8 +132,17 @@ export async function syncMercadoPagoPayment(paymentId: string) {
       await tx.order.update({
         where: { id: order.id },
         data: {
-          status: "PAID",
+          status: order.shippingType === "PICKUP" ? "AWAITING_PICKUP" : "PAID",
           paidAt: new Date(),
+        },
+      });
+    }
+
+    if (status === "REFUNDED") {
+      await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: "REFUNDED",
         },
       });
     }
