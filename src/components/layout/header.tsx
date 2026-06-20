@@ -29,16 +29,16 @@ export async function Header() {
           <XNutriLogo />
         </Link>
 
-        <nav className="ml-4 hidden items-center gap-5 text-sm font-semibold text-[var(--muted)] lg:flex">
+        <nav className="ml-4 hidden items-center gap-4 text-sm font-semibold text-[var(--muted)] xl:gap-5 lg:flex">
           {nav.map((item) => (
-            <Link key={item.href} href={item.href} className="group relative py-2 transition-colors hover:text-[var(--brand)]">
+            <Link key={item.href} href={item.href} className="group relative whitespace-nowrap py-2 transition-colors hover:text-[var(--brand)]">
               {item.label}
               <span className="absolute inset-x-0 -bottom-1 h-0.5 origin-left scale-x-0 bg-[var(--brand)] transition-transform duration-200 group-hover:scale-x-100" />
             </Link>
           ))}
         </nav>
 
-        <form action="/catalogo" className="ml-auto hidden w-full max-w-sm items-center gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] px-3 py-2.5 shadow-inner md:flex">
+        <form action="/catalogo" className="ml-auto hidden w-full max-w-xs items-center gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] px-3 py-2.5 shadow-inner xl:max-w-sm md:flex">
           <Search size={18} className="text-[var(--muted)]" />
           <input name="q" placeholder="Buscar suplementos ou roupas..." className="w-full bg-transparent text-sm outline-none" />
         </form>
@@ -67,7 +67,7 @@ export async function Header() {
             </form>
             <nav className="grid gap-1">
               {nav.map((item) => (
-                <Link key={item.href} href={item.href} className="rounded-md px-3 py-2.5 text-sm font-black text-[var(--graphite)] hover:bg-[#fff0ee] hover:text-[var(--brand)]">
+                <Link key={item.href} href={item.href} className="whitespace-nowrap rounded-md px-3 py-2.5 text-sm font-black text-[var(--graphite)] hover:bg-[#fff0ee] hover:text-[var(--brand)]">
                   {item.label}
                 </Link>
               ))}

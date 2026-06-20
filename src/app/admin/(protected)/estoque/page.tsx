@@ -46,14 +46,14 @@ export default async function AdminInventoryPage({ searchParams }: { searchParam
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <span className="text-xs font-black uppercase text-white/50">Operacao</span>
-        <h1 className="mt-2 text-4xl font-black md:text-5xl">Estoque</h1>
-        <p className="mt-2 text-sm text-white/60">Ajuste saldos, configure alerta minimo e acompanhe movimentacoes.</p>
+      <div className="admin-page-heading mb-6">
+        <span className="admin-eyebrow">Rotina da loja</span>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Estoque</h1>
+        <p className="admin-page-copy mt-2 text-sm">Atualize saldos, defina alertas de estoque baixo e veja o histórico de ajustes.</p>
       </div>
 
       <form className="surface mb-5 grid gap-3 p-4 md:grid-cols-[1fr_220px_auto]">
-        <input className="field" name="q" defaultValue={q} placeholder="Buscar produto ou SKU" />
+        <input className="field" name="q" defaultValue={q} placeholder="Buscar produto ou Código/SKU" />
         <select className="field" name="filter" defaultValue={filter}>
           <option value="ALL">Todos</option>
           <option value="LOW">Estoque baixo</option>
@@ -71,10 +71,10 @@ export default async function AdminInventoryPage({ searchParams }: { searchParam
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <strong>{item.product.name}</strong>
-                  <span className={low ? "stock-pill stock-pill-low" : "stock-pill"}>{available} disponivel</span>
+                  <span className={low ? "stock-pill stock-pill-low" : "stock-pill"}>{available} disponível</span>
                 </div>
                 <p className="mt-1 text-sm text-[var(--muted)]">
-                  {item.product.category.name} · {item.variant?.name ?? "Produto"} · SKU {item.variant?.sku ?? item.product.sku}
+                  {item.product.category.name} · {item.variant?.name ?? "Produto"} · Código/SKU {item.variant?.sku ?? item.product.sku}
                 </p>
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full min-w-[680px] text-left text-xs">
@@ -96,12 +96,12 @@ export default async function AdminInventoryPage({ searchParams }: { searchParam
                           <td className="py-2">{movement.quantity}</td>
                           <td className="py-2">{movement.balance}</td>
                           <td className="py-2">{movement.reason}</td>
-                          <td className="py-2">{movement.createdBy?.name ?? movement.createdBy?.email ?? movement.order?.orderNumber ?? "Sistema"}</td>
+                          <td className="py-2">{movement.createdBy?.name ?? movement.createdBy?.email ?? movement.order?.orderNumber ?? "Configurações"}</td>
                         </tr>
                       ))}
                       {item.movements.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="py-4 text-center text-[var(--muted)]">Sem movimentacoes recentes.</td>
+                          <td colSpan={6} className="py-4 text-center text-[var(--muted)]">Sem movimentações recentes.</td>
                         </tr>
                       )}
                     </tbody>
@@ -112,7 +112,7 @@ export default async function AdminInventoryPage({ searchParams }: { searchParam
                 <input type="hidden" name="inventoryId" value={item.id} />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="text-sm font-black">Novo estoque<input className="field mt-2" name="quantity" type="number" defaultValue={item.quantity} min={0} /></label>
-                  <label className="text-sm font-black">Alerta minimo<input className="field mt-2" name="lowStockThreshold" type="number" defaultValue={item.lowStockThreshold} min={0} /></label>
+                  <label className="text-sm font-black">Alerta mínimo<input className="field mt-2" name="lowStockThreshold" type="number" defaultValue={item.lowStockThreshold} min={0} /></label>
                 </div>
                 <input className="field" name="reason" placeholder="Motivo" defaultValue="Ajuste manual" />
                 <AdminSubmitButton pendingText="Ajustando...">Ajustar estoque</AdminSubmitButton>

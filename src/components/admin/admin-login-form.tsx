@@ -20,18 +20,18 @@ export function AdminLoginForm({ callbackUrl }: { callbackUrl?: string }) {
   return (
     <form action={action} className="grid gap-4" onSubmit={() => form.trigger()}>
       <input type="hidden" name="callbackUrl" value={callbackUrl ?? "/admin"} />
-      <label className="text-sm font-black text-white">
+      <label className="text-sm font-black text-[var(--graphite)]">
         E-mail administrativo
         <input className="field mt-2" type="email" autoComplete="email" {...form.register("email")} name="email" />
-        {form.formState.errors.email && <span className="mt-1 block text-xs text-red-200">{form.formState.errors.email.message}</span>}
+        {form.formState.errors.email && <span className="mt-1 block text-xs text-red-700">{form.formState.errors.email.message}</span>}
       </label>
-      <label className="text-sm font-black text-white">
+      <label className="text-sm font-black text-[var(--graphite)]">
         Senha
         <input className="field mt-2" type="password" autoComplete="current-password" {...form.register("password")} name="password" />
-        {form.formState.errors.password && <span className="mt-1 block text-xs text-red-200">{form.formState.errors.password.message}</span>}
+        {form.formState.errors.password && <span className="mt-1 block text-xs text-red-700">{form.formState.errors.password.message}</span>}
       </label>
       {state.message && (
-        <p className="rounded-md border border-red-200/30 bg-red-500/15 p-3 text-sm font-semibold text-red-100">
+        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
           {state.message}
         </p>
       )}

@@ -18,8 +18,6 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
   const selected = useMemo(() => variants.find((variant) => variant.id === variantId) ?? variants[0], [variantId, variants]);
   const available = selected?.inventory ? selected.inventory.quantity - selected.inventory.reserved : 0;
   const price = basePrice + toNumber(selected?.priceAdjustment ?? 0);
-  const isFallbackProduct = productId.startsWith("fallback-");
-
   return (
     <div className="surface space-y-4 p-4 md:space-y-5 md:p-5">
       <div>
@@ -54,10 +52,10 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
           <span className="text-xs font-bold uppercase text-[var(--muted)]">Preço</span>
           <strong className="block text-3xl">{formatCurrency(price)}</strong>
         </div>
-        {available > 0 && selected && !isFallbackProduct ? (
+        {available > 0 && selected ? (
           <AddToCartButton productId={productId} variantId={selected.id} quantity={quantity} className="btn btn-primary w-full sm:min-w-40 sm:w-auto" />
         ) : (
-          <span className="btn btn-secondary w-full sm:min-w-40 sm:w-auto">{isFallbackProduct ? "Banco pendente" : "Indisponível"}</span>
+          <span className="btn btn-secondary w-full sm:min-w-40 sm:w-auto">Indisponível</span>
         )}
       </div>
     </div>

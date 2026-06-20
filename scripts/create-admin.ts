@@ -52,7 +52,7 @@ async function main() {
       active: true,
       permissions: {
         all: true,
-        modules: ["dashboard", "products", "categories", "inventory", "coupons", "orders", "customers", "reports", "content", "shipping", "settings", "audit"],
+        modules: ["dashboard", "products", "categories", "inventory", "coupons", "orders", "customers", "reports", "finance", "content", "shipping", "settings", "audit"],
       },
     },
     update: {
@@ -60,7 +60,7 @@ async function main() {
       active: true,
       permissions: {
         all: true,
-        modules: ["dashboard", "products", "categories", "inventory", "coupons", "orders", "customers", "reports", "content", "shipping", "settings", "audit"],
+        modules: ["dashboard", "products", "categories", "inventory", "coupons", "orders", "customers", "reports", "finance", "content", "shipping", "settings", "audit"],
       },
     },
   });

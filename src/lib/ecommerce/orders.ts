@@ -3,15 +3,24 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CART_COOKIE, getCartForDisplay } from "@/lib/ecommerce/cart";
 import { calculateDiscount } from "@/lib/ecommerce/coupons";
+import { createDemoOrder } from "@/lib/ecommerce/demo-cart";
 import { prisma } from "@/lib/db/prisma";
+import { isDatabaseUnavailable } from "@/lib/db/errors";
 import { checkoutSchema } from "@/lib/validations";
 import { generateOrderNumber, toNumber } from "@/lib/utils";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
 import { createMercadoPagoPreference } from "@/lib/payments/mercado-pago";
+import { marginPercent, roundMoney } from "@/lib/finance/calculations";
+import { getFinancialSettings } from "@/lib/finance/settings";
+
+function optionalFormValue(formData: FormData, key: string) {
+  return formData.get(key) ?? undefined;
+}
 
 export async function createOrderFromCheckout(formData: FormData) {
   const user = await getCurrentUser();
   const cart = await getCartForDisplay();
+  const financialSettings = await getFinancialSettings();
 
   if (!cart.id || cart.items.length === 0) {
     throw new Error("Carrinho vazio.");
@@ -21,19 +30,19 @@ export async function createOrderFromCheckout(formData: FormData) {
     customerName: formData.get("customerName"),
     customerEmail: formData.get("customerEmail"),
     customerPhone: formData.get("customerPhone"),
-    document: formData.get("document"),
+    document: optionalFormValue(formData, "document"),
     shippingType: formData.get("shippingType"),
     paymentMethod: formData.get("paymentMethod"),
-    zipCode: formData.get("zipCode"),
-    street: formData.get("street"),
-    number: formData.get("number"),
-    complement: formData.get("complement"),
-    district: formData.get("district"),
-    city: formData.get("city"),
-    state: formData.get("state"),
-    shippingMethodId: formData.get("shippingMethodId"),
-    pickupLocationId: formData.get("pickupLocationId"),
-    notes: formData.get("notes"),
+    zipCode: optionalFormValue(formData, "zipCode"),
+    street: optionalFormValue(formData, "street"),
+    number: optionalFormValue(formData, "number"),
+    complement: optionalFormValue(formData, "complement"),
+    district: optionalFormValue(formData, "district"),
+    city: optionalFormValue(formData, "city"),
+    state: optionalFormValue(formData, "state"),
+    shippingMethodId: optionalFormValue(formData, "shippingMethodId"),
+    pickupLocationId: optionalFormValue(formData, "pickupLocationId"),
+    notes: optionalFormValue(formData, "notes"),
   });
 
   if (!parsed.success) {
@@ -41,11 +50,24 @@ export async function createOrderFromCheckout(formData: FormData) {
   }
 
   const data = parsed.data;
+  if (cart.id === "demo-cart") {
+    const demoOrder = await createDemoOrder({
+      customerName: sanitizeText(data.customerName),
+      customerEmail: data.customerEmail,
+      customerPhone: sanitizeText(data.customerPhone),
+      shippingType: data.shippingType,
+      paymentMethod: data.paymentMethod,
+    });
+    redirect(`/pedido/${demoOrder.orderNumber}`);
+  }
+
   const orderNumber = generateOrderNumber();
   const pickupProtocol =
     data.shippingType === "PICKUP" ? `XN-${crypto.randomUUID().slice(0, 8).toUpperCase()}` : null;
 
-  const createdOrder = await prisma.$transaction(async (tx) => {
+  let createdOrder;
+  try {
+    createdOrder = await prisma.$transaction(async (tx) => {
     const dbCart = await tx.cart.findUniqueOrThrow({
       where: { id: cart.id },
       include: {
@@ -88,6 +110,58 @@ export async function createOrderFromCheckout(formData: FormData) {
       })),
     );
     const total = Math.max(subtotal + shippingCost - discount, 0);
+    const paymentFee = roundMoney(total * (financialSettings.mercadoPagoRate / 100));
+    const fixedFee = total > 0 ? financialSettings.fixedTransactionFee : 0;
+    const shippingCostPaidByStore =
+      data.shippingType === "DELIVERY" ? financialSettings.defaultShippingCostPaidByStore : 0;
+    const basisTotal = subtotal > 0 ? subtotal : 1;
+    const financialItems = dbCart.items.map((item) => {
+      const unitPrice = toNumber(item.product.price) + toNumber(item.variant?.priceAdjustment ?? 0);
+      const itemTotal = roundMoney(unitPrice * item.quantity);
+      const ratio = itemTotal / basisTotal;
+      const unitCost = toNumber(item.variant?.costPrice ?? item.product.costPrice ?? 0);
+      const unitPackagingCost = toNumber(
+        item.variant?.packagingCost ?? item.product.packagingCost ?? financialSettings.defaultPackagingCost,
+      );
+      const productCost = roundMoney(unitCost * item.quantity);
+      const packagingCost = roundMoney(unitPackagingCost * item.quantity);
+      const discountAllocated = roundMoney(discount * ratio);
+      const paymentFeeAllocated = roundMoney(paymentFee * ratio);
+      const fixedFeeAllocated = roundMoney(fixedFee * ratio);
+      const shippingCostAllocated = roundMoney(shippingCostPaidByStore * ratio);
+      const taxRate = toNumber(item.product.estimatedTaxRate ?? financialSettings.estimatedTaxRate);
+      const taxableRevenue = Math.max(itemTotal - discountAllocated, 0);
+      const taxAllocated = roundMoney(taxableRevenue * (taxRate / 100));
+      const grossProfit = roundMoney(taxableRevenue - productCost);
+      const netProfit = roundMoney(
+        grossProfit - packagingCost - paymentFeeAllocated - fixedFeeAllocated - shippingCostAllocated - taxAllocated,
+      );
+
+      return {
+        item,
+        unitPrice,
+        itemTotal,
+        unitCost,
+        unitPackagingCost,
+        productCost,
+        packagingCost,
+        discountAllocated,
+        paymentFeeAllocated,
+        fixedFeeAllocated,
+        shippingCostAllocated,
+        taxAllocated,
+        grossProfit,
+        netProfit,
+        profitMargin: marginPercent(netProfit, taxableRevenue),
+      };
+    });
+    const productsCost = roundMoney(financialItems.reduce((sum, item) => sum + item.productCost, 0));
+    const packagingCost = roundMoney(financialItems.reduce((sum, item) => sum + item.packagingCost, 0));
+    const estimatedTax = roundMoney(financialItems.reduce((sum, item) => sum + item.taxAllocated, 0));
+    const grossProfit = roundMoney(financialItems.reduce((sum, item) => sum + item.grossProfit, 0));
+    const netProfit = roundMoney(financialItems.reduce((sum, item) => sum + item.netProfit, 0));
+    const netRevenue = roundMoney(total - paymentFee - fixedFee);
+    const financialByCartItem = new Map(financialItems.map((item) => [item.item.id, item]));
 
     let addressId: string | undefined;
 
@@ -127,6 +201,17 @@ export async function createOrderFromCheckout(formData: FormData) {
         discount,
         shippingCost,
         total,
+        grossRevenue: roundMoney(subtotal + shippingCost),
+        netRevenue,
+        productsCost,
+        paymentFee,
+        fixedFee,
+        packagingCost,
+        estimatedTax,
+        shippingCostPaidByStore,
+        grossProfit,
+        netProfit,
+        profitMargin: marginPercent(netProfit, Math.max(subtotal - discount, 0)),
         notes: sanitizeOptionalText(data.notes),
         shippingSnapshot:
           data.shippingType === "DELIVERY"
@@ -145,7 +230,8 @@ export async function createOrderFromCheckout(formData: FormData) {
 
     await tx.orderItem.createMany({
       data: dbCart.items.map((item) => {
-        const unitPrice = toNumber(item.product.price) + toNumber(item.variant?.priceAdjustment ?? 0);
+        const financial = financialByCartItem.get(item.id);
+        const unitPrice = financial?.unitPrice ?? toNumber(item.product.price) + toNumber(item.variant?.priceAdjustment ?? 0);
 
         return {
           orderId: order.id,
@@ -157,6 +243,17 @@ export async function createOrderFromCheckout(formData: FormData) {
           quantity: item.quantity,
           unitPrice,
           total: unitPrice * item.quantity,
+          unitCost: financial?.unitCost ?? 0,
+          unitPackagingCost: financial?.unitPackagingCost ?? 0,
+          productCost: financial?.productCost ?? 0,
+          discountAllocated: financial?.discountAllocated ?? 0,
+          paymentFeeAllocated: financial?.paymentFeeAllocated ?? 0,
+          fixedFeeAllocated: financial?.fixedFeeAllocated ?? 0,
+          shippingCostAllocated: financial?.shippingCostAllocated ?? 0,
+          taxAllocated: financial?.taxAllocated ?? 0,
+          grossProfit: financial?.grossProfit ?? 0,
+          netProfit: financial?.netProfit ?? 0,
+          profitMargin: financial?.profitMargin ?? 0,
           attributes: item.variant?.attributes ?? undefined,
         };
       }),
@@ -188,7 +285,20 @@ export async function createOrderFromCheckout(formData: FormData) {
         payments: true,
       },
     });
-  });
+    });
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) {
+      const demoOrder = await createDemoOrder({
+        customerName: sanitizeText(data.customerName),
+        customerEmail: data.customerEmail,
+        customerPhone: sanitizeText(data.customerPhone),
+        shippingType: data.shippingType,
+        paymentMethod: data.paymentMethod,
+      });
+      redirect(`/pedido/${demoOrder.orderNumber}`);
+    }
+    throw error;
+  }
 
   try {
     const preference = await createMercadoPagoPreference(createdOrder);

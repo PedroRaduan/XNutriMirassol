@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { PackageCheck, Tag } from "lucide-react";
 import { CartLine } from "@/components/cart/cart-line";
+import { CouponForm } from "@/components/cart/coupon-form";
 import { ShippingEstimator } from "@/components/cart/shipping-estimator";
-import { applyCoupon, clearCoupon, selectPickup } from "@/lib/actions/cart";
+import { selectPickup } from "@/lib/actions/cart";
 import { getCartForDisplay } from "@/lib/ecommerce/cart";
 import { getPickupOptions } from "@/lib/shipping/quote";
 import { formatCurrency } from "@/lib/utils";
@@ -42,17 +43,7 @@ export default async function CartPage() {
               <Tag size={18} />
               <h2 className="font-black">Cupom</h2>
             </div>
-            {cart.coupon ? (
-              <form action={clearCoupon} className="mt-4 flex items-center justify-between rounded-md bg-[#fff1ef] p-3">
-                <span className="font-black">{cart.coupon.code}</span>
-                <button className="text-sm font-black text-red-700">Remover</button>
-              </form>
-            ) : (
-              <form action={applyCoupon} className="mt-4 flex gap-2">
-                <input className="field" name="code" placeholder="BEMVINDO10" />
-                <button className="btn btn-secondary">Aplicar</button>
-              </form>
-            )}
+            <CouponForm coupon={cart.coupon ? { code: cart.coupon.code } : null} />
           </div>
 
           <ShippingEstimator subtotal={cart.subtotal} />

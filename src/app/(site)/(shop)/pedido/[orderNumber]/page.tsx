@@ -2,21 +2,32 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Clock, CreditCard, PackageCheck } from "lucide-react";
 import { prisma } from "@/lib/db/prisma";
+import { isDatabaseUnavailable } from "@/lib/db/errors";
+import { getDemoOrder } from "@/lib/ecommerce/demo-cart";
 import { formatCurrency, formatDate, statusLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrderPage({ params }: { params: Promise<{ orderNumber: string }> }) {
   const { orderNumber } = await params;
-  const order = await prisma.order.findUnique({
-    where: { orderNumber },
-    include: {
-      items: true,
-      payments: { orderBy: { createdAt: "desc" } },
-      pickupLocation: true,
-      shippingMethod: true,
-    },
-  });
+  let order;
+  try {
+    order = await prisma.order.findUnique({
+      where: { orderNumber },
+      include: {
+        items: true,
+        payments: { orderBy: { createdAt: "desc" } },
+        pickupLocation: true,
+        shippingMethod: true,
+      },
+    });
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) {
+      order = await getDemoOrder(orderNumber);
+    } else {
+      throw error;
+    }
+  }
 
   if (!order) notFound();
 

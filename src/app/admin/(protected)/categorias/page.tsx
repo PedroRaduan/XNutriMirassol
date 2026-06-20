@@ -41,10 +41,10 @@ export default async function AdminCategoriesPage() {
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <span className="text-xs font-black uppercase text-white/50">Catalogo</span>
-        <h1 className="mt-2 text-4xl font-black md:text-5xl">Categorias</h1>
-        <p className="mt-2 text-sm text-white/60">Controle vitrines, imagens, ordem e status das categorias.</p>
+      <div className="admin-page-heading mb-6">
+        <span className="admin-eyebrow">Catálogo</span>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Categorias</h1>
+        <p className="admin-page-copy mt-2 text-sm">Organize as categorias que aparecem na loja e mantenha tudo fácil de encontrar.</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
@@ -81,7 +81,7 @@ export default async function AdminCategoriesPage() {
 
         <aside className="surface self-start p-5 lg:sticky lg:top-8">
           <h2 className="text-xl font-black">Nova categoria</h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">Categorias iniciais ja ficam no seed, mas voce pode criar novas.</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">Categorias iniciais ja ficam no seed, mas você pode criar novas.</p>
           <div className="mt-4">
             <CategoryForm />
           </div>

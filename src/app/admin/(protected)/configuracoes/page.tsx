@@ -27,10 +27,10 @@ export default async function AdminSettingsPage() {
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <span className="text-xs font-black uppercase text-white/50">Sistema</span>
-        <h1 className="mt-2 text-4xl font-black md:text-5xl">Configuracoes</h1>
-        <p className="mt-2 text-sm text-white/60">
+      <div className="admin-page-heading mb-6">
+        <span className="admin-eyebrow">Configurações</span>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Configurações</h1>
+        <p className="admin-page-copy mt-2 text-sm">
           Dados gerais da loja, atendimento, pagamento, entrega e mensagem padrao de retirada.
         </p>
       </div>
@@ -71,9 +71,9 @@ export default async function AdminSettingsPage() {
 
         <div className="surface flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold text-[var(--muted)]">
-            Essas informacoes ficam no banco e podem ser exibidas pelo site publico.
+            Essas informações ficam no banco e podem ser exibidas pelo site público.
           </p>
-          <AdminSubmitButton pendingText="Salvando configuracoes...">Salvar configuracoes</AdminSubmitButton>
+          <AdminSubmitButton pendingText="Salvando configurações...">Salvar configurações</AdminSubmitButton>
         </div>
       </form>
     </div>

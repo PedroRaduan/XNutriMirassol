@@ -53,7 +53,7 @@ export const cartItemSchema = z.object({
 });
 
 export const couponSchema = z.object({
-  code: z.string().min(3).max(32).toUpperCase(),
+  code: z.string().trim().min(3).max(32).toUpperCase(),
 });
 
 export const shippingQuoteSchema = z.object({
@@ -104,6 +104,10 @@ export const productAdminSchema = z.object({
   description: z.string().min(20, required),
   price: z.coerce.number().min(0, "Preco invalido"),
   compareAtPrice: optionalNumber,
+  costPrice: optionalNumber,
+  packagingCost: optionalNumber,
+  desiredMargin: optionalNumber,
+  estimatedTaxRate: optionalNumber,
   status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]),
   imageUrls: z.string().min(1, "Informe ao menos uma imagem"),
   featured: z.coerce.boolean().optional(),
@@ -124,6 +128,8 @@ export const productVariantAdminSchema = z.object({
   sku: z.string().min(3, required),
   attributes: z.string().min(2, "Informe os atributos"),
   priceAdjustment: optionalNumber,
+  costPrice: optionalNumber,
+  packagingCost: optionalNumber,
   stock: z.coerce.number().int().min(0),
   lowStockThreshold: optionalInt,
   active: z.coerce.boolean().optional(),
@@ -200,6 +206,16 @@ export const pickupLocationAdminSchema = z.object({
   state: z.string().length(2, "UF invalida").toUpperCase(),
   instructions: z.string().min(10, required),
   active: z.coerce.boolean().optional(),
+});
+
+export const financialSettingsAdminSchema = z.object({
+  mercadoPagoRate: z.coerce.number().min(0).max(100),
+  fixedTransactionFee: z.coerce.number().min(0),
+  estimatedTaxRate: z.coerce.number().min(0).max(100),
+  defaultPackagingCost: z.coerce.number().min(0),
+  minimumMargin: z.coerce.number().min(0).max(1000),
+  lowMarginAlert: z.coerce.number().min(0).max(1000),
+  defaultShippingCostPaidByStore: z.coerce.number().min(0),
 });
 
 export const storeSettingsAdminSchema = z.object({

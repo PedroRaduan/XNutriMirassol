@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/auth/session";
 import { calculateDiscount } from "@/lib/ecommerce/coupons";
+import { getDemoCartForDisplay } from "@/lib/ecommerce/demo-cart";
 import { prisma } from "@/lib/db/prisma";
 import { toNumber } from "@/lib/utils";
 
@@ -55,7 +56,9 @@ export async function getCartForDisplay() {
           quantity,
           unitPrice,
           total: unitPrice * quantity,
-          availableStock: item.variant?.inventory?.quantity ?? 0,
+          availableStock: item.variant?.inventory
+            ? Math.max(item.variant.inventory.quantity - item.variant.inventory.reserved, 0)
+            : 0,
         };
       }) ?? [];
 
@@ -78,19 +81,7 @@ export async function getCartForDisplay() {
       count: items.reduce((sum, item) => sum + item.quantity, 0),
     };
   } catch {
-    return {
-      id: undefined,
-      items: [],
-      coupon: null,
-      shippingMethod: null,
-      pickupLocation: null,
-      shippingZipCode: null,
-      subtotal: 0,
-      shippingCost: 0,
-      discount: 0,
-      total: 0,
-      count: 0,
-    };
+    return getDemoCartForDisplay();
   }
 }
 

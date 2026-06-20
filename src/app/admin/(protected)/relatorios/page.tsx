@@ -168,11 +168,11 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <span className="text-xs font-black uppercase text-white/50">Inteligencia</span>
-        <h1 className="mt-2 text-4xl font-black md:text-5xl">Relatorios</h1>
-        <p className="mt-2 text-sm text-white/60">
-          Faturamento, pedidos, ticket medio, produtos, categorias, clientes, cupons, entrega e pagamento.
+      <div className="admin-page-heading mb-6">
+        <span className="admin-eyebrow">Números da loja</span>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Relatorios</h1>
+        <p className="admin-page-copy mt-2 text-sm">
+          Veja vendas, pedidos, ticket médio, produtos, clientes, cupons, entrega e pagamento em um só lugar.
         </p>
       </div>
 
@@ -189,8 +189,8 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
         <button className="btn btn-secondary">Aplicar</button>
       </form>
 
-      <div className="mb-5 text-sm font-bold text-white/70">
-        Periodo analisado: {formatDate(from)} ate {formatDate(to)}
+      <div className="mb-5 rounded-lg border border-[var(--line)] bg-white px-4 py-3 text-sm font-bold text-[var(--muted)]">
+        Período analisado: {formatDate(from)} até {formatDate(to)}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

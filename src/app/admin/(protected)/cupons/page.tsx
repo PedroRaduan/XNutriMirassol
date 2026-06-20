@@ -71,10 +71,10 @@ export default async function AdminCouponsPage() {
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <span className="text-xs font-black uppercase text-white/50">Marketing</span>
-        <h1 className="mt-2 text-4xl font-black md:text-5xl">Cupons</h1>
-        <p className="mt-2 text-sm text-white/60">Crie descontos por percentual, valor fixo ou frete gratis, com regras de uso.</p>
+      <div className="admin-page-heading mb-6">
+        <span className="admin-eyebrow">Marketing</span>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Cupons</h1>
+        <p className="admin-page-copy mt-2 text-sm">Crie descontos simples para campanhas, boas-vindas, combos e frete grátis.</p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_430px]">
@@ -95,7 +95,7 @@ export default async function AdminCouponsPage() {
                     <span><strong className="block text-[var(--ink)]">Uso</strong>{coupon.usageCount}/{coupon.usageLimit ?? "sem limite"}</span>
                   </div>
                   <p className="mt-2 text-xs font-bold text-[var(--muted)]">
-                    Validade: {coupon.startsAt ? formatDate(coupon.startsAt) : "agora"} ate {coupon.endsAt ? formatDate(coupon.endsAt) : "sem expiracao"}
+                    Validade: {coupon.startsAt ? formatDate(coupon.startsAt) : "agora"} até {coupon.endsAt ? formatDate(coupon.endsAt) : "sem expiração"}
                   </p>
                 </div>
                 <form action={deactivateCoupon}>

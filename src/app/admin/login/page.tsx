@@ -3,11 +3,12 @@ import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { AdminLoginForm } from "@/components/admin/admin-login-form";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
+import { enterDemoAdmin } from "@/lib/actions/auth";
 import { getCurrentAdmin } from "@/lib/auth/session";
 
 export const metadata = {
   title: "Login Admin | XNutri",
-  description: "Area privada de administracao da XNutri.",
+  description: "Acesso ao painel administrativo da XNutri.",
 };
 
 export default async function AdminLoginPage({
@@ -23,28 +24,38 @@ export default async function AdminLoginPage({
   }
 
   return (
-    <main className="min-h-screen bg-[var(--ink)] text-white">
+    <main className="admin-shell min-h-screen">
       <div className="container-x grid min-h-screen place-items-center py-10">
         <div className="w-full max-w-md">
           <Link href="/" aria-label="Voltar para a loja" className="inline-flex">
-            <XNutriLogo tone="light" />
+            <XNutriLogo />
           </Link>
 
-          <div className="mt-8 rounded-lg border border-white/10 bg-white/10 p-6 shadow-2xl backdrop-blur">
+          <div className="surface mt-8 p-6">
             <div className="flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-lg bg-white text-[var(--brand)]">
+              <span className="grid size-11 place-items-center rounded-lg bg-[#fff1ef] text-[var(--brand)]">
                 <ShieldCheck size={22} />
               </span>
               <div>
-                <h1 className="text-2xl font-black">Admin XNutri</h1>
-                <p className="mt-1 text-sm text-white/60">Area privada para administradores autorizados.</p>
+                <h1 className="text-2xl font-black">Painel XNutri</h1>
+                <p className="mt-1 text-sm text-[var(--muted)]">Entre para cuidar da loja com segurança.</p>
               </div>
             </div>
 
             {params.error === "unauthorized" && (
-              <p className="mt-5 rounded-md border border-red-200/30 bg-red-500/15 p-3 text-sm font-semibold text-red-100">
-                Voce nao tem permissao administrativa para acessar esta area.
+              <p className="mt-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                Este usuário ainda não tem permissão administrativa ativa.
               </p>
+            )}
+            {params.error === "database" && (
+              <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                <p>Banco de dados offline. Voce pode entrar em modo demo para visualizar o painel sem gravar dados reais.</p>
+                <form action={enterDemoAdmin} className="mt-3">
+                  <button className="btn btn-secondary w-full border-red-200 bg-white text-red-700 hover:bg-red-50">
+                    Entrar no modo demo
+                  </button>
+                </form>
+              </div>
             )}
 
             <div className="mt-6">
@@ -52,8 +63,8 @@ export default async function AdminLoginPage({
             </div>
           </div>
 
-          <p className="mt-5 text-center text-xs text-white/45">
-            Esta rota nao aparece na navegacao publica e exige permissao ativa no banco de dados.
+          <p className="mt-5 text-center text-xs font-semibold text-[var(--muted)]">
+            Acesso reservado para a equipe autorizada da XNutri.
           </p>
         </div>
       </div>

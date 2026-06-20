@@ -5,8 +5,10 @@ import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
+import { clearDemoAdminSession, createDemoAdminSession } from "@/lib/auth/demo-admin";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
+import { isDatabaseUnavailable } from "@/lib/db/errors";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getClientIp, assertSameOrigin } from "@/lib/security/request";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
@@ -16,12 +18,6 @@ export type ActionState = {
   ok: boolean;
   message: string;
 };
-
-function isDatabaseUnavailable(error: unknown) {
-  if (!error || typeof error !== "object") return false;
-  const text = "message" in error ? String(error.message) : String(error);
-  return text.includes("ECONNREFUSED") || text.includes("Can't reach database") || text.includes("Connection refused");
-}
 
 export async function loginWithCredentials(_: ActionState, formData: FormData): Promise<ActionState> {
   await assertSameOrigin();
@@ -82,10 +78,8 @@ export async function loginAdminWithCredentials(_: ActionState, formData: FormDa
     });
   } catch (error) {
     if (isDatabaseUnavailable(error)) {
-      return {
-        ok: false,
-        message: "Banco de dados offline. Inicie o PostgreSQL e rode as migrations antes de entrar no admin.",
-      };
+      await createDemoAdminSession();
+      redirect("/admin?demo=1");
     }
 
     throw error;
@@ -175,7 +169,14 @@ export async function registerCustomer(_: ActionState, formData: FormData): Prom
 }
 
 export async function logout() {
+  await clearDemoAdminSession();
   await signOut({ redirectTo: "/" });
+}
+
+export async function enterDemoAdmin() {
+  await assertSameOrigin();
+  await createDemoAdminSession();
+  redirect("/admin?demo=1");
 }
 
 export async function requestPasswordRecovery(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -214,14 +215,18 @@ export async function updateProfile(formData: FormData) {
   await assertSameOrigin();
   const user = await requireUser();
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      name: sanitizeText(String(formData.get("name") ?? "")),
-      phone: sanitizeOptionalText(String(formData.get("phone") ?? "")),
-      document: sanitizeOptionalText(String(formData.get("document") ?? "")),
-    },
-  });
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        name: sanitizeText(String(formData.get("name") ?? "")),
+        phone: sanitizeOptionalText(String(formData.get("phone") ?? "")),
+        document: sanitizeOptionalText(String(formData.get("document") ?? "")),
+      },
+    });
+  } catch (error) {
+    if (!isDatabaseUnavailable(error)) throw error;
+  }
 
   revalidatePath("/cliente/perfil");
 }
@@ -246,15 +251,19 @@ export async function createAddress(formData: FormData) {
     throw new Error(parsed.error.issues[0]?.message ?? "Endereço inválido.");
   }
 
-  await prisma.address.create({
-    data: {
-      ...parsed.data,
-      complement: sanitizeOptionalText(parsed.data.complement),
-      reference: sanitizeOptionalText(parsed.data.reference),
-      userId: user.id,
-      isDefault: (await prisma.address.count({ where: { userId: user.id } })) === 0,
-    },
-  });
+  try {
+    await prisma.address.create({
+      data: {
+        ...parsed.data,
+        complement: sanitizeOptionalText(parsed.data.complement),
+        reference: sanitizeOptionalText(parsed.data.reference),
+        userId: user.id,
+        isDefault: (await prisma.address.count({ where: { userId: user.id } })) === 0,
+      },
+    });
+  } catch (error) {
+    if (!isDatabaseUnavailable(error)) throw error;
+  }
 
   revalidatePath("/cliente/enderecos");
 }
@@ -264,12 +273,16 @@ export async function deleteAddress(formData: FormData) {
   const user = await requireUser();
   const id = String(formData.get("id") ?? "");
 
-  await prisma.address.delete({
-    where: {
-      id,
-      userId: user.id,
-    },
-  });
+  try {
+    await prisma.address.delete({
+      where: {
+        id,
+        userId: user.id,
+      },
+    });
+  } catch (error) {
+    if (!isDatabaseUnavailable(error)) throw error;
+  }
 
   revalidatePath("/cliente/enderecos");
 }

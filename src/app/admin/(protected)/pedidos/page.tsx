@@ -36,16 +36,16 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <span className="text-xs font-black uppercase text-white/50">Operacao</span>
-        <h1 className="mt-2 text-4xl font-black md:text-5xl">Pedidos</h1>
-        <p className="mt-2 text-sm text-white/60">Filtre, acompanhe pagamento, entrega, retirada e altere status.</p>
+      <div className="admin-page-heading mb-6">
+        <span className="admin-eyebrow">Rotina da loja</span>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Pedidos</h1>
+        <p className="admin-page-copy mt-2 text-sm">Acompanhe cada compra, veja pagamento, entrega ou retirada e atualize o andamento.</p>
       </div>
 
       <form className="surface mb-5 grid gap-3 p-4 md:grid-cols-[1fr_240px_auto]">
         <div className="field flex items-center gap-2">
           <Search size={16} className="text-[var(--muted)]" />
-          <input name="q" defaultValue={q} className="w-full bg-transparent outline-none" placeholder="Cliente, email, telefone ou numero" />
+          <input name="q" defaultValue={q} className="w-full bg-transparent outline-none" placeholder="Cliente, email, telefone ou número" />
         </div>
         <select className="field" name="status" defaultValue={status}>
           <option value="ALL">Todos os status</option>
@@ -85,7 +85,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                 <select className="field" name="status" defaultValue={order.status}>
                   {statuses.map((item) => <option key={item} value={item}>{statusLabel(item)}</option>)}
                 </select>
-                <input className="field" name="notes" placeholder="Observacao interna" defaultValue={order.notes ?? ""} />
+                <input className="field" name="notes" placeholder="Observação interna" defaultValue={order.notes ?? ""} />
                 <AdminSubmitButton pendingText="Atualizando...">Atualizar</AdminSubmitButton>
               </form>
             </div>

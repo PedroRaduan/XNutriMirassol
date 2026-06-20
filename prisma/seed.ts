@@ -35,6 +35,8 @@ type SeedProduct = {
     attributes: Record<string, string>;
     stock: number;
     priceAdjustment?: number;
+    costPrice?: number;
+    packagingCost?: number;
   }>;
 };
 
@@ -413,7 +415,7 @@ const products: SeedProduct[] = [
     description:
       "Capsulas de omega 3 com concentracao equilibrada para suporte a rotina de bem-estar.",
     imageUrl:
-      "https://images.unsplash.com/photo-1550572017-edd951aa8f3f?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1576602976047-174e57a47881?auto=format&fit=crop&w=1200&q=80",
     bestSeller: true,
     weightGrams: 240,
     variants: ["90 capsulas"].map((flavor) => ({
@@ -611,6 +613,7 @@ async function cleanDatabase() {
   await prisma.product.deleteMany();
   await prisma.banner.deleteMany();
   await prisma.newsletterSubscriber.deleteMany();
+  await prisma.financialSettings.deleteMany();
   await prisma.storeSetting.deleteMany();
   await prisma.coupon.deleteMany();
   await prisma.shippingMethod.deleteMany();
@@ -649,6 +652,7 @@ async function main() {
               "orders",
               "customers",
               "reports",
+              "finance",
               "content",
               "shipping",
               "settings",
@@ -882,6 +886,19 @@ async function main() {
     ],
   });
 
+  await prisma.financialSettings.create({
+    data: {
+      name: "default",
+      mercadoPagoRate: 4.99,
+      fixedTransactionFee: 0,
+      estimatedTaxRate: 0,
+      defaultPackagingCost: 2.5,
+      minimumMargin: 25,
+      lowMarginAlert: 12,
+      defaultShippingCostPaidByStore: 0,
+    },
+  });
+
   for (const product of products) {
     const categoryId = categories.get(product.category);
     if (!categoryId) {
@@ -899,6 +916,9 @@ async function main() {
         price: product.price,
         compareAtPrice: product.compareAtPrice,
         costPrice: Number((product.price * 0.58).toFixed(2)),
+        packagingCost: 2.5,
+        desiredMargin: 35,
+        estimatedTaxRate: 0,
         featured: product.featured ?? false,
         bestSeller: product.bestSeller ?? false,
         promotion: product.promotion ?? false,
@@ -925,6 +945,8 @@ async function main() {
           sku: variant.sku,
           attributes: variant.attributes,
           priceAdjustment: variant.priceAdjustment ?? 0,
+          costPrice: variant.costPrice ?? Number(((product.price + (variant.priceAdjustment ?? 0)) * 0.58).toFixed(2)),
+          packagingCost: variant.packagingCost ?? 2.5,
         },
       });
 

@@ -2,17 +2,31 @@ import Link from "next/link";
 import { MapPin, PackageCheck, UserRound } from "lucide-react";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
+import { isDatabaseUnavailable } from "@/lib/db/errors";
+import { getDemoOrders } from "@/lib/ecommerce/demo-cart";
+import { fallbackAddresses, fallbackProfile } from "@/lib/fallback/customer";
 import { formatCurrency, formatDate, statusLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function CustomerPage() {
   const user = await requireUser();
-  const [orders, addresses, profile] = await Promise.all([
-    prisma.order.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 5 }),
-    prisma.address.count({ where: { userId: user.id } }),
-    prisma.user.findUnique({ where: { id: user.id } }),
-  ]);
+  let orders;
+  let addresses;
+  let profile;
+
+  try {
+    [orders, addresses, profile] = await Promise.all([
+      prisma.order.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 5 }),
+      prisma.address.count({ where: { userId: user.id } }),
+      prisma.user.findUnique({ where: { id: user.id } }),
+    ]);
+  } catch (error) {
+    if (!isDatabaseUnavailable(error)) throw error;
+    orders = await getDemoOrders();
+    addresses = fallbackAddresses.length;
+    profile = fallbackProfile(user);
+  }
 
   return (
     <div>

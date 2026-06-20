@@ -16,10 +16,13 @@ type CartLineProps = {
     quantity: number;
     unitPrice: number;
     total: number;
+    availableStock: number;
   };
 };
 
 export function CartLine({ cartId, item }: CartLineProps) {
+  const canIncrease = item.quantity < item.availableStock;
+
   return (
     <div className="grid grid-cols-[82px_1fr] gap-3 border-b border-[var(--line)] py-4 sm:grid-cols-[96px_1fr_auto] sm:gap-4 sm:py-5">
       <Link href={`/produto/${item.slug}`} className="relative aspect-square overflow-hidden rounded-md bg-[#f0efed]">
@@ -33,6 +36,7 @@ export function CartLine({ cartId, item }: CartLineProps) {
           {item.variantName} · <span className="hidden sm:inline">SKU {item.sku}</span>
         </p>
         <p className="mt-2 font-black sm:mt-3">{formatCurrency(item.unitPrice)}</p>
+        <p className="mt-1 text-xs font-semibold text-[var(--muted)]">{item.availableStock} em estoque</p>
       </div>
       <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-1 sm:flex-col sm:items-end">
         <div className="flex items-center rounded-md border border-[var(--line)] bg-white">
@@ -49,7 +53,7 @@ export function CartLine({ cartId, item }: CartLineProps) {
             <input type="hidden" name="cartId" value={cartId} />
             <input type="hidden" name="itemId" value={item.id} />
             <input type="hidden" name="quantity" value={item.quantity + 1} />
-            <button className="grid size-10 place-items-center" aria-label="Aumentar">
+            <button className="grid size-10 place-items-center disabled:cursor-not-allowed disabled:opacity-40" aria-label="Aumentar" disabled={!canIncrease}>
               <Plus size={16} />
             </button>
           </form>

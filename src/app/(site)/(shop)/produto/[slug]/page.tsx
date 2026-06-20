@@ -65,6 +65,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const stock = product.variants.reduce((sum, variant) => {
     return sum + Math.max((variant.inventory?.quantity ?? 0) - (variant.inventory?.reserved ?? 0), 0);
   }, 0);
+  const purchaseVariants = product.variants.map((variant) => ({
+    id: variant.id,
+    name: variant.name,
+    sku: variant.sku,
+    priceAdjustment: toNumber(variant.priceAdjustment),
+    inventory: variant.inventory
+      ? {
+          quantity: variant.inventory.quantity,
+          reserved: variant.inventory.reserved,
+        }
+      : null,
+  }));
   const storefrontCategory = getStorefrontCategory(product.category);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -114,7 +126,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
           </div>
 
-          <ProductPurchase productId={product.id} basePrice={toNumber(product.price)} variants={product.variants} />
+          <ProductPurchase productId={product.id} basePrice={toNumber(product.price)} variants={purchaseVariants} />
 
           <div className="surface p-5">
             <h2 className="text-xl font-black">Descrição</h2>

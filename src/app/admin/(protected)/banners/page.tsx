@@ -42,7 +42,7 @@ function BannerForm({ banner }: { banner?: Awaited<ReturnType<typeof getBanners>
         <select className="field" name="location" defaultValue={banner?.location ?? "HOME_HERO"}>
           <option value="HOME_HERO">Home hero</option>
           <option value="HOME_PROMO">Home promocional</option>
-          <option value="CATALOG">Catalogo</option>
+          <option value="CATALOG">Catálogo</option>
         </select>
         <input className="field" name="sortOrder" type="number" min={0} placeholder="Ordem" defaultValue={banner?.sortOrder ?? 0} />
       </div>
@@ -70,10 +70,10 @@ export default async function AdminBannersPage() {
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <span className="text-xs font-black uppercase text-white/50">Conteudo do site</span>
-        <h1 className="mt-2 text-4xl font-black md:text-5xl">Banners e home</h1>
-        <p className="mt-2 text-sm text-white/60">Controle banner principal, chamadas, botoes e areas promocionais da loja publica.</p>
+      <div className="admin-page-heading mb-6">
+        <span className="admin-eyebrow">Vitrine do site</span>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Banners e home</h1>
+        <p className="admin-page-copy mt-2 text-sm">Altere chamadas, botões e áreas promocionais que aparecem para os clientes.</p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_430px]">
@@ -107,7 +107,7 @@ export default async function AdminBannersPage() {
                   </div>
                   <p className="mt-1 text-sm text-[var(--muted)]">{banner.subtitle}</p>
                   <p className="mt-2 text-xs font-bold text-[var(--muted)]">
-                    Ordem {banner.sortOrder} · {banner.startsAt ? formatDate(banner.startsAt) : "sem inicio"} ate {banner.endsAt ? formatDate(banner.endsAt) : "sem fim"}
+                    Ordem {banner.sortOrder} · {banner.startsAt ? formatDate(banner.startsAt) : "sem início"} até {banner.endsAt ? formatDate(banner.endsAt) : "sem fim"}
                   </p>
                 </div>
                 <form action={deactivateBanner}>

@@ -2,12 +2,20 @@ import { Trash2 } from "lucide-react";
 import { createAddress, deleteAddress } from "@/lib/actions/auth";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
+import { isDatabaseUnavailable } from "@/lib/db/errors";
+import { fallbackAddresses } from "@/lib/fallback/customer";
 
 export const dynamic = "force-dynamic";
 
 export default async function AddressesPage() {
   const user = await requireUser();
-  const addresses = await prisma.address.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" } });
+  let addresses;
+  try {
+    addresses = await prisma.address.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" } });
+  } catch (error) {
+    if (!isDatabaseUnavailable(error)) throw error;
+    addresses = fallbackAddresses;
+  }
 
   return (
     <div>

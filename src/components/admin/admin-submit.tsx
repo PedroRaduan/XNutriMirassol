@@ -14,7 +14,7 @@ export function AdminSubmitButton({ children, pendingText = "Salvando..." }: { c
 
 export function ConfirmSubmitButton({
   children,
-  message = "Tem certeza?",
+  message = "Confirmar esta alteração?",
   className = "btn btn-secondary px-3 text-red-700",
 }: {
   children: React.ReactNode;

@@ -42,10 +42,10 @@ export default async function AdminAuditPage({ searchParams }: { searchParams: A
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <span className="text-xs font-black uppercase text-white/50">Seguranca</span>
-        <h1 className="mt-2 text-4xl font-black md:text-5xl">Auditoria</h1>
-        <p className="mt-2 text-sm text-white/60">Historico das acoes administrativas importantes feitas no painel.</p>
+      <div className="admin-page-heading mb-6">
+        <span className="admin-eyebrow">Histórico</span>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Auditoria</h1>
+        <p className="admin-page-copy mt-2 text-sm">Registro das mudanças importantes feitas no painel.</p>
       </div>
 
       <form className="surface mb-5 grid gap-3 p-4 md:grid-cols-[1fr_220px_auto]">
@@ -75,7 +75,7 @@ export default async function AdminAuditPage({ searchParams }: { searchParams: A
                 <tr key={log.id} className="admin-row border-t border-[var(--line)] align-top">
                   <td className="px-5 py-4 whitespace-nowrap">{formatDate(log.createdAt)}</td>
                   <td className="px-5 py-4">
-                    <strong>{log.adminUser?.user.name ?? "Sistema"}</strong>
+                    <strong>{log.adminUser?.user.name ?? "Configurações"}</strong>
                     <span className="block text-xs text-[var(--muted)]">{log.adminUser?.user.email}</span>
                   </td>
                   <td className="px-5 py-4 font-black">{log.action}</td>
@@ -83,7 +83,7 @@ export default async function AdminAuditPage({ searchParams }: { searchParams: A
                     {log.entity}
                     <span className="block text-xs text-[var(--muted)]">{log.entityId}</span>
                   </td>
-                  <td className="px-5 py-4 text-[var(--muted)]">{log.ipAddress ?? "nao informado"}</td>
+                  <td className="px-5 py-4 text-[var(--muted)]">{log.ipAddress ?? "não informado"}</td>
                   <td className="px-5 py-4">
                     <code className="block max-w-lg whitespace-pre-wrap rounded-md bg-[#f7f7f8] p-2 text-xs text-[var(--muted)]">{preview(log.metadata)}</code>
                   </td>

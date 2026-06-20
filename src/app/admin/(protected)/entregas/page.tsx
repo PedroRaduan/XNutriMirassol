@@ -85,10 +85,10 @@ export default async function AdminShippingPage() {
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <span className="text-xs font-black uppercase text-white/50">Logistica</span>
-        <h1 className="mt-2 text-4xl font-black md:text-5xl">Frete e retirada</h1>
-        <p className="mt-2 text-sm text-white/60">
+      <div className="admin-page-heading mb-6">
+        <span className="admin-eyebrow">Entrega e retirada</span>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Frete e retirada</h1>
+        <p className="admin-page-copy mt-2 text-sm">
           Configure retirada gratuita, frete manual regional e dados preparados para Correios.
         </p>
       </div>
@@ -113,7 +113,7 @@ export default async function AdminShippingPage() {
                     Codigo {method.code} · {formatCurrency(method.basePrice)} · {method.deliveryDaysMin} a {method.deliveryDaysMax} dia(s)
                   </p>
                   <p className="mt-1 text-sm text-[var(--muted)]">
-                    Frete gratis acima de {method.freeAbove ? formatCurrency(method.freeAbove) : "nao configurado"}.
+                    Frete gratis acima de {method.freeAbove ? formatCurrency(method.freeAbove) : "não configurado"}.
                   </p>
                 </div>
                 <form action={deactivateShippingMethod}>

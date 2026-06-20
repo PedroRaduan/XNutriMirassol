@@ -33,10 +33,10 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <span className="text-xs font-black uppercase text-white/50">Relacionamento</span>
-        <h1 className="mt-2 text-4xl font-black md:text-5xl">Clientes</h1>
-        <p className="mt-2 text-sm text-white/60">Busque clientes, veja historico de pedidos, enderecos e total gasto.</p>
+      <div className="admin-page-heading mb-6">
+        <span className="admin-eyebrow">Clientes</span>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Clientes</h1>
+        <p className="admin-page-copy mt-2 text-sm">Encontre clientes, veja pedidos, endereços e quanto cada um já comprou.</p>
       </div>
 
       <form className="surface mb-5 grid gap-3 p-4 md:grid-cols-[1fr_auto]">
@@ -67,7 +67,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
               </div>
 
               <details className="border-t border-[var(--line)]">
-                <summary className="cursor-pointer p-4 font-black text-[var(--brand)]">Historico e enderecos</summary>
+                <summary className="cursor-pointer p-4 font-black text-[var(--brand)]">Histórico e endereços</summary>
                 <div className="grid gap-4 border-t border-[var(--line)] p-4 lg:grid-cols-2">
                   <section>
                     <h2 className="font-black">Pedidos</h2>
@@ -94,7 +94,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                           <p>{address.city}/{address.state} · CEP {address.zipCode}</p>
                         </div>
                       ))}
-                      {customer.addresses.length === 0 && <p className="text-sm text-[var(--muted)]">Sem enderecos.</p>}
+                      {customer.addresses.length === 0 && <p className="text-sm text-[var(--muted)]">Sem endereços.</p>}
                     </div>
                   </section>
                 </div>

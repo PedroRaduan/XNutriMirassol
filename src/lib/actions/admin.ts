@@ -13,6 +13,7 @@ import {
   bannerAdminSchema,
   categoryAdminSchema,
   couponAdminSchema,
+  financialSettingsAdminSchema,
   homeContentAdminSchema,
   orderAdminSchema,
   pickupLocationAdminSchema,
@@ -128,6 +129,10 @@ export async function upsertProduct(formData: FormData) {
     description: formData.get("description"),
     price: formData.get("price"),
     compareAtPrice: emptyToUndefined(formData.get("compareAtPrice")),
+    costPrice: emptyToUndefined(formData.get("costPrice")),
+    packagingCost: emptyToUndefined(formData.get("packagingCost")),
+    desiredMargin: emptyToUndefined(formData.get("desiredMargin")),
+    estimatedTaxRate: emptyToUndefined(formData.get("estimatedTaxRate")),
     status: formData.get("status") || "ACTIVE",
     imageUrls: formData.get("imageUrls") || formData.get("imageUrl"),
     featured: formData.get("featured") === "on",
@@ -166,6 +171,10 @@ export async function upsertProduct(formData: FormData) {
         description: sanitizeText(data.description),
         price: data.price,
         compareAtPrice: data.compareAtPrice,
+        costPrice: data.costPrice,
+        packagingCost: data.packagingCost,
+        desiredMargin: data.desiredMargin,
+        estimatedTaxRate: data.estimatedTaxRate,
         status: data.status,
         featured: Boolean(data.featured),
         bestSeller: Boolean(data.bestSeller),
@@ -218,6 +227,8 @@ export async function upsertProduct(formData: FormData) {
             name: "Padrao",
             sku: `${data.sku}-PADRAO`,
             attributes: { tipo: "Padrao" },
+            costPrice: data.costPrice,
+            packagingCost: data.packagingCost,
           },
         });
 
@@ -303,6 +314,8 @@ export async function upsertProductVariant(formData: FormData) {
     sku: formData.get("sku"),
     attributes: formData.get("attributes"),
     priceAdjustment: emptyToUndefined(formData.get("priceAdjustment")),
+    costPrice: emptyToUndefined(formData.get("costPrice")),
+    packagingCost: emptyToUndefined(formData.get("packagingCost")),
     stock: formData.get("stock") || 0,
     lowStockThreshold: emptyToUndefined(formData.get("lowStockThreshold")),
     active: formData.get("active") === "on",
@@ -325,6 +338,8 @@ export async function upsertProductVariant(formData: FormData) {
               sku: sanitizeText(data.sku),
               attributes: parseAttributes(data.attributes),
               priceAdjustment: data.priceAdjustment ?? 0,
+              costPrice: data.costPrice,
+              packagingCost: data.packagingCost,
               active: Boolean(data.active),
             },
           })
@@ -335,6 +350,8 @@ export async function upsertProductVariant(formData: FormData) {
               sku: sanitizeText(data.sku),
               attributes: parseAttributes(data.attributes),
               priceAdjustment: data.priceAdjustment ?? 0,
+              costPrice: data.costPrice,
+              packagingCost: data.packagingCost,
               active: Boolean(data.active),
             },
           });
@@ -947,6 +964,39 @@ export async function updateStoreSettings(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/contato");
   revalidatePath("/retirada-na-loja");
+}
+
+export async function updateFinancialSettings(formData: FormData) {
+  const admin = await withAdmin("finance");
+  const parsed = financialSettingsAdminSchema.safeParse({
+    mercadoPagoRate: formData.get("mercadoPagoRate") || 0,
+    fixedTransactionFee: formData.get("fixedTransactionFee") || 0,
+    estimatedTaxRate: formData.get("estimatedTaxRate") || 0,
+    defaultPackagingCost: formData.get("defaultPackagingCost") || 0,
+    minimumMargin: formData.get("minimumMargin") || 0,
+    lowMarginAlert: formData.get("lowMarginAlert") || 0,
+    defaultShippingCostPaidByStore: formData.get("defaultShippingCostPaidByStore") || 0,
+  });
+
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Configuracao financeira invalida.");
+
+  const before = await prisma.financialSettings.findFirst({ orderBy: { createdAt: "asc" } });
+  const settings = await prisma.financialSettings.upsert({
+    where: { name: "default" },
+    create: {
+      name: "default",
+      ...parsed.data,
+    },
+    update: parsed.data,
+  });
+
+  await audit(admin.admin.id, "finance.settings.update", "financial_settings", settings.id, {
+    before: before ? JSON.parse(JSON.stringify(before)) : null,
+    after: parsed.data,
+  });
+  revalidatePath("/admin");
+  revalidatePath("/admin/financeiro");
+  revalidatePath("/admin/produtos");
 }
 
 export async function updateHomeContent(formData: FormData) {

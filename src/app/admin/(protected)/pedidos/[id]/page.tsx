@@ -31,13 +31,13 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
   return (
     <div>
-      <div className="mb-6 text-white">
-        <Link href="/admin/pedidos" className="text-sm font-black text-white/60 hover:text-white">&larr; Voltar para pedidos</Link>
+      <div className="admin-page-heading mb-6">
+        <Link href="/admin/pedidos" className="text-sm font-black text-[var(--brand)] hover:text-[var(--brand-dark)]">&larr; Voltar para pedidos</Link>
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <h1 className="text-4xl font-black md:text-5xl">{order.orderNumber}</h1>
+          <h1 className="text-3xl font-black md:text-4xl">{order.orderNumber}</h1>
           <span className={statusBadgeClass(order.status)}>{statusLabel(order.status)}</span>
         </div>
-        <p className="mt-2 text-sm text-white/60">Compra realizada em {formatDate(order.createdAt)}</p>
+        <p className="admin-page-copy mt-2 text-sm">Compra realizada em {formatDate(order.createdAt)}</p>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_390px]">
@@ -54,8 +54,11 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                   </div>
                   <div>
                     <strong>{item.productName}</strong>
-                    <p className="mt-1 text-sm text-[var(--muted)]">SKU {item.sku} · {item.variant?.name ?? "Padrao"}</p>
-                    <p className="mt-1 text-sm text-[var(--muted)]">Quantidade: {item.quantity} · Unitario: {formatCurrency(item.unitPrice)}</p>
+                    <p className="mt-1 text-sm text-[var(--muted)]">Código/SKU {item.sku} · {item.variant?.name ?? "Padrão"}</p>
+                    <p className="mt-1 text-sm text-[var(--muted)]">Quantidade: {item.quantity} · Unitário: {formatCurrency(item.unitPrice)}</p>
+                    <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+                      Custo snapshot: {formatCurrency(item.productCost)} · Lucro: {formatCurrency(item.netProfit)} · Margem {Number(item.profitMargin).toFixed(2)}%
+                    </p>
                   </div>
                   <strong className="text-right">{formatCurrency(item.total)}</strong>
                 </div>
@@ -70,6 +73,10 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               <div className="flex justify-between"><dt>Desconto</dt><dd>- {formatCurrency(order.discount)}</dd></div>
               <div className="flex justify-between"><dt>Frete</dt><dd>{formatCurrency(order.shippingCost)}</dd></div>
               <div className="flex justify-between border-t border-[var(--line)] pt-3 text-xl font-black"><dt>Total</dt><dd>{formatCurrency(order.total)}</dd></div>
+              <div className="flex justify-between border-t border-[var(--line)] pt-3"><dt>Custo dos produtos</dt><dd>{formatCurrency(order.productsCost)}</dd></div>
+              <div className="flex justify-between"><dt>Taxas estimadas</dt><dd>{formatCurrency(Number(order.paymentFee) + Number(order.fixedFee))}</dd></div>
+              <div className="flex justify-between"><dt>Embalagem + imposto</dt><dd>{formatCurrency(Number(order.packagingCost) + Number(order.estimatedTax))}</dd></div>
+              <div className="flex justify-between text-base font-black"><dt>Lucro liquido estimado</dt><dd>{formatCurrency(order.netProfit)} · {Number(order.profitMargin).toFixed(2)}%</dd></div>
             </dl>
             {order.coupon && <p className="mt-3 text-sm font-bold text-[var(--muted)]">Cupom: {order.coupon.code}</p>}
           </div>
@@ -83,7 +90,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     <strong>{payment.provider} · {payment.method}</strong>
                     <span className={statusBadgeClass(payment.status)}>{statusLabel(payment.status)}</span>
                   </div>
-                  <p className="mt-2 text-[var(--muted)]">Valor {formatCurrency(payment.amount)} · ID externo {payment.externalId ?? "nao informado"}</p>
+                  <p className="mt-2 text-[var(--muted)]">Valor {formatCurrency(payment.amount)} · ID externo {payment.externalId ?? "não informado"}</p>
                   {payment.checkoutUrl && <a className="mt-2 inline-flex font-black text-[var(--brand)]" href={payment.checkoutUrl}>Abrir checkout Mercado Pago</a>}
                 </div>
               ))}
@@ -98,7 +105,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             <select className="field" name="status" defaultValue={order.status}>
               {statuses.map((item) => <option key={item} value={item}>{statusLabel(item)}</option>)}
             </select>
-            <textarea className="field min-h-28" name="notes" placeholder="Observacoes internas" defaultValue={order.notes ?? ""} />
+            <textarea className="field min-h-28" name="notes" placeholder="Observações internas" defaultValue={order.notes ?? ""} />
             <AdminSubmitButton pendingText="Atualizando...">Salvar status</AdminSubmitButton>
           </form>
 
