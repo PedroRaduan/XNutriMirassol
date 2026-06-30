@@ -100,15 +100,11 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
         </div>
 
         <div className="grid gap-2">
-          {stock > 0 && firstVariant && !isFallbackProduct ? (
+          {stock > 0 && firstVariant && !isFallbackProduct && (
             <AddToCartButton productId={product.id} variantId={firstVariant.id} className="btn btn-primary w-full py-2.5 sm:py-3" />
-          ) : (
-            <Link href={`/produto/${product.slug}`} className="btn btn-dark w-full">
-              {isFallbackProduct ? "Ver produtos" : "Ver produto"} <ArrowRight size={17} />
-            </Link>
           )}
-          <Link href={`/produto/${product.slug}`} className="btn btn-secondary w-full py-2.5 text-sm">
-            Ver detalhes <ArrowRight size={15} />
+          <Link href={`/produto/${product.slug}`} className={`btn w-full py-2.5 text-sm ${stock > 0 && firstVariant && !isFallbackProduct ? "btn-secondary" : "btn-dark"}`}>
+            Ver produto <ArrowRight size={15} />
           </Link>
         </div>
 

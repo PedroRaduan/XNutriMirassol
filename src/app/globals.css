@@ -540,6 +540,16 @@ a {
     font-size: 0.52rem;
   }
 
+  .site-header-logo {
+    max-width: 100%;
+  }
+
+  .site-header-logo .xnutri-logo-word,
+  .site-header-logo .xnutri-logo-subtitle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .hero-xnutri .container-x {
     padding-top: 2.25rem;
     padding-bottom: 2.25rem;
@@ -556,6 +566,20 @@ a {
   .stock-pill {
     padding: 0.22rem 0.46rem;
     font-size: 0.66rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .site-header-logo .xnutri-logo-mark {
+    font-size: 1.8rem;
+  }
+
+  .site-header-logo .xnutri-logo-word {
+    font-size: 1.3rem;
+  }
+
+  .site-header-logo .xnutri-logo-subtitle {
+    display: none;
   }
 }
 

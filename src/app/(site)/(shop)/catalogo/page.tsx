@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search, SlidersHorizontal, Sparkles } from "lucide-react";
 import { ProductCard, type ProductCardProduct } from "@/components/product/product-card";
 import { prisma } from "@/lib/db/prisma";
+import { demoFallbackOrThrow } from "@/lib/db/errors";
 import {
   fallbackCategories,
   fallbackProducts,
@@ -173,7 +174,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
                   ? { featured: "desc" }
               : { createdAt: "desc" },
     }),
-  ]).catch(() => null);
+  ]).catch((error) => demoFallbackOrThrow(error, () => null));
 
   const categories = data?.[0]?.length === 2 ? data[0] : fallbackCategories;
   let products: ProductCardProduct[] = data?.[1] ?? fallbackProducts;

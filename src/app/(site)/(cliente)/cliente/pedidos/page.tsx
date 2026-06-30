@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
-import { isDatabaseUnavailable } from "@/lib/db/errors";
+import { isDatabaseUnavailable, isDemoModeAllowed } from "@/lib/db/errors";
 import { getDemoOrders } from "@/lib/ecommerce/demo-cart";
 import { formatCurrency, formatDate, statusLabel } from "@/lib/utils";
 
@@ -17,7 +17,7 @@ export default async function CustomerOrdersPage() {
       orderBy: { createdAt: "desc" },
     });
   } catch (error) {
-    if (!isDatabaseUnavailable(error)) throw error;
+    if (!isDatabaseUnavailable(error) || !isDemoModeAllowed()) throw error;
     orders = await getDemoOrders();
   }
 

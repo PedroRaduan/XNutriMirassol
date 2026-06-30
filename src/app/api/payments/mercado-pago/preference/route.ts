@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { createMercadoPagoPreference } from "@/lib/payments/mercado-pago";
+import { createMercadoPagoPreference, getMercadoPagoCheckoutUrl } from "@/lib/payments/mercado-pago";
 import { assertSameOrigin, getClientIp } from "@/lib/security/request";
 import { rateLimit } from "@/lib/security/rate-limit";
 
@@ -29,16 +29,17 @@ export async function POST(request: Request) {
   }
 
   const preference = await createMercadoPagoPreference(order);
+  const checkoutUrl = getMercadoPagoCheckoutUrl(preference);
   await prisma.payment.update({
     where: { id: order.payments[0].id },
     data: {
       preferenceId: preference.id,
-      checkoutUrl: preference.init_point ?? preference.sandbox_init_point,
+      checkoutUrl,
     },
   });
 
   return NextResponse.json({
     preferenceId: preference.id,
-    checkoutUrl: preference.init_point ?? preference.sandbox_init_point,
+    checkoutUrl,
   });
 }

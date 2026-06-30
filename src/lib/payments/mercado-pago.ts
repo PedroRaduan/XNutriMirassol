@@ -18,6 +18,16 @@ function getMercadoPagoClient() {
   });
 }
 
+export function getMercadoPagoCheckoutUrl(preference: {
+  init_point?: string | null;
+  sandbox_init_point?: string | null;
+}) {
+  const environment = process.env.MERCADO_PAGO_ENVIRONMENT ?? "sandbox";
+  return environment === "production"
+    ? preference.init_point ?? preference.sandbox_init_point ?? null
+    : preference.sandbox_init_point ?? preference.init_point ?? null;
+}
+
 export async function createMercadoPagoPreference(
   order: Order & { items: OrderItem[]; payments: Payment[] },
 ) {

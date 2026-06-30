@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { InvalidWebhookSignatureError, WebhookSignatureValidator } from "mercadopago";
 import { syncMercadoPagoPayment } from "@/lib/payments/mercado-pago";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getClientIp } from "@/lib/security/request";
@@ -13,24 +14,39 @@ export async function POST(request: Request) {
 
   const url = new URL(request.url);
   const body = await request.json().catch(() => ({}));
-  const paymentId = String(body?.data?.id ?? url.searchParams.get("id") ?? "");
+  const paymentId = String(url.searchParams.get("data.id") ?? body?.data?.id ?? url.searchParams.get("id") ?? "");
   const topic = String(body?.type ?? url.searchParams.get("topic") ?? "");
 
   if (!paymentId || (topic && !topic.includes("payment"))) {
     return NextResponse.json({ received: true });
   }
 
+  const webhookSecret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
+  if (!webhookSecret && process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Webhook do Mercado Pago não configurado." }, { status: 503 });
+  }
+
+  if (webhookSecret) {
+    try {
+      WebhookSignatureValidator.validate({
+        xSignature: request.headers.get("x-signature"),
+        xRequestId: request.headers.get("x-request-id"),
+        dataId: paymentId,
+        secret: webhookSecret,
+        toleranceSeconds: 300,
+      });
+    } catch (error) {
+      if (error instanceof InvalidWebhookSignatureError) {
+        return NextResponse.json({ error: "Assinatura do webhook inválida." }, { status: 401 });
+      }
+      throw error;
+    }
+  }
+
   await syncMercadoPagoPayment(paymentId);
   return NextResponse.json({ received: true });
 }
 
-export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const paymentId = String(url.searchParams.get("id") ?? url.searchParams.get("data.id") ?? "");
-
-  if (paymentId) {
-    await syncMercadoPagoPayment(paymentId);
-  }
-
-  return NextResponse.json({ received: true });
+export async function GET() {
+  return NextResponse.json({ ok: true, service: "mercado-pago-webhook" });
 }

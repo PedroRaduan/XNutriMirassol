@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, Clock, CreditCard, PackageCheck } from "lucide-react";
 import { prisma } from "@/lib/db/prisma";
-import { isDatabaseUnavailable } from "@/lib/db/errors";
+import { isDatabaseUnavailable, isDemoModeAllowed } from "@/lib/db/errors";
 import { getDemoOrder } from "@/lib/ecommerce/demo-cart";
 import { formatCurrency, formatDate, statusLabel } from "@/lib/utils";
 
@@ -22,7 +22,7 @@ export default async function OrderPage({ params }: { params: Promise<{ orderNum
       },
     });
   } catch (error) {
-    if (isDatabaseUnavailable(error)) {
+    if (isDatabaseUnavailable(error) && isDemoModeAllowed()) {
       order = await getDemoOrder(orderNumber);
     } else {
       throw error;

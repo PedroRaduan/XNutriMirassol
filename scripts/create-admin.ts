@@ -3,10 +3,10 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 import { config as loadEnv } from "dotenv";
 
+loadEnv({ path: ".env.local", quiet: true });
 loadEnv({ path: ".env", quiet: true });
-loadEnv({ path: ".env.local", override: true, quiet: true });
 
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = process.env.DIRECT_URL ?? process.env.POSTGRES_URL_NON_POOLING ?? process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error("Defina DATABASE_URL antes de criar o administrador.");

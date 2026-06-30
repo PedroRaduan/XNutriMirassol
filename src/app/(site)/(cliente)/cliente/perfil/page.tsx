@@ -1,7 +1,7 @@
 import { updateProfile } from "@/lib/actions/auth";
 import { requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
-import { isDatabaseUnavailable } from "@/lib/db/errors";
+import { isDatabaseUnavailable, isDemoModeAllowed } from "@/lib/db/errors";
 import { fallbackProfile } from "@/lib/fallback/customer";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export default async function ProfilePage() {
   try {
     user = await prisma.user.findUniqueOrThrow({ where: { id: sessionUser.id } });
   } catch (error) {
-    if (!isDatabaseUnavailable(error)) throw error;
+    if (!isDatabaseUnavailable(error) || !isDemoModeAllowed()) throw error;
     user = fallbackProfile(sessionUser);
   }
 

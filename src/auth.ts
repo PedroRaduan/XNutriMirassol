@@ -7,8 +7,12 @@ import { prisma } from "@/lib/db/prisma";
 import { loginSchema } from "@/lib/validations";
 
 const authSecret =
-  process.env.AUTH_SECRET ??
+  process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ??
   (process.env.NODE_ENV === "production" ? undefined : "xnutri-local-development-auth-secret");
+
+if (process.env.NODE_ENV === "production" && !authSecret) {
+  throw new Error("AUTH_SECRET não configurada. Gere uma chave segura antes de publicar.");
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -19,7 +23,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/login",
   },
-  trustHost: true,
+  trustHost: process.env.AUTH_TRUST_HOST !== "false",
   providers: [
     Credentials({
       name: "E-mail e senha",

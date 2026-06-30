@@ -1,5 +1,7 @@
 # Guia de Deploy
 
+> O guia completo, atualizado e com comandos prontos está em [PRODUCAO.md](./PRODUCAO.md).
+
 ## Plataforma recomendada
 
 Vercel para o Next.js e PostgreSQL gerenciado em Neon, Supabase, RDS ou Railway.

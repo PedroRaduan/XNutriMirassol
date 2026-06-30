@@ -4,7 +4,7 @@ Guia completo para instalar, rodar, administrar e publicar o e-commerce da **XNu
 
 Este README foi escrito para quem está começando. Siga a ordem dos passos e, se algum comando der erro, veja a seção **Erros comuns** no final.
 
-> Quer colocar tudo para funcionar sem rodeios? Use o [tutorial completo com comandos prontos](docs/TUTORIAL-COMPLETO-XNUTRI.md) ou o [tutorial de integração passo a passo](docs/TUTORIAL-INTEGRACAO.md).
+> Para publicar de verdade, use o [guia de produção com Neon, Vercel, migrations, Mercado Pago e Cloudinary](docs/PRODUCAO.md). Para instalação local, use o [tutorial completo com comandos prontos](docs/TUTORIAL-COMPLETO-XNUTRI.md) ou o [tutorial de integração passo a passo](docs/TUTORIAL-INTEGRACAO.md).
 
 ## Sumário
 
@@ -1004,9 +1004,13 @@ Isso evita sitemap e Open Graph apontando para `localhost`.
 ### Opção Recomendada
 
 - Vercel para Next.js.
-- Neon, Supabase ou Railway para PostgreSQL.
+- Neon para PostgreSQL gerenciado, com URL pooler para a aplicação e URL direta para migrations.
 - Cloudinary para imagens.
 - Mercado Pago para pagamentos.
+
+O PostgreSQL do `docker-compose.yml` é somente local. Ele não acompanha o código quando a aplicação é publicada e nenhuma variável de produção pode apontar para `localhost`.
+
+Tutorial completo: [docs/PRODUCAO.md](docs/PRODUCAO.md).
 
 ### Passo A Passo Geral
 
@@ -1025,14 +1029,15 @@ Isso evita sitemap e Open Graph apontando para `localhost`.
 1. Acesse https://vercel.com.
 2. Importe o repositório.
 3. Em `Environment Variables`, cadastre as variáveis do `.env`.
-4. Faça o deploy.
-5. Rode localmente apontando para o banco de produção, ou no terminal da hospedagem:
+4. Use `DATABASE_URL` com o endpoint pooler e `DIRECT_URL` com o endpoint direto do Neon.
+5. Faça o deploy. O `vercel.json` usa `npm run vercel-build`, que valida as variáveis, gera o Prisma Client, aplica migrations e compila o Next.js.
+6. Para conferir manualmente as migrations:
 
 ```bash
 npm run db:deploy
 ```
 
-6. Crie admin:
+7. Crie admin:
 
 ```bash
 npm run admin:create -- admin@xnutri.com.br SenhaForte123
@@ -1071,6 +1076,32 @@ Exemplo:
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/xnutri?schema=public
 ```
+
+Em produção, nunca use esse exemplo local. Copie a URL pooler do Neon e cadastre-a no ambiente **Production** da Vercel.
+
+### `MissingSecret`
+
+Cadastre `AUTH_SECRET` na Vercel com pelo menos 32 caracteres aleatórios e faça um novo deploy. Use também o domínio HTTPS em `AUTH_URL`, `NEXTAUTH_URL` e `NEXT_PUBLIC_APP_URL`.
+
+### `P1001 Can't reach database server`
+
+Confira se `DATABASE_URL` aponta para o PostgreSQL online, contém SSL e não usa `localhost`, `127.0.0.1`, `postgres` ou `host.docker.internal`.
+
+### `P2021 table does not exist`
+
+O banco está acessível, mas as migrations não foram aplicadas. Rode `npm run db:deploy` usando `DIRECT_URL` do banco online.
+
+### `Prisma Client did not initialize`
+
+Rode `npm ci` e `npm run db:generate`. O projeto possui `postinstall: prisma generate` e também gera o client antes do build.
+
+### `SSL connection error`
+
+Copie novamente a connection string do provedor e mantenha `sslmode=require` e os demais parâmetros fornecidos pelo Neon.
+
+### Migration Falhou Em Produção
+
+Use `DIRECT_URL` sem `-pooler`, rode `npm run db:status` e confira o histórico em `prisma/migrations`. Não apague migrations e não use `prisma db push` para esconder divergências no banco real.
 
 ### `ECONNREFUSED`
 
@@ -1194,6 +1225,12 @@ ngrok http 3000
 
 Configure a URL gerada no painel Mercado Pago.
 
+Em produção, configure `https://SEU-DOMINIO/api/payments/mercado-pago/webhook`, copie o segredo para `MERCADO_PAGO_WEBHOOK_SECRET` e confirme que o simulador recebe HTTP `200`. Assinatura inválida retorna `401`.
+
+### Localhost Sendo Usado Em Produção
+
+Revise `DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_APP_URL`, `AUTH_URL` e `NEXTAUTH_URL`. Rode `npm run production:check`; o projeto agora bloqueia banco local e domínio local em produção.
+
 ### Build Falha Por Causa Do Prisma
 
 Geralmente o banco não recebeu migrations.
@@ -1316,6 +1353,8 @@ Atenção: `docker compose down -v` apaga as informações salvas no PostgreSQL 
 - Trocar senha do admin.
 - Usar `AUTH_SECRET` forte.
 - Usar PostgreSQL online.
+- Usar `DATABASE_URL` pooler e `DIRECT_URL` direta.
+- Garantir que nenhuma variável de produção use `localhost`.
 - Configurar `NEXT_PUBLIC_APP_URL` com domínio real.
 - Configurar Cloudinary.
 - Configurar Mercado Pago de produção.
@@ -1334,7 +1373,9 @@ Atenção: `docker compose down -v` apaga as informações salvas no PostgreSQL 
 - Testar pagamento cartão.
 - Testar e-mail/contato se for integrado depois.
 - Rodar `npm run lint`.
+- Rodar `npm run typecheck`.
 - Rodar `npm run build`.
+- Rodar `npm run production:check -- --strict` com as variáveis de produção.
 
 ## Ordem Mais Simples Para Iniciantes
 

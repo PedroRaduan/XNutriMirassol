@@ -10,3 +10,12 @@ export function isDatabaseUnavailable(error: unknown) {
     text.includes("Schema engine error")
   );
 }
+
+export function isDemoModeAllowed() {
+  return process.env.NODE_ENV !== "production" && process.env.ALLOW_DEMO_DATA !== "false";
+}
+
+export function demoFallbackOrThrow<T>(error: unknown, fallback: () => T): T {
+  if (isDemoModeAllowed()) return fallback();
+  throw error;
+}

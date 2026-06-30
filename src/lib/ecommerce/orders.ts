@@ -5,11 +5,11 @@ import { CART_COOKIE, getCartForDisplay } from "@/lib/ecommerce/cart";
 import { calculateDiscount } from "@/lib/ecommerce/coupons";
 import { createDemoOrder } from "@/lib/ecommerce/demo-cart";
 import { prisma } from "@/lib/db/prisma";
-import { isDatabaseUnavailable } from "@/lib/db/errors";
+import { isDatabaseUnavailable, isDemoModeAllowed } from "@/lib/db/errors";
 import { checkoutSchema } from "@/lib/validations";
 import { generateOrderNumber, toNumber } from "@/lib/utils";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
-import { createMercadoPagoPreference } from "@/lib/payments/mercado-pago";
+import { createMercadoPagoPreference, getMercadoPagoCheckoutUrl } from "@/lib/payments/mercado-pago";
 import { marginPercent, roundMoney } from "@/lib/finance/calculations";
 import { getFinancialSettings } from "@/lib/finance/settings";
 import { validateAddressAgainstCep, validateCep } from "@/lib/shipping/cep";
@@ -350,7 +350,7 @@ export async function createOrderFromCheckout(formData: FormData) {
     });
     });
   } catch (error) {
-    if (isDatabaseUnavailable(error)) {
+    if (isDatabaseUnavailable(error) && isDemoModeAllowed()) {
       const demoOrder = await createDemoOrder({
         customerName: sanitizeText(data.customerName),
         customerEmail: data.customerEmail,
@@ -365,11 +365,12 @@ export async function createOrderFromCheckout(formData: FormData) {
 
   try {
     const preference = await createMercadoPagoPreference(createdOrder);
+    const checkoutUrl = getMercadoPagoCheckoutUrl(preference);
     await prisma.payment.update({
       where: { id: createdOrder.payments[0].id },
       data: {
         preferenceId: preference.id,
-        checkoutUrl: preference.init_point ?? preference.sandbox_init_point,
+        checkoutUrl,
       },
     });
   } catch (error) {

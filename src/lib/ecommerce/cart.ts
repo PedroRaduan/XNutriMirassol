@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { getCurrentUser } from "@/lib/auth/session";
 import { calculateDiscount } from "@/lib/ecommerce/coupons";
 import { getDemoCartForDisplay } from "@/lib/ecommerce/demo-cart";
+import { isDemoModeAllowed } from "@/lib/db/errors";
 import { prisma } from "@/lib/db/prisma";
 import { toNumber } from "@/lib/utils";
 
@@ -80,8 +81,9 @@ export async function getCartForDisplay() {
       total,
       count: items.reduce((sum, item) => sum + item.quantity, 0),
     };
-  } catch {
-    return getDemoCartForDisplay();
+  } catch (error) {
+    if (isDemoModeAllowed()) return getDemoCartForDisplay();
+    throw error;
   }
 }
 

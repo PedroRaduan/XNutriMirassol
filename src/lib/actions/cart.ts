@@ -13,7 +13,7 @@ import {
   selectDemoShipping,
   updateDemoCartItem,
 } from "@/lib/ecommerce/demo-cart";
-import { isDatabaseUnavailable } from "@/lib/db/errors";
+import { isDatabaseUnavailable, isDemoModeAllowed } from "@/lib/db/errors";
 import { prisma } from "@/lib/db/prisma";
 import { cartItemSchema, couponSchema } from "@/lib/validations";
 import { quoteShipping } from "@/lib/shipping/quote";
@@ -90,7 +90,7 @@ async function performAddToCart(formData: FormData) {
       });
     }
   } catch (error) {
-    if (isDatabaseUnavailable(error)) {
+    if (isDatabaseUnavailable(error) && isDemoModeAllowed()) {
       await addDemoCartItem(parsed.data.productId, parsed.data.variantId, parsed.data.quantity);
       revalidatePath("/carrinho");
       revalidatePath("/checkout");
@@ -111,7 +111,7 @@ async function performAddToCart(formData: FormData) {
   try {
     cart = await getMutableCart();
   } catch (error) {
-    if (isDatabaseUnavailable(error)) {
+    if (isDatabaseUnavailable(error) && isDemoModeAllowed()) {
       await addDemoCartItem(parsed.data.productId, parsed.data.variantId, parsed.data.quantity);
       revalidatePath("/carrinho");
       revalidatePath("/checkout");
@@ -229,7 +229,7 @@ export async function applyCoupon(_: CouponActionState, formData: FormData): Pro
     cart = await getMutableCart();
     current = await getCartForDisplay();
   } catch (error) {
-    if (isDatabaseUnavailable(error)) {
+    if (isDatabaseUnavailable(error) && isDemoModeAllowed()) {
       const result = await applyDemoCoupon(String(formData.get("code") ?? ""));
       revalidatePath("/carrinho");
       revalidatePath("/checkout");
@@ -255,7 +255,7 @@ export async function applyCoupon(_: CouponActionState, formData: FormData): Pro
       where: { code: parsed.data.code },
     });
   } catch (error) {
-    if (isDatabaseUnavailable(error)) {
+    if (isDatabaseUnavailable(error) && isDemoModeAllowed()) {
       const result = await applyDemoCoupon(parsed.data.code);
       revalidatePath("/carrinho");
       revalidatePath("/checkout");
@@ -304,7 +304,7 @@ export async function clearCoupon() {
   try {
     cart = await getMutableCart();
   } catch (error) {
-    if (isDatabaseUnavailable(error)) {
+    if (isDatabaseUnavailable(error) && isDemoModeAllowed()) {
       await clearDemoCoupon();
       revalidatePath("/carrinho");
       revalidatePath("/checkout");
@@ -337,7 +337,7 @@ export async function selectShipping(formData: FormData) {
   try {
     cart = await getMutableCart();
   } catch (error) {
-    if (isDatabaseUnavailable(error)) {
+    if (isDatabaseUnavailable(error) && isDemoModeAllowed()) {
       await selectDemoShipping(zipCode, methodId, selected.price);
       revalidatePath("/carrinho");
       revalidatePath("/checkout");
@@ -371,7 +371,7 @@ export async function selectPickup(formData: FormData) {
       where: { id: pickupLocationId, active: true },
     });
   } catch (error) {
-    if (isDatabaseUnavailable(error) || pickupLocationId.startsWith("fallback-")) {
+    if ((isDatabaseUnavailable(error) || pickupLocationId.startsWith("fallback-")) && isDemoModeAllowed()) {
       await selectDemoPickup(pickupLocationId);
       revalidatePath("/carrinho");
       revalidatePath("/checkout");

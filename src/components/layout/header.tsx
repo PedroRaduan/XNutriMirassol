@@ -42,9 +42,9 @@ export async function Header() {
         </div>
       </div>
 
-      <div className="container-x flex min-h-16 items-center gap-2 sm:min-h-20 sm:gap-4">
-        <Link href="/" aria-label="XNutri home">
-          <XNutriLogo />
+      <div className="container-x flex min-h-16 min-w-0 items-center gap-1.5 sm:min-h-20 sm:gap-4">
+        <Link href="/" aria-label="XNutri home" className="min-w-0 shrink">
+          <XNutriLogo className="site-header-logo" />
         </Link>
 
         <nav className="ml-4 hidden items-center gap-4 text-sm font-semibold text-[var(--muted)] xl:gap-5 lg:flex">
@@ -70,7 +70,7 @@ export async function Header() {
           <UserRound size={18} />
         </Link>
 
-        <Link href="/carrinho" className="btn btn-primary relative px-3" aria-label="Carrinho">
+        <Link href="/carrinho" className="btn btn-primary relative ml-auto size-11 shrink-0 p-0 md:ml-0" aria-label="Carrinho">
           <ShoppingCart size={18} />
           {cart.count > 0 && (
             <span className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full bg-[var(--ink)] text-xs font-black text-white ring-2 ring-white">
@@ -79,14 +79,14 @@ export async function Header() {
           )}
         </Link>
 
-        <details className="mobile-menu relative lg:hidden">
-          <summary className="btn btn-secondary cursor-pointer px-3" aria-label="Abrir menu">
+        <details className="mobile-menu relative shrink-0 lg:hidden">
+          <summary className="btn btn-secondary size-11 cursor-pointer p-0" aria-label="Abrir menu">
             <Menu size={18} />
           </summary>
           <div className="mobile-menu-panel absolute right-0 top-full mt-3 w-[min(90vw,360px)] rounded-lg border border-[var(--line)] bg-white p-3 shadow-2xl">
             <form action="/catalogo" className="mb-3 flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] px-3 py-2.5">
               <Search size={17} className="text-[var(--muted)]" />
-              <input name="q" placeholder="Buscar produtos" className="w-full bg-transparent text-sm outline-none" />
+              <input name="q" placeholder="Buscar produtos" className="min-w-0 w-full bg-transparent text-sm outline-none" />
             </form>
             <nav className="grid gap-1">
               {nav.map((item) => (
@@ -108,7 +108,7 @@ export async function Header() {
       <form action="/catalogo" className="container-x flex pb-3 md:hidden">
         <div className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] px-3 shadow-inner">
           <Search size={17} className="text-[var(--brand)]" />
-          <input name="q" placeholder="Buscar suplementos ou moda fitness..." className="w-full bg-transparent text-[16px] outline-none" />
+          <input name="q" placeholder="Buscar produtos na XNutri..." className="min-w-0 w-full bg-transparent text-[16px] outline-none" />
         </div>
       </form>
     </header>

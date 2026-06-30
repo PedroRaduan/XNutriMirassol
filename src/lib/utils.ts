@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { isHostedProduction } from "@/lib/env";
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -33,7 +34,26 @@ export function onlyDigits(value: string) {
 }
 
 export function getBaseUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "http://localhost:3000";
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.AUTH_URL ??
+    process.env.NEXTAUTH_URL ??
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : undefined);
+
+  if (!configuredUrl) {
+    if (isHostedProduction()) {
+      throw new Error("NEXT_PUBLIC_APP_URL não configurada para o domínio público de produção.");
+    }
+    return "http://localhost:3000";
+  }
+
+  const normalizedUrl = configuredUrl.replace(/\/$/, "");
+  const parsedUrl = new URL(normalizedUrl);
+  if (isHostedProduction() && ["localhost", "127.0.0.1", "::1"].includes(parsedUrl.hostname)) {
+    throw new Error("NEXT_PUBLIC_APP_URL não pode apontar para localhost em produção.");
+  }
+
+  return normalizedUrl;
 }
 
 export function statusLabel(status: string) {

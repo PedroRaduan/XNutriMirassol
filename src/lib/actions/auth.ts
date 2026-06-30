@@ -8,7 +8,7 @@ import { signIn, signOut } from "@/auth";
 import { clearDemoAdminSession, createDemoAdminSession } from "@/lib/auth/demo-admin";
 import { canAccessAdminModule, requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
-import { isDatabaseUnavailable } from "@/lib/db/errors";
+import { isDatabaseUnavailable, isDemoModeAllowed } from "@/lib/db/errors";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getClientIp, assertSameOrigin } from "@/lib/security/request";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
@@ -250,7 +250,7 @@ export async function updateProfile(formData: FormData) {
       },
     });
   } catch (error) {
-    if (!isDatabaseUnavailable(error)) throw error;
+    if (!isDatabaseUnavailable(error) || !isDemoModeAllowed()) throw error;
   }
 
   revalidatePath("/cliente/perfil");
@@ -287,7 +287,7 @@ export async function createAddress(formData: FormData) {
       },
     });
   } catch (error) {
-    if (!isDatabaseUnavailable(error)) throw error;
+    if (!isDatabaseUnavailable(error) || !isDemoModeAllowed()) throw error;
   }
 
   revalidatePath("/cliente/enderecos");
@@ -306,7 +306,7 @@ export async function deleteAddress(formData: FormData) {
       },
     });
   } catch (error) {
-    if (!isDatabaseUnavailable(error)) throw error;
+    if (!isDatabaseUnavailable(error) || !isDemoModeAllowed()) throw error;
   }
 
   revalidatePath("/cliente/enderecos");

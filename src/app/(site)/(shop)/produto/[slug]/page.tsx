@@ -6,6 +6,7 @@ import { ProductGallery } from "@/components/product/product-gallery";
 import { ProductPurchase } from "@/components/product/product-purchase";
 import { ProductCard } from "@/components/product/product-card";
 import { prisma } from "@/lib/db/prisma";
+import { demoFallbackOrThrow } from "@/lib/db/errors";
 import { fallbackProducts, getStorefrontCategory } from "@/lib/fallback/catalog";
 import { formatCurrency, getBaseUrl, toNumber } from "@/lib/utils";
 import { getWhatsAppHref } from "@/lib/whatsapp";
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const product = await prisma.product.findUnique({
     where: { slug },
     include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
-  }).catch(() => fallbackProducts.find((item) => item.slug === slug));
+  }).catch((error) => demoFallbackOrThrow(error, () => fallbackProducts.find((item) => item.slug === slug)));
 
   if (!product) return {};
 
@@ -50,7 +51,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       variants: { where: { active: true }, include: { inventory: true } },
       reviews: { where: { approved: true }, orderBy: { createdAt: "desc" }, take: 8 },
     },
-  }).catch(() => fallbackProducts.find((item) => item.slug === slug));
+  }).catch((error) => demoFallbackOrThrow(error, () => fallbackProducts.find((item) => item.slug === slug)));
 
   if (!product || product.status !== "ACTIVE") notFound();
 
@@ -62,7 +63,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     },
     include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, variants: { take: 1 }, inventory: true },
     take: 4,
-  }).catch(() => fallbackProducts.filter((item) => item.categoryId === product.categoryId && item.id !== product.id).slice(0, 4));
+  }).catch((error) => demoFallbackOrThrow(error, () => fallbackProducts.filter((item) => item.categoryId === product.categoryId && item.id !== product.id).slice(0, 4)));
 
   const stock = product.variants.reduce((sum, variant) => {
     return sum + Math.max((variant.inventory?.quantity ?? 0) - (variant.inventory?.reserved ?? 0), 0);

@@ -14,6 +14,7 @@ import {
 import { ProductCard } from "@/components/product/product-card";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
 import { prisma } from "@/lib/db/prisma";
+import { demoFallbackOrThrow } from "@/lib/db/errors";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
 import { fallbackCategories, fallbackProducts, storefrontCategorySlugs } from "@/lib/fallback/catalog";
 import { formatCurrency } from "@/lib/utils";
@@ -102,7 +103,7 @@ export default async function Home() {
       take: 3,
       orderBy: { createdAt: "desc" },
     }),
-  ]).catch(() => null);
+  ]).catch((error) => demoFallbackOrThrow(error, () => null));
 
   const [promo, homeHero, homeSetting, storedCategories, featured, bestSellers, discountProducts, reviews] = data ?? [
     {
