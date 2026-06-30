@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { MessageCircle, ShieldCheck, Store, Truck } from "lucide-react";
 import { ProductGallery } from "@/components/product/product-gallery";
 import { ProductPurchase } from "@/components/product/product-purchase";
 import { ProductCard } from "@/components/product/product-card";
 import { prisma } from "@/lib/db/prisma";
 import { fallbackProducts, getStorefrontCategory } from "@/lib/fallback/catalog";
 import { formatCurrency, getBaseUrl, toNumber } from "@/lib/utils";
+import { getWhatsAppHref } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +80,23 @@ export default async function ProductPage({ params }: ProductPageProps) {
       : null,
   }));
   const storefrontCategory = getStorefrontCategory(product.category);
+  const stockLabel = stock > 0 ? (stock <= 5 ? "Poucas unidades" : "Em estoque") : "Indisponível";
+  const isSupplement = storefrontCategory.slug === "suplementos";
+  const productGuides = isSupplement
+    ? [
+        { title: "Benefícios", body: "Produto selecionado para apoiar rotina de treino, recuperação e consistência alimentar conforme seus objetivos." },
+        { title: "Sugestão de uso", body: "Siga sempre a orientação do rótulo. Em caso de dúvidas, fale com a equipe da XNutri pelo WhatsApp antes de comprar." },
+        { title: "Cuidados", body: "Mantenha o produto fechado, em local seco e arejado. Suplementos não substituem alimentação equilibrada." },
+      ]
+    : [
+        { title: "Conforto no treino", body: "Peça pensada para mobilidade, rotina de academia e uso esportivo no dia a dia." },
+        { title: "Cuidados de conservação", body: "Lave conforme a etiqueta do produto e evite secagem em alta temperatura para preservar tecido e acabamento." },
+        { title: "Trocas", body: "Se precisar de ajuda após a compra, fale com a equipe pelo WhatsApp informando o número do pedido." },
+      ];
+  const whatsappHref = getWhatsAppHref(
+    undefined,
+    `Olá! Vim pelo site da XNutri e tenho interesse no produto: ${product.name}.`,
+  );
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -122,11 +141,28 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="mt-5 flex flex-wrap items-end gap-3">
               {product.compareAtPrice && <span className="text-lg text-[var(--muted)] line-through">{formatCurrency(product.compareAtPrice)}</span>}
               <strong className="text-3xl md:text-4xl">{formatCurrency(product.price)}</strong>
-              <span className="badge">{stock} em estoque</span>
+              <span className="badge">{stockLabel}</span>
             </div>
           </div>
 
           <ProductPurchase productId={product.id} basePrice={toNumber(product.price)} variants={purchaseVariants} />
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <a href={whatsappHref} target="_blank" rel="noreferrer" className="btn btn-secondary w-full">
+              <MessageCircle size={18} />
+              Tirar dúvida no WhatsApp
+            </a>
+            <Link href="/retirada-na-loja" className="btn btn-secondary w-full">
+              <Store size={18} />
+              Retirada em Mirassol
+            </Link>
+          </div>
+
+          <div className="surface grid gap-3 p-4 text-sm font-semibold text-[var(--muted)] sm:grid-cols-3">
+            <span className="inline-flex items-center gap-2"><Store size={17} className="text-[var(--brand)]" /> Retirada disponível</span>
+            <span className="inline-flex items-center gap-2"><Truck size={17} className="text-[var(--brand)]" /> Entrega regional</span>
+            <span className="inline-flex items-center gap-2"><ShieldCheck size={17} className="text-[var(--brand)]" /> Compra protegida</span>
+          </div>
 
           <div className="surface p-5">
             <h2 className="text-xl font-black">Descrição</h2>
@@ -137,6 +173,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <div><dt className="font-black">Dimensões</dt><dd className="text-[var(--muted)]">{product.widthCm} x {product.heightCm} x {product.lengthCm} cm</dd></div>
               <div><dt className="font-black">Marca</dt><dd className="text-[var(--muted)]">{product.brand}</dd></div>
             </dl>
+          </div>
+
+          <div className="grid gap-3">
+            {productGuides.map((guide) => (
+              <div key={guide.title} className="surface p-4">
+                <h2 className="font-black">{guide.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{guide.body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -151,6 +196,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{review.comment}</p>
             </article>
           ))}
+          {product.reviews.length === 0 && (
+            <div className="surface p-5 text-sm leading-6 text-[var(--muted)] md:col-span-3">
+              Este produto ainda não tem avaliações publicadas. Se quiser, fale com a equipe da XNutri pelo WhatsApp para tirar dúvidas antes de comprar.
+            </div>
+          )}
         </div>
       </section>
 

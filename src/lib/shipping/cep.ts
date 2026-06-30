@@ -90,7 +90,7 @@ export async function validateAddressAgainstCep(input: CheckoutAddressInput): Pr
   if (!cep) {
     return {
       ok: false,
-      message: "CEP invalido. Informe os 8 numeros do CEP.",
+      message: "CEP inválido. Informe os 8 números do CEP.",
       address: null,
     };
   }
@@ -100,17 +100,17 @@ export async function validateAddressAgainstCep(input: CheckoutAddressInput): Pr
   if (!address) {
     return {
       ok: false,
-      message: "CEP nao encontrado ou consulta indisponivel. Confira o numero e tente novamente.",
+      message: "CEP não encontrado ou consulta indisponível. Confira o número e tente novamente.",
       address,
     };
   }
 
   if (normalizeAddressPart(address.state).toUpperCase() !== normalizeAddressPart(input.state).toUpperCase()) {
-    return { ok: false, message: "CEP nao confere com a UF informada.", address };
+    return { ok: false, message: "CEP não confere com a UF informada.", address };
   }
 
   if (!addressPartMatches(address.city, input.city)) {
-    return { ok: false, message: "CEP nao confere com a cidade informada.", address };
+    return { ok: false, message: "CEP não confere com a cidade informada.", address };
   }
 
   return { ok: true, address };

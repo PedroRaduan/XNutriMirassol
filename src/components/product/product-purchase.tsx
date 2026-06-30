@@ -54,16 +54,27 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
 
   const addButton =
     available > 0 && selected ? (
-      <AddToCartButton productId={productId} variantId={selected.id} quantity={quantity} className="btn btn-primary w-full sm:min-w-40 sm:w-auto" />
+      <div className="grid w-full gap-2 sm:w-auto sm:min-w-48">
+        <AddToCartButton productId={productId} variantId={selected.id} quantity={quantity} className="btn btn-primary w-full" />
+        <AddToCartButton
+          productId={productId}
+          variantId={selected.id}
+          quantity={quantity}
+          className="btn btn-secondary w-full"
+          idleLabel="Comprar agora"
+          addedLabel="Indo ao checkout..."
+          redirectTo="/checkout"
+        />
+      </div>
     ) : (
-      <span className="btn btn-secondary w-full sm:min-w-40 sm:w-auto">Indisponivel</span>
+      <span className="btn btn-secondary w-full sm:min-w-40 sm:w-auto">Indisponível</span>
     );
 
   return (
     <div className="space-y-3 pb-24 md:pb-0">
       <div ref={purchaseRef} className="surface space-y-4 p-4 md:space-y-5 md:p-5">
         <div>
-          <label className="text-sm font-black">Variacao</label>
+          <label className="text-sm font-black">Opção</label>
           <select
             className="field mt-2"
             value={variantId}
@@ -114,15 +125,15 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
             </span>
           </label>
           <div className="rounded-md border border-[var(--line)] bg-[#f9faf7] p-3">
-            <span className="block text-xs font-bold text-[var(--muted)]">Disponivel</span>
+            <span className="block text-xs font-bold text-[var(--muted)]">Disponível</span>
             <strong>{available} unidades</strong>
-            {available <= 5 && available > 0 && <span className="mt-1 block text-xs font-bold text-[var(--brand-dark)]">Ultimas unidades</span>}
+            {available <= 5 && available > 0 && <span className="mt-1 block text-xs font-bold text-[var(--brand-dark)]">Últimas unidades</span>}
           </div>
         </div>
 
         <div className="grid gap-3 sm:flex sm:items-end sm:justify-between sm:gap-4">
           <div>
-            <span className="text-xs font-bold uppercase text-[var(--muted)]">Preco</span>
+            <span className="text-xs font-bold uppercase text-[var(--muted)]">Preço</span>
             <strong className="block text-3xl">{formatCurrency(unitPrice)}</strong>
             <span className="mt-1 block text-xs font-semibold text-[var(--muted)]">Total do item: {formatCurrency(itemTotal)}</span>
           </div>
@@ -137,13 +148,21 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
           <strong className="block truncate text-lg">{formatCurrency(itemTotal)}</strong>
           <span className="mt-1 flex items-center gap-1 text-[11px] font-bold text-[var(--muted)]">
             <Store size={13} className="text-[var(--brand)]" />
-            Retirada disponivel
+            Retirada disponível
           </span>
         </div>
         {available > 0 && selected ? (
-          <AddToCartButton productId={productId} variantId={selected.id} quantity={quantity} className="btn btn-primary min-w-[148px] px-4" />
+          <AddToCartButton
+            productId={productId}
+            variantId={selected.id}
+            quantity={quantity}
+            className="btn btn-primary min-w-[148px] px-4"
+            idleLabel="Comprar agora"
+            addedLabel="Indo ao checkout..."
+            redirectTo="/checkout"
+          />
         ) : (
-          <span className="btn btn-secondary min-w-[148px]">Indisponivel</span>
+          <span className="btn btn-secondary min-w-[148px]">Indisponível</span>
         )}
       </div>
       )}

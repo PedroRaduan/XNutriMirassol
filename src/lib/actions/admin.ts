@@ -523,7 +523,7 @@ export async function adjustInventory(formData: FormData) {
   const reason = sanitizeText(String(formData.get("reason") ?? "Ajuste manual"));
 
   if (!Number.isInteger(quantity) || quantity < 0) {
-    throw new Error("Estoque nao pode ser negativo.");
+    throw new Error("Estoque não pode ser negativo.");
   }
 
   const inventory = await prisma.inventory.findUniqueOrThrow({ where: { id: inventoryId } });
@@ -574,7 +574,7 @@ export async function upsertCoupon(formData: FormData) {
     active: formData.get("active") === "on",
   });
 
-  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Cupom invalido.");
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Cupom inválido.");
 
   const data = parsed.data;
   const before = data.id ? await prisma.coupon.findUnique({ where: { id: data.id } }) : null;
@@ -947,7 +947,7 @@ export async function updateStoreSettings(formData: FormData) {
       where: { key: "checkout" },
       create: {
         key: "checkout",
-        description: "Configuracoes de checkout",
+        description: "Configurações de checkout",
         value: { defaultPickupMessage: data.pickupMessage },
       },
       update: { value: { defaultPickupMessage: data.pickupMessage } },
@@ -956,7 +956,7 @@ export async function updateStoreSettings(formData: FormData) {
       where: { key: "delivery" },
       create: {
         key: "delivery",
-        description: "Configuracoes de entrega",
+        description: "Configurações de entrega",
         value: { deliveryInfo: data.deliveryInfo },
       },
       update: { value: { deliveryInfo: data.deliveryInfo } },

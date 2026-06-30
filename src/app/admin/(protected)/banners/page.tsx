@@ -35,7 +35,7 @@ function BannerForm({ banner }: { banner?: Awaited<ReturnType<typeof getBanners>
         <ImageUploadField name="imageUrl" placeholder="URL da imagem" required />
       )}
       <div className="grid gap-3 sm:grid-cols-2">
-        <input className="field" name="ctaLabel" placeholder="Texto do botao" defaultValue={banner?.ctaLabel ?? ""} />
+        <input className="field" name="ctaLabel" placeholder="Texto do botão" defaultValue={banner?.ctaLabel ?? ""} />
         <input className="field" name="ctaHref" placeholder="/catalogo" defaultValue={banner?.ctaHref ?? ""} />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -47,7 +47,7 @@ function BannerForm({ banner }: { banner?: Awaited<ReturnType<typeof getBanners>
         <input className="field" name="sortOrder" type="number" min={0} placeholder="Ordem" defaultValue={banner?.sortOrder ?? 0} />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm font-black">Inicio<input className="field mt-2" name="startsAt" type="datetime-local" defaultValue={dateInput(banner?.startsAt)} /></label>
+        <label className="text-sm font-black">Início<input className="field mt-2" name="startsAt" type="datetime-local" defaultValue={dateInput(banner?.startsAt)} /></label>
         <label className="text-sm font-black">Fim<input className="field mt-2" name="endsAt" type="datetime-local" defaultValue={dateInput(banner?.endsAt)} /></label>
       </div>
       <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="active" type="checkbox" defaultChecked={banner?.active ?? true} /> Ativo</label>
@@ -79,18 +79,18 @@ export default async function AdminBannersPage() {
       <div className="grid gap-6 xl:grid-cols-[1fr_430px]">
         <section className="grid gap-4">
           <AdminActionForm actionName="updateHomeContent" className="surface grid gap-3 p-5">
-            <h2 className="text-xl font-black">Conteudo da home</h2>
-            <input className="field" name="heroTitle" placeholder="Titulo da hero" defaultValue={home.heroTitle ?? "Performance, saude e estilo em um so lugar."} required />
-            <textarea className="field min-h-24" name="heroSubtitle" placeholder="Subtitulo da hero" defaultValue={home.heroSubtitle ?? ""} required />
+            <h2 className="text-xl font-black">Conteúdo da home</h2>
+            <input className="field" name="heroTitle" placeholder="Título da hero" defaultValue={home.heroTitle ?? "Performance, saúde e estilo em um só lugar."} required />
+            <textarea className="field min-h-24" name="heroSubtitle" placeholder="Subtítulo da hero" defaultValue={home.heroSubtitle ?? ""} required />
             <div className="grid gap-3 sm:grid-cols-2">
-              <input className="field" name="heroPrimaryLabel" placeholder="Botao principal" defaultValue={home.heroPrimaryLabel ?? "Ver produtos"} required />
+              <input className="field" name="heroPrimaryLabel" placeholder="Botão principal" defaultValue={home.heroPrimaryLabel ?? "Ver produtos"} required />
               <input className="field" name="heroPrimaryHref" placeholder="/catalogo" defaultValue={home.heroPrimaryHref ?? "/catalogo"} required />
-              <input className="field" name="heroSecondaryLabel" placeholder="Botao secundario" defaultValue={home.heroSecondaryLabel ?? "Retirar na loja"} required />
+              <input className="field" name="heroSecondaryLabel" placeholder="Botão secundário" defaultValue={home.heroSecondaryLabel ?? "Retirar na loja"} required />
               <input className="field" name="heroSecondaryHref" placeholder="/retirada-na-loja" defaultValue={home.heroSecondaryHref ?? "/retirada-na-loja"} required />
             </div>
             <textarea className="field min-h-24" name="institutionalText" placeholder="Texto institucional" defaultValue={home.institutionalText ?? ""} />
-            <textarea className="field min-h-20" name="footerText" placeholder="Texto do rodape/chamada" defaultValue={home.footerText ?? ""} />
-            <AdminSubmitButton>Salvar conteudo da home</AdminSubmitButton>
+            <textarea className="field min-h-20" name="footerText" placeholder="Texto do rodapé/chamada" defaultValue={home.footerText ?? ""} />
+            <AdminSubmitButton>Salvar conteúdo da home</AdminSubmitButton>
           </AdminActionForm>
 
           {banners.map((banner) => (

@@ -37,13 +37,13 @@ export default async function PDVLoginPage({
                 <Store size={24} />
               </span>
               <h1 className="mt-4 text-2xl font-black">PDV XNutri</h1>
-              <p className="mt-1 text-sm font-semibold text-white/78">Entre para vender no caixa da loja fisica.</p>
+              <p className="mt-1 text-sm font-semibold text-white/78">Entre para vender no caixa da loja física.</p>
             </div>
 
             <div className="p-6">
               {params.error === "unauthorized" && (
                 <p className="mb-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                  Este usuario nao tem permissao para acessar o PDV.
+                  Este usuário não tem permissão para acessar o PDV.
                 </p>
               )}
               {params.error === "database" && (
@@ -51,12 +51,12 @@ export default async function PDVLoginPage({
                   <p>
                     Banco de dados offline. {process.env.NODE_ENV === "production"
                       ? "Reestabeleça a conexão com o PostgreSQL antes de usar o caixa."
-                      : "Você pode abrir o PDV em modo demo para visualizar a tela sem gravar vendas reais."}
+                      : "Você pode abrir o PDV em modo de treinamento para visualizar a tela sem gravar vendas reais."}
                   </p>
                   {process.env.NODE_ENV !== "production" && (
                     <form action={enterDemoPOS} className="mt-3">
                       <button className="btn btn-secondary w-full border-red-200 bg-white text-red-700 hover:bg-red-50">
-                        Entrar no PDV demo
+                        Entrar no PDV de treinamento
                       </button>
                     </form>
                   )}

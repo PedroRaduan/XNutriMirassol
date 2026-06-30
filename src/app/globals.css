@@ -215,7 +215,8 @@ a {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(135deg, #080809 0%, #16171b 30%, #801813 64%, #f2382f 100%);
+    radial-gradient(circle at 88% 12%, rgb(255 255 255 / 34%), transparent 18rem),
+    linear-gradient(135deg, #f2382f 0%, #c9231d 42%, #ff5a27 76%, #fff0ee 100%);
   color: white;
 }
 

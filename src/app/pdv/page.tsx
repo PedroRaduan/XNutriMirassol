@@ -195,7 +195,7 @@ function PDVShell({
       <div className="container-x py-5">
         {isDemo && (
           <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-800">
-            Modo demo: a tela funciona para treinamento, mas vendas, estoque e relatorios so sao gravados quando o PostgreSQL estiver ligado e migrado.
+            Modo de treinamento: a tela funciona para simular vendas, mas vendas, estoque e relatórios reais só são gravados quando o PostgreSQL estiver ligado e migrado.
           </div>
         )}
         {children}

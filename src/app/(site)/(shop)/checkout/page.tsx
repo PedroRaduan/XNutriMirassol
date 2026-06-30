@@ -8,6 +8,11 @@ import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Checkout",
+  description: "Finalize seu pedido na XNutri com entrega, retirada em Mirassol, PIX ou cartão pelo Mercado Pago.",
+};
+
 export default async function CheckoutPage() {
   const [cart, pickupOptions, user] = await Promise.all([getCartForDisplay(), getPickupOptions(), getCurrentUser()]);
 
@@ -26,17 +31,18 @@ export default async function CheckoutPage() {
 
   return (
     <div className="container-x py-6 md:py-10">
-      <div className="rounded-lg bg-[var(--ink)] p-5 text-white shadow-2xl md:p-8">
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-black uppercase text-white/80">
-          <LockKeyhole size={14} className="text-[#ffd2cc]" />
+      <div className="relative overflow-hidden rounded-lg border border-[#ffd2ca] bg-gradient-to-br from-white via-[#fff7f6] to-[#ffe7e2] p-5 text-[var(--ink)] shadow-xl md:p-8">
+        <div className="absolute right-[-5rem] top-[-5rem] h-48 w-48 rounded-full bg-[var(--brand)]/12 blur-2xl" />
+        <span className="relative inline-flex items-center gap-2 rounded-full border border-[#ffc4bc] bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-dark)]">
+          <LockKeyhole size={14} className="text-[var(--brand)]" />
           Checkout seguro XNutri
         </span>
-        <div className="mt-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="relative mt-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-3xl font-black md:text-5xl">Finalize seu pedido</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70 md:text-base">Escolha entrega ou retirada na loja, confirme seus dados e pague via Mercado Pago.</p>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)] md:text-base">Escolha entrega ou retirada na loja, confirme seus dados e pague via Mercado Pago.</p>
           </div>
-          <div className="grid gap-2 text-sm text-white/70 sm:grid-cols-3 md:min-w-[420px]">
+          <div className="grid gap-2 text-sm font-bold text-[var(--graphite)] sm:grid-cols-3 md:min-w-[420px]">
             <span className="inline-flex items-center gap-2"><CheckCircle2 size={16} className="text-[var(--brand)]" /> Dados</span>
             <span className="inline-flex items-center gap-2"><CheckCircle2 size={16} className="text-[var(--brand)]" /> Entrega</span>
             <span className="inline-flex items-center gap-2"><CheckCircle2 size={16} className="text-[var(--brand)]" /> Pagamento</span>
@@ -46,7 +52,7 @@ export default async function CheckoutPage() {
 
       {!user && (
         <div className="mt-5 rounded-lg border border-[var(--line)] bg-white p-4 text-sm text-[var(--muted)] shadow-sm">
-          Voce pode finalizar como visitante ou <Link href="/login" className="font-black text-[var(--brand)]">entrar na sua conta</Link>.
+          Você pode finalizar como visitante ou <Link href="/login" className="font-black text-[var(--brand)]">entrar na sua conta</Link>.
         </div>
       )}
 
@@ -76,7 +82,7 @@ export default async function CheckoutPage() {
               </div>
               <dl className="mt-5 grid gap-3 border-t border-[var(--line)] pt-4 text-sm">
                 <div className="flex justify-between"><dt>Subtotal</dt><dd>{formatCurrency(cart.subtotal)}</dd></div>
-                <div className="flex justify-between"><dt>Frete</dt><dd>{cart.shippingCost === 0 ? "Gratis" : formatCurrency(cart.shippingCost)}</dd></div>
+                <div className="flex justify-between"><dt>Frete</dt><dd>{cart.shippingCost === 0 ? "Grátis" : formatCurrency(cart.shippingCost)}</dd></div>
                 <div className="flex justify-between"><dt>Desconto</dt><dd>- {formatCurrency(cart.discount)}</dd></div>
                 <div className="flex justify-between rounded-lg bg-[#f7f7f8] p-3 text-xl font-black"><dt>Total</dt><dd>{formatCurrency(cart.total)}</dd></div>
               </dl>
@@ -90,6 +96,9 @@ export default async function CheckoutPage() {
             </div>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
               Se escolher retirada, o frete fica zerado e o pedido gera protocolo para apresentar na XNutri Mirassol.
+            </p>
+            <p className="mt-3 rounded-md bg-[#fff1ef] p-3 text-sm font-semibold leading-6 text-[var(--brand-dark)]">
+              Após finalizar, você poderá confirmar detalhes do pedido pelo WhatsApp se precisar.
             </p>
           </div>
 

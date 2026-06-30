@@ -1,10 +1,10 @@
 # XNutri E-commerce
 
-Guia completo para instalar, rodar, administrar e publicar o e-commerce da **XNutri**, loja de suplementos e roupas fitness de Mirassol-SP.
+Guia completo para instalar, rodar, administrar e publicar o e-commerce da **XNutri**, loja de suplementos e moda fitness de Mirassol-SP.
 
 Este README foi escrito para quem está começando. Siga a ordem dos passos e, se algum comando der erro, veja a seção **Erros comuns** no final.
 
-> Quer colocar tudo para funcionar sem rodeios? Use o [tutorial de integração passo a passo](docs/TUTORIAL-INTEGRACAO.md).
+> Quer colocar tudo para funcionar sem rodeios? Use o [tutorial completo com comandos prontos](docs/TUTORIAL-COMPLETO-XNUTRI.md) ou o [tutorial de integração passo a passo](docs/TUTORIAL-INTEGRACAO.md).
 
 ## Sumário
 
@@ -53,9 +53,9 @@ Ele possui:
 Categorias públicas principais:
 
 - `Suplementos`
-- `Roupas Fitness`
+- `Moda Fitness`
 
-Dentro de `Suplementos` entram produtos como whey, creatina, pré-treino, vitaminas e acessórios de treino. Dentro de `Roupas Fitness` entram camisetas, leggings, shorts, tops e peças com tamanhos.
+Dentro de `Suplementos` entram produtos como whey, creatina, pré-treino, vitaminas e acessórios de treino. Dentro de `Moda Fitness` entram camisetas, leggings, shorts, tops e peças esportivas.
 
 ## Funcionalidades
 
@@ -95,16 +95,16 @@ Dentro de `Suplementos` entram produtos como whey, creatina, pré-treino, vitami
 ### PDV Presencial
 
 - Caixa privado em `/pdv`.
-- Busca por nome, SKU, codigo de barras, EAN e codigo interno.
-- Venda com produtos e variacoes.
-- Pagamento em dinheiro, Pix, debito, credito, Mercado Pago e pagamento misto.
-- Calculo de troco.
+- Busca por nome, SKU, código de barras, EAN e código interno.
+- Venda com produtos e variações.
+- Pagamento em dinheiro, Pix, débito, crédito, Mercado Pago e pagamento misto.
+- Cálculo de troco.
 - Abertura e fechamento de caixa.
 - Sangria e reforco.
 - Baixa automatica de estoque compartilhado com o site.
 - Comprovante com impressao, PDF pelo navegador, WhatsApp e e-mail.
 - Cancelamento total e devolucao parcial.
-- Relatorios de vendas presenciais.
+- Relatórios de vendas presenciais.
 
 ### Pagamentos
 
@@ -427,7 +427,7 @@ xnutri/
 | `/` | Home |
 | `/catalogo` | Catálogo |
 | `/catalogo?category=suplementos` | Suplementos |
-| `/catalogo?category=roupas-fitness` | Roupas Fitness |
+| `/catalogo?category=roupas-fitness` | Moda Fitness |
 | `/produto/[slug]` | Página de produto |
 | `/carrinho` | Carrinho |
 | `/checkout` | Checkout |
@@ -477,7 +477,7 @@ xnutri/
 | --- | --- |
 | `/pdv/login` | Login do caixa |
 | `/pdv` | Tela principal de venda presencial |
-| `/pdv/relatorios` | Relatorios do PDV |
+| `/pdv/relatorios` | Relatórios do PDV |
 | `/pdv/comprovante/[saleNumber]` | Comprovante da venda |
 
 ## Como Usar O PDV
@@ -489,8 +489,8 @@ Resumo rapido:
 1. Entre em `/pdv/login`.
 2. Use `caixa@xnutri.com.br` / `Caixa@12345` no ambiente seedado.
 3. Abra o caixa informando o valor inicial.
-4. Busque ou escaneie produtos por nome, SKU, barcode, EAN ou codigo interno.
-5. Escolha pagamento: dinheiro, Pix, debito, credito, Mercado Pago ou misto.
+4. Busque ou escaneie produtos por nome, SKU, barcode, EAN ou código interno.
+5. Escolha pagamento: dinheiro, Pix, débito, crédito, Mercado Pago ou misto.
 6. Finalize a venda.
 7. Imprima o comprovante.
 8. Feche o caixa no fim do expediente.
@@ -691,11 +691,11 @@ Papéis administrativos:
 Use apenas:
 
 - `Suplementos`
-- `Roupas Fitness`
+- `Moda Fitness`
 
 Mesmo que existam produtos de whey, creatina, vitaminas ou acessórios, eles devem entrar em `Suplementos`.
 
-Produtos com tamanho, como camiseta, legging, top e shorts, devem entrar em `Roupas Fitness`.
+Produtos de moda fitness, como camiseta, legging, top e shorts, devem entrar em `Moda Fitness`.
 
 ### Cadastrar Produto Pelo Admin
 
@@ -723,24 +723,23 @@ Preço anterior: 159.90
 Promoção: marcado
 ```
 
-### Produtos Com Tamanho
+### Produtos Com Variação
 
-Para roupas fitness, use variações.
+Para produtos com opções, use variações.
 
-Exemplo de tamanhos:
+Exemplo de opções:
 
 ```text
-PP
-P
-M
-G
-GG
+Chocolate
+Baunilha
+Preta
+Grafite
 ```
 
 Exemplo de atributos:
 
 ```text
-tamanho=M
+sabor=Chocolate
 cor=Preta
 modelo=Dry Fit
 ```
@@ -1310,7 +1309,7 @@ Parar banco e apagar volume local:
 docker compose down -v
 ```
 
-Atenção: `docker compose down -v` apaga os dados locais do PostgreSQL.
+Atenção: `docker compose down -v` apaga as informações salvas no PostgreSQL local.
 
 ## Checklist Antes De Produção
 

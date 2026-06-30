@@ -12,8 +12,8 @@ export function fallbackProfile(user: User) {
 
 export const fallbackAddresses = [
   {
-    id: "demo-address",
-    label: "Endereco demo",
+    id: "fallback-address",
+    label: "Retirada na XNutri",
     recipient: "Cliente XNutri",
     zipCode: "15130-000",
     street: "Rua 9 de Julho",

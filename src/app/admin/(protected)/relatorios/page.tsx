@@ -170,7 +170,7 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
     <div>
       <div className="admin-page-heading mb-6">
         <span className="admin-eyebrow">Números da loja</span>
-        <h1 className="mt-2 text-3xl font-black md:text-4xl">Relatorios</h1>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">Relatórios</h1>
         <p className="admin-page-copy mt-2 text-sm">
           Veja vendas, pedidos, ticket médio, produtos, clientes, cupons, entrega e pagamento em um só lugar.
         </p>
@@ -179,9 +179,9 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
       <form className="surface mb-5 grid gap-3 p-4 md:grid-cols-[220px_1fr_1fr_auto]">
         <select className="field" name="period" defaultValue={period}>
           <option value="today">Hoje</option>
-          <option value="7d">Ultimos 7 dias</option>
-          <option value="month">Mes atual</option>
-          <option value="last-month">Mes passado</option>
+          <option value="7d">Últimos 7 dias</option>
+          <option value="month">Mês atual</option>
+          <option value="last-month">Mês passado</option>
           <option value="custom">Personalizado</option>
         </select>
         <input className="field" name="start" type="date" defaultValue={params.start ?? from.toISOString().slice(0, 10)} />

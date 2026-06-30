@@ -116,7 +116,7 @@ function assertDemoStock(productId: string, variantId: string | undefined, quant
   const { availableStock } = getFallbackVariantStock(productId, variantId);
 
   if (quantity > availableStock) {
-    throw new Error(`Estoque insuficiente. Disponivel: ${availableStock} unidade(s).`);
+    throw new Error(`Estoque insuficiente. Disponível: ${availableStock} unidade(s).`);
   }
 }
 
@@ -164,7 +164,7 @@ export async function getDemoCartForDisplay() {
     id: "demo-cart",
     items,
     coupon: cart.couponCode ? { code: cart.couponCode } : null,
-    shippingMethod: cart.shippingMethodId ? { id: cart.shippingMethodId, name: "Frete Manual Mirassol e Regiao" } : null,
+    shippingMethod: cart.shippingMethodId ? { id: cart.shippingMethodId, name: "Frete Manual Mirassol e Região" } : null,
     pickupLocation: cart.pickupLocationId ? fallbackPickup : null,
     shippingZipCode: cart.shippingZipCode ?? null,
     subtotal,
@@ -178,7 +178,7 @@ export async function getDemoCartForDisplay() {
 export async function addDemoCartItem(productId: string, variantId: string | undefined, quantity: number) {
   const { product, selectedVariantId, availableStock } = getFallbackVariantStock(productId, variantId);
   if (!product) {
-    throw new Error("Produto demo nao encontrado.");
+    throw new Error("Produto não encontrado.");
   }
 
   const cart = await readDemoCart();
@@ -186,7 +186,7 @@ export async function addDemoCartItem(productId: string, variantId: string | und
   const nextQuantity = (existing?.quantity ?? 0) + quantity;
 
   if (nextQuantity > availableStock) {
-    throw new Error(`Estoque insuficiente. Disponivel: ${availableStock} unidade(s).`);
+    throw new Error(`Estoque insuficiente. Disponível: ${availableStock} unidade(s).`);
   }
 
   if (existing) {
@@ -227,20 +227,20 @@ export async function applyDemoCoupon(code: string) {
   const display = await getDemoCartForDisplay();
   const coupon = fallbackCoupons.find((item) => item.code === normalized);
 
-  if (!coupon) return { ok: false, message: "Cupom demo nao encontrado." };
+  if (!coupon) return { ok: false, message: "Cupom não encontrado." };
   if (display.subtotal < coupon.minSubtotal) {
     return {
       ok: false,
-      message: `Este cupom exige subtotal minimo de ${coupon.minSubtotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+      message: `Este cupom exige subtotal mínimo de ${coupon.minSubtotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
     };
   }
   if (coupon.type === "FREE_SHIPPING" && display.shippingCost <= 0) {
-    return { ok: false, message: "Escolha uma entrega paga antes de aplicar frete gratis." };
+    return { ok: false, message: "Escolha uma entrega paga antes de aplicar frete grátis." };
   }
 
   cart.couponCode = normalized;
   await writeDemoCart(cart);
-  return { ok: true, message: "Cupom aplicado no modo demo." };
+  return { ok: true, message: "Cupom aplicado com sucesso." };
 }
 
 export async function clearDemoCoupon() {
@@ -280,7 +280,7 @@ export async function createDemoOrder(data: DemoCheckoutData) {
 
   for (const item of cart.items) {
     if (item.quantity > item.availableStock) {
-      throw new Error(`Estoque insuficiente para ${item.name}. Disponivel: ${item.availableStock} unidade(s).`);
+      throw new Error(`Estoque insuficiente para ${item.name}. Disponível: ${item.availableStock} unidade(s).`);
     }
   }
 
@@ -293,7 +293,7 @@ export async function createDemoOrder(data: DemoCheckoutData) {
     customerPhone: data.customerPhone,
     status: "PENDING",
     shippingType: data.shippingType,
-    pickupProtocol: data.shippingType === "PICKUP" ? `XN-DEMO-${crypto.randomUUID().slice(0, 6).toUpperCase()}` : null,
+    pickupProtocol: data.shippingType === "PICKUP" ? `XN-RET-${crypto.randomUUID().slice(0, 6).toUpperCase()}` : null,
     subtotal: cart.subtotal,
     discount: cart.discount,
     shippingCost: data.shippingType === "PICKUP" ? 0 : cart.shippingCost,
@@ -318,7 +318,7 @@ export async function createDemoOrder(data: DemoCheckoutData) {
       },
     ],
     pickupLocation: data.shippingType === "PICKUP" ? fallbackPickup : null,
-    shippingMethod: data.shippingType === "DELIVERY" ? { id: cart.shippingMethod?.id ?? "fallback-manual", name: cart.shippingMethod?.name ?? "Frete Manual Mirassol e Regiao" } : null,
+    shippingMethod: data.shippingType === "DELIVERY" ? { id: cart.shippingMethod?.id ?? "fallback-manual", name: cart.shippingMethod?.name ?? "Frete Manual Mirassol e Região" } : null,
   };
 
   const orders = await readDemoOrders();

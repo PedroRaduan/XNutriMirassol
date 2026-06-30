@@ -43,22 +43,15 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
   const price = toNumber(product.price);
   const compareAtPrice = product.compareAtPrice ? toNumber(product.compareAtPrice) : 0;
   const discount = compareAtPrice > price ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100) : 0;
-  const stockLabel = stock > 0 ? `${stock} em estoque` : "Indisponivel";
-  const sizeOptions = product.variants
-    .map((variant) => {
-      const attributes = variant.attributes as Record<string, unknown>;
-      return typeof attributes.tamanho === "string" ? attributes.tamanho : null;
-    })
-    .filter(Boolean)
-    .slice(0, 6);
+  const stockLabel = stock > 0 ? (stock <= 5 ? "Poucas unidades" : "Em estoque") : "Indisponível";
   const badges = [
-    product.promotion ? (discount > 0 ? `-${discount}%` : "Promocao") : null,
+    product.promotion ? (discount > 0 ? `-${discount}%` : "Promoção") : null,
     product.bestSeller ? "Mais vendido" : null,
     !product.promotion && !product.bestSeller && isRecent(product.createdAt) ? "Novo" : null,
   ].filter(Boolean);
 
   return (
-    <article className="product-card surface reveal-card group">
+    <article className="product-card surface reveal-card group flex h-full flex-col">
       <Link href={`/produto/${product.slug}`} className="block" aria-label={product.name}>
         <div className="product-card-media relative aspect-[4/3] overflow-hidden bg-[#eceef1]">
           {image ? (
@@ -85,25 +78,15 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
         </div>
       </Link>
 
-      <div className="grid gap-2.5 p-3 sm:gap-3 sm:p-4">
-        <div className="min-h-[92px] sm:min-h-[112px]">
+      <div className="flex flex-1 flex-col gap-3 p-3 sm:p-4">
+        <div className="min-h-[112px]">
           <Link href={`/produto/${product.slug}`} className="line-clamp-2 text-base font-black leading-snug text-[var(--ink)] hover:text-[var(--brand)] sm:text-lg">
             {product.name}
           </Link>
           <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-[var(--muted)] sm:mt-2 sm:text-sm">{product.shortDescription}</p>
         </div>
 
-        {sizeOptions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {sizeOptions.map((size) => (
-              <span key={size} className="grid min-w-8 place-items-center rounded-md border border-[var(--line)] bg-white px-2 py-1 text-xs font-black text-[var(--graphite)]">
-                {size}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="grid gap-2 sm:flex sm:items-end sm:justify-between sm:gap-3">
+        <div className="mt-auto grid gap-2 sm:flex sm:items-end sm:justify-between sm:gap-3">
           <div>
             {compareAtPrice > 0 && (
               <span className="block text-xs font-semibold text-[var(--muted)] line-through">{formatCurrency(compareAtPrice)}</span>
@@ -116,13 +99,18 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
           </span>
         </div>
 
-        {stock > 0 && firstVariant && !isFallbackProduct ? (
-          <AddToCartButton productId={product.id} variantId={firstVariant.id} className="btn btn-primary w-full py-2.5 sm:py-3" />
-        ) : (
-          <Link href={`/produto/${product.slug}`} className="btn btn-dark w-full">
-            {isFallbackProduct ? "Ver vitrine" : "Ver produto"} <ArrowRight size={17} />
+        <div className="grid gap-2">
+          {stock > 0 && firstVariant && !isFallbackProduct ? (
+            <AddToCartButton productId={product.id} variantId={firstVariant.id} className="btn btn-primary w-full py-2.5 sm:py-3" />
+          ) : (
+            <Link href={`/produto/${product.slug}`} className="btn btn-dark w-full">
+              {isFallbackProduct ? "Ver produtos" : "Ver produto"} <ArrowRight size={17} />
+            </Link>
+          )}
+          <Link href={`/produto/${product.slug}`} className="btn btn-secondary w-full py-2.5 text-sm">
+            Ver detalhes <ArrowRight size={15} />
           </Link>
-        )}
+        </div>
 
         <span className="hidden text-xs font-semibold text-[var(--muted)] sm:block">SKU {product.sku}</span>
       </div>

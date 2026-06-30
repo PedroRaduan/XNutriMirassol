@@ -21,6 +21,8 @@ import { formatCurrency } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
+  title: "Suplementos e Moda Fitness em Mirassol",
+  description: "Compre suplementos, moda fitness e acessórios na XNutri Mirassol. Retire na loja, receba com praticidade e fale pelo WhatsApp.",
   alternates: { canonical: "/" },
 };
 
@@ -38,10 +40,10 @@ const heroSubtitle =
   "Suplementos, roupas fitness e acessórios para quem treina de verdade. Compre online e retire na loja em Mirassol.";
 
 const benefitCards = [
-  { Icon: Dumbbell, title: "Performance real", text: "Whey, creatina, pre-treinos e vitaminas para evoluir." },
-  { Icon: ShoppingBag, title: "Moda fitness", text: "Leggings, camisetas e acessorios com variacoes de tamanho." },
+  { Icon: Dumbbell, title: "Performance real", text: "Whey, creatina, pré-treinos e vitaminas para evoluir." },
+  { Icon: ShoppingBag, title: "Moda fitness", text: "Peças confortáveis para treinar com mobilidade e estilo." },
   { Icon: PackageCheck, title: "Retirada sem frete", text: "Escolha retirar na loja e receba protocolo no checkout." },
-  { Icon: ShieldCheck, title: "Compra segura", text: "Auth, validacao, Mercado Pago e controle de status." },
+  { Icon: ShieldCheck, title: "Compra segura", text: "Pagamento protegido, checkout validado e acompanhamento do pedido." },
 ];
 
 export default async function Home() {
@@ -60,8 +62,8 @@ export default async function Home() {
     },
     {
       id: "fallback-review-3",
-      title: "Roupas com tamanhos",
-      comment: "Gostei de ver as opções PP, P, M, G e GG direto no catálogo.",
+      title: "Moda fitness confortável",
+      comment: "Gostei da variedade de roupas e da facilidade para comprar pelo site.",
       product: { name: "Roupas Fitness" },
     },
   ];
@@ -105,7 +107,7 @@ export default async function Home() {
   const [promo, homeHero, homeSetting, storedCategories, featured, bestSellers, discountProducts, reviews] = data ?? [
     {
       title: "Vitrine fitness Xnutri",
-      subtitle: "Roupas fitness com tamanhos, suplementos e acessorios para retirar na loja.",
+      subtitle: "Roupas fitness, suplementos e acessórios para comprar online e retirar na loja.",
       imageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1800&q=85",
       ctaLabel: "Ver roupas",
       ctaHref: "/catalogo?category=roupas-fitness",
@@ -202,7 +204,7 @@ export default async function Home() {
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <h2 className="text-2xl font-black md:text-3xl">Categorias</h2>
-            <p className="mt-2 text-[var(--muted)]">Suplementos e roupas fitness com tamanhos para sua rotina.</p>
+            <p className="mt-2 text-[var(--muted)]">Suplementos, moda fitness e acessórios para sua rotina render mais.</p>
           </div>
           <Link href="/catalogo" className="btn btn-secondary hidden sm:inline-flex">Ver catálogo</Link>
         </div>
@@ -232,14 +234,14 @@ export default async function Home() {
       </section>
 
       <section className="container-x mt-12 md:mt-16">
-        <div className="relative overflow-hidden rounded-lg bg-[var(--ink)] p-5 text-white shadow-2xl md:p-8">
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-dark)] via-[var(--ink)] to-[var(--graphite)] opacity-95" />
+        <div className="relative overflow-hidden rounded-lg bg-[var(--brand)] p-5 text-white shadow-2xl md:p-8">
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-dark)] via-[var(--brand)] to-[var(--brand-hot)] opacity-95" />
           <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <span className="badge border-transparent bg-white text-[var(--brand)]">Ofertas XNutri</span>
               <h2 className="mt-4 text-2xl font-black md:text-4xl">Produtos com desconto</h2>
               <p className="mt-2 max-w-2xl text-white/70">
-                Separe aqui os produtos em promocao, combos, queimas de estoque e itens com preco antigo.
+                Ofertas selecionadas em suplementos, moda fitness e acessórios. Aproveite enquanto houver estoque disponível.
               </p>
             </div>
             <Link href="/catalogo?sort=discounts" className="btn bg-white text-[var(--ink)] hover:bg-[#f3f4f6]">
@@ -258,7 +260,7 @@ export default async function Home() {
             <Image src={promo.imageUrl} alt={promo.title} fill sizes="100vw" className="object-cover opacity-40" />
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
             <div className="relative max-w-xl">
-              <span className="badge border-transparent bg-white text-[var(--brand)]">Promocao XNutri</span>
+              <span className="badge border-transparent bg-white text-[var(--brand)]">Promoção XNutri</span>
               <h2 className="mt-4 text-3xl font-black md:text-5xl">{promo.title}</h2>
               <p className="mt-4 text-lg leading-8 text-white/80">{promo.subtitle}</p>
               <Link href={promo.ctaHref ?? "/catalogo"} className="btn mt-6 bg-white text-[var(--ink)]">{promo.ctaLabel ?? "Ver agora"}</Link>

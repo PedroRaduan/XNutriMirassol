@@ -83,7 +83,7 @@ export function ShippingEstimator({ subtotal }: { subtotal: number }) {
                   await selectShipping(formData);
                   setMessage("");
                 } catch (error) {
-                  setMessage(error instanceof Error ? error.message : "Nao foi possivel selecionar este frete.");
+                  setMessage(error instanceof Error ? error.message : "Não foi possível selecionar este frete.");
                 }
               });
             }}

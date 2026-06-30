@@ -11,10 +11,19 @@ import {
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Catálogo",
+  description: "Confira suplementos, moda fitness e acessórios da XNutri Mirassol com retirada na loja e entrega regional.",
+};
+
 type CatalogSearchParams = Promise<{
   q?: string;
   category?: string;
   sort?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  promotion?: string;
+  availability?: string;
 }>;
 
 type CatalogCategory = {
@@ -28,11 +37,19 @@ function CatalogFilterForm({
   q,
   category,
   sort,
+  minPrice,
+  maxPrice,
+  promotion,
+  availability,
 }: {
   categories: CatalogCategory[];
   q?: string;
   category?: string;
   sort: string;
+  minPrice?: number;
+  maxPrice?: number;
+  promotion?: boolean;
+  availability?: boolean;
 }) {
   return (
     <form className="grid gap-4">
@@ -63,6 +80,24 @@ function CatalogFilterForm({
           <option value="price-desc">Maior preço</option>
         </select>
       </label>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+        <label className="text-sm font-black">
+          Preço mínimo
+          <input name="minPrice" type="number" min={0} step="0.01" defaultValue={minPrice ?? ""} className="field mt-2" placeholder="R$ 0,00" />
+        </label>
+        <label className="text-sm font-black">
+          Preço máximo
+          <input name="maxPrice" type="number" min={0} step="0.01" defaultValue={maxPrice ?? ""} className="field mt-2" placeholder="R$ 300,00" />
+        </label>
+      </div>
+      <label className="flex items-center gap-2 rounded-lg border border-[var(--line)] bg-white p-3 text-sm font-black">
+        <input className="accent-[var(--brand)]" type="checkbox" name="promotion" value="1" defaultChecked={promotion} />
+        Ver apenas promoções
+      </label>
+      <label className="flex items-center gap-2 rounded-lg border border-[var(--line)] bg-white p-3 text-sm font-black">
+        <input className="accent-[var(--brand)]" type="checkbox" name="availability" value="1" defaultChecked={availability} />
+        Somente disponíveis
+      </label>
       <button className="btn btn-primary">Aplicar filtros</button>
       <Link href="/catalogo" className="btn btn-secondary">Limpar</Link>
     </form>
@@ -75,6 +110,10 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
   const requestedCategory = params.category?.trim();
   const category = requestedCategory && storefrontCategorySlugs.includes(requestedCategory) ? requestedCategory : undefined;
   const sort = params.sort ?? "recent";
+  const minPrice = params.minPrice && Number.isFinite(Number(params.minPrice)) ? Number(params.minPrice) : undefined;
+  const maxPrice = params.maxPrice && Number.isFinite(Number(params.maxPrice)) ? Number(params.maxPrice) : undefined;
+  const onlyPromotion = params.promotion === "1";
+  const onlyAvailable = params.availability === "1";
   const categoryFilter =
     category === "suplementos"
       ? { category: { slug: { in: supplementSourceCategorySlugs } } }
@@ -102,7 +141,18 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
               }
             : {},
           sort === "discounts" ? { OR: [{ promotion: true }, { compareAtPrice: { not: null } }] } : {},
+          onlyPromotion ? { OR: [{ promotion: true }, { compareAtPrice: { not: null } }] } : {},
           sort === "featured" ? { featured: true } : {},
+          minPrice !== undefined ? { price: { gte: minPrice } } : {},
+          maxPrice !== undefined ? { price: { lte: maxPrice } } : {},
+          onlyAvailable
+            ? {
+                OR: [
+                  { inventory: { some: { quantity: { gt: 0 } } } },
+                  { variants: { some: { inventory: { quantity: { gt: 0 } } } } },
+                ],
+              }
+            : {},
         ],
       },
       include: {
@@ -139,8 +189,14 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
           )
         : true;
       const matchesDiscount = sort === "discounts" ? Boolean(product.promotion || product.compareAtPrice) : true;
+      const matchesPromotion = onlyPromotion ? Boolean(product.promotion || product.compareAtPrice) : true;
       const matchesFeatured = sort === "featured" ? Boolean(product.featured) : true;
-      return matchesCategory && matchesQuery && matchesDiscount && matchesFeatured;
+      const price = Number(product.price);
+      const matchesMinPrice = minPrice !== undefined ? price >= minPrice : true;
+      const matchesMaxPrice = maxPrice !== undefined ? price <= maxPrice : true;
+      const stock = Math.max(product.inventory?.reduce((sum, item) => sum + item.quantity - item.reserved, 0) ?? 0, 0);
+      const matchesAvailability = onlyAvailable ? stock > 0 : true;
+      return matchesCategory && matchesQuery && matchesDiscount && matchesPromotion && matchesFeatured && matchesMinPrice && matchesMaxPrice && matchesAvailability;
     });
   }
 
@@ -148,19 +204,21 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
 
   return (
     <div className="container-x py-10">
-      <div className="rounded-lg bg-[var(--ink)] p-6 text-white shadow-2xl md:p-8">
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-black uppercase text-white/80">
-          <Sparkles size={14} className="text-[#ffd2cc]" />
+      <div className="relative overflow-hidden rounded-lg border border-[#ffd2ca] bg-gradient-to-br from-white via-[#fff7f6] to-[#ffe7e2] p-6 text-[var(--ink)] shadow-xl md:p-8">
+        <div className="absolute right-[-4rem] top-[-5rem] h-44 w-44 rounded-full bg-[var(--brand)]/12 blur-2xl" />
+        <div className="absolute bottom-[-5rem] left-[-4rem] h-44 w-44 rounded-full bg-[var(--brand-hot)]/10 blur-2xl" />
+        <span className="relative inline-flex items-center gap-2 rounded-full border border-[#ffc4bc] bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-dark)]">
+          <Sparkles size={14} className="text-[var(--brand)]" />
           Vitrine XNutri
         </span>
-        <div className="mt-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="relative mt-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-4xl font-black md:text-5xl">{currentCategory?.name ?? "Catálogo"}</h1>
-            <p className="mt-3 max-w-2xl text-white/70">
+            <p className="mt-3 max-w-2xl text-[var(--muted)]">
               Suplementos e roupas fitness com retirada na loja em Mirassol.
             </p>
           </div>
-          <span className="text-sm font-black text-white/70">{products.length} produto(s) encontrado(s)</span>
+          <span className="rounded-full border border-[#ffc4bc] bg-white px-3 py-2 text-sm font-black text-[var(--brand-dark)]">{products.length} produto(s) encontrado(s)</span>
         </div>
       </div>
 
@@ -171,7 +229,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
             <span className="text-sm text-[var(--brand)]">Abrir</span>
           </summary>
           <div className="border-t border-[var(--line)] p-4">
-            <CatalogFilterForm categories={categories} q={q} category={category} sort={sort} />
+            <CatalogFilterForm categories={categories} q={q} category={category} sort={sort} minPrice={minPrice} maxPrice={maxPrice} promotion={onlyPromotion} availability={onlyAvailable} />
           </div>
         </details>
       </div>
@@ -183,7 +241,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
             <h2 className="text-xl font-black">Filtros</h2>
           </div>
           <div className="mt-5">
-            <CatalogFilterForm categories={categories} q={q} category={category} sort={sort} />
+            <CatalogFilterForm categories={categories} q={q} category={category} sort={sort} minPrice={minPrice} maxPrice={maxPrice} promotion={onlyPromotion} availability={onlyAvailable} />
           </div>
         </aside>
 

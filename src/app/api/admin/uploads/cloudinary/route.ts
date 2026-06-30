@@ -16,18 +16,18 @@ export async function POST(request: Request) {
   }
 
   if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-    return NextResponse.json({ error: "Cloudinary nao configurado." }, { status: 503 });
+    return NextResponse.json({ error: "Cloudinary não configurado." }, { status: 503 });
   }
 
   const formData = await request.formData();
   const file = formData.get("file");
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Arquivo nao enviado." }, { status: 400 });
+    return NextResponse.json({ error: "Arquivo não enviado." }, { status: 400 });
   }
 
   if (!file.type.startsWith("image/")) {
-    return NextResponse.json({ error: "Envie uma imagem valida." }, { status: 400 });
+    return NextResponse.json({ error: "Envie uma imagem válida." }, { status: 400 });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());

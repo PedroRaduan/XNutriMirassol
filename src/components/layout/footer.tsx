@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AtSign, Mail, MapPin, MessageCircle, ShieldCheck, Store, Truck } from "lucide-react";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
 import { prisma } from "@/lib/db/prisma";
+import { getWhatsAppHref } from "@/lib/whatsapp";
 
 const institutional = [
   ["Sobre", "/sobre"],
@@ -11,7 +12,7 @@ const institutional = [
   ["Privacidade", "/privacidade"],
   ["Termos", "/termos"],
   ["Entrega", "/entrega"],
-  ["Retirada na Loja", "/retirada-na-loja"],
+  ["Retirada na loja", "/retirada-na-loja"],
 ];
 
 const trustItems = [
@@ -40,13 +41,14 @@ export async function Footer() {
   const email = getText(store, "email", "contato@xnutri.com.br");
   const whatsapp = getText(store, "whatsapp", "5517997000000");
   const instagram = getText(store, "instagram", "https://instagram.com");
-  const businessHours = getText(store, "businessHours", "Segunda a sexta: 9h as 18h. Sabado: 9h as 13h.");
-  const footerText = getText(home, "footerText", "Treino, saude e estilo com atendimento local.");
+  const businessHours = getText(store, "businessHours", "Segunda a sexta: 9h às 18h. Sábado: 9h às 13h.");
+  const footerText = getText(home, "footerText", "Treino, saúde e estilo com atendimento local.");
   const institutionalText = getText(
     home,
     "institutionalText",
-    "Suplementos, vitaminas, roupas e acessorios fitness com compra online, retirada na loja e suporte proximo em Mirassol-SP.",
+    "Suplementos, vitaminas, moda fitness e acessórios com compra online, retirada na loja e suporte próximo em Mirassol/SP.",
   );
+  const whatsappHref = getWhatsAppHref(whatsapp);
 
   return (
     <footer className="mt-20 overflow-hidden bg-[var(--ink)] text-white">
@@ -93,8 +95,9 @@ export async function Footer() {
               ))}
             </div>
             <div className="flex gap-2 pt-2">
-              <a className="btn border border-white/10 bg-white/10 px-3 text-white hover:bg-white/15" href={`https://wa.me/${whatsapp}`} aria-label="WhatsApp">
+              <a className="btn border border-white/10 bg-white/10 px-3 text-white hover:bg-white/15" href={whatsappHref} target="_blank" rel="noreferrer" aria-label="WhatsApp">
                 <MessageCircle size={18} />
+                WhatsApp
               </a>
               <a className="btn border border-white/10 bg-white/10 px-3 text-white hover:bg-white/15" href={instagram} aria-label="Instagram">
                 <AtSign size={18} />
@@ -104,7 +107,7 @@ export async function Footer() {
         </div>
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-white/50">
-        XNutri Comercio de Suplementos - {city}-{state}. Pagamentos processados por Mercado Pago.
+        XNutri Comércio de Suplementos - {city}-{state}. Pagamentos processados por Mercado Pago.
       </div>
     </footer>
   );

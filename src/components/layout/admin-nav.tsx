@@ -23,20 +23,20 @@ import { canAccessAdminModule } from "@/lib/auth/session";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
 
 const items: Array<{ href: string; label: string; help: string; module: AdminModule; Icon: LucideIcon }> = [
-  { href: "/admin", label: "Inicio", help: "Resumo da loja", module: "dashboard", Icon: LayoutDashboard },
-  { href: "/admin/produtos", label: "Produtos", help: "Cadastro e edicao", module: "products", Icon: Package },
+  { href: "/admin", label: "Início", help: "Resumo da loja", module: "dashboard", Icon: LayoutDashboard },
+  { href: "/admin/produtos", label: "Produtos", help: "Cadastro e edição", module: "products", Icon: Package },
   { href: "/admin/categorias", label: "Categorias", help: "Suplementos e roupas", module: "categories", Icon: Tags },
   { href: "/admin/estoque", label: "Estoque", help: "Saldos e alertas", module: "inventory", Icon: Boxes },
   { href: "/admin/cupons", label: "Cupons", help: "Descontos", module: "coupons", Icon: TicketPercent },
   { href: "/admin/pedidos", label: "Pedidos", help: "Vendas e status", module: "orders", Icon: ShoppingBag },
-  { href: "/admin/clientes", label: "Clientes", help: "Cadastro e historico", module: "customers", Icon: Users },
-  { href: "/admin/relatorios", label: "Relatorios", help: "Numeros da loja", module: "reports", Icon: BarChart3 },
+  { href: "/admin/clientes", label: "Clientes", help: "Cadastro e histórico", module: "customers", Icon: Users },
+  { href: "/admin/relatorios", label: "Relatórios", help: "Números da loja", module: "reports", Icon: BarChart3 },
   { href: "/admin/financeiro", label: "Financeiro", help: "Lucro e margem", module: "finance", Icon: CircleDollarSign },
-  { href: "/pdv", label: "PDV", help: "Caixa da loja fisica", module: "pos", Icon: Store },
+  { href: "/pdv", label: "PDV", help: "Caixa da loja física", module: "pos", Icon: Store },
   { href: "/admin/banners", label: "Banners", help: "Home e chamadas", module: "content", Icon: ImageIcon },
-  { href: "/admin/entregas", label: "Frete e retirada", help: "Prazos e loja fisica", module: "shipping", Icon: Truck },
-  { href: "/admin/configuracoes", label: "Configuracoes", help: "Dados gerais", module: "settings", Icon: Settings },
-  { href: "/admin/auditoria", label: "Auditoria", help: "Historico interno", module: "audit", Icon: ClipboardList },
+  { href: "/admin/entregas", label: "Frete e retirada", help: "Prazos e loja física", module: "shipping", Icon: Truck },
+  { href: "/admin/configuracoes", label: "Configurações", help: "Dados gerais", module: "settings", Icon: Settings },
+  { href: "/admin/auditoria", label: "Auditoria", help: "Histórico interno", module: "audit", Icon: ClipboardList },
 ];
 
 export function AdminNav({ role, demo = false }: { role: AdminRole; demo?: boolean }) {
@@ -52,8 +52,8 @@ export function AdminNav({ role, demo = false }: { role: AdminRole; demo?: boole
         </div>
         <p className="mt-3 text-xs font-semibold leading-5 text-[var(--muted)]">
           {demo
-            ? "Modo demo ativo: o banco esta offline, entao os cadastros reais ficam bloqueados."
-            : "Use este menu para cuidar da loja: produtos, pedidos, estoque, descontos e conteudo do site."}
+            ? "Modo de treinamento ativo: o banco está offline, então os cadastros reais ficam bloqueados."
+            : "Use este menu para cuidar da loja: produtos, pedidos, estoque, descontos e conteúdo do site."}
         </p>
       </div>
       <nav className="grid gap-1 p-3">

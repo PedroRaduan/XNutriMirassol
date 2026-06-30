@@ -11,7 +11,7 @@ export const supplementSourceCategorySlugs = [
 
 export function getStorefrontCategory(category: { slug: string; name: string }) {
   if (category.slug === "roupas-fitness") {
-    return { slug: "roupas-fitness", name: "Roupas Fitness" };
+    return { slug: "roupas-fitness", name: "Moda Fitness" };
   }
 
   return { slug: "suplementos", name: "Suplementos" };
@@ -22,14 +22,14 @@ export const fallbackCategories = [
     id: "fallback-suplementos",
     name: "Suplementos",
     slug: "suplementos",
-    description: "Whey, creatina, pre-treinos, vitaminas e itens de apoio para performance.",
+    description: "Whey, creatina, pré-treinos, vitaminas e itens de apoio para performance.",
     imageUrl: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=1200&q=80",
   },
   {
     id: "fallback-roupas",
-    name: "Roupas Fitness",
+    name: "Moda Fitness",
     slug: "roupas-fitness",
-    description: "Leggings, camisetas, regatas e shorts com tamanhos PP ao GG.",
+    description: "Leggings, camisetas, regatas e shorts para treinar com conforto e estilo.",
     imageUrl: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80",
   },
 ];
@@ -43,9 +43,9 @@ export const fallbackProducts = [
     slug: "whey-protein-isolado-xnutri-900g",
     sku: "XN-WHEY-ISO-900",
     brand: "XNutri",
-    shortDescription: "Whey isolado premium para recuperacao e rotina proteica.",
+    shortDescription: "Whey isolado premium para recuperação e rotina proteica.",
     description:
-      "Produto de exemplo local para visualizacao quando o PostgreSQL ainda nao foi inicializado. Com o banco ativo, o catalogo vem do Prisma e do seed real.",
+      "Proteína isolada com ótima dissolução, indicada para complementar a ingestão proteica no pós-treino ou ao longo do dia. Uma opção prática para quem busca recuperação muscular e mais consistência na rotina.",
     price: 169.9,
     compareAtPrice: 189.9,
     status: "ACTIVE",
@@ -79,8 +79,8 @@ export const fallbackProducts = [
     slug: "creatina-monohidratada-xnutri-300g",
     sku: "XN-CREA-MONO-300",
     brand: "XNutri",
-    shortDescription: "Creatina pura para forca, potencia e desempenho.",
-    description: "Creatina monohidratada sem sabor com estrutura de estoque por variacao.",
+    shortDescription: "Creatina pura para força, potência e desempenho.",
+    description: "Creatina monohidratada sem sabor para apoiar treinos de força, potência e alta intensidade. Fácil de incluir na rotina e com excelente custo-benefício para uso contínuo.",
     price: 89.9,
     compareAtPrice: 99.9,
     status: "ACTIVE",
@@ -113,8 +113,8 @@ export const fallbackProducts = [
     slug: "legging-compression-xnutri-feminina",
     sku: "XN-ROUPA-LEGGING-COMP",
     brand: "XNutri",
-    shortDescription: "Legging de compressao com cintura alta e tamanhos PP ao GG.",
-    description: "Peca fitness para treino funcional, musculacao e corrida, com variacoes reais de tamanho.",
+    shortDescription: "Legging de compressão com cintura alta e toque confortável.",
+    description: "Peça fitness para treino funcional, musculação e corrida, com tecido confortável, boa elasticidade e visual versátil para a rotina de treinos.",
     price: 119.9,
     compareAtPrice: null,
     status: "ACTIVE",
@@ -133,14 +133,16 @@ export const fallbackProducts = [
         sortOrder: 1,
       },
     ],
-    variants: ["PP", "P", "M", "G", "GG"].map((size, index) => ({
-      id: `fallback-legging-${size}`,
-      name: size,
-      sku: `XN-ROUPA-LEGGING-${size}`,
-      attributes: { tamanho: size, cor: "Grafite" },
-      priceAdjustment: 0,
-      inventory: { quantity: 8 + index, reserved: 0 },
-    })),
+    variants: [
+      {
+        id: "fallback-legging-grafite",
+        name: "Grafite",
+        sku: "XN-ROUPA-LEGGING-GRAFITE",
+        attributes: { cor: "Grafite" },
+        priceAdjustment: 0,
+        inventory: { quantity: 50, reserved: 0 },
+      },
+    ],
     inventory: [{ quantity: 50, reserved: 0 }],
     reviews: [],
   },
@@ -152,8 +154,8 @@ export const fallbackProducts = [
     slug: "camiseta-dry-fit-xnutri-preta",
     sku: "XN-ROUPA-DRY-PRETA",
     brand: "XNutri",
-    shortDescription: "Camiseta leve para treino intenso, com tamanhos PP ao GG.",
-    description: "Tecido respiravel, modelagem atletica e secagem rapida para academia.",
+    shortDescription: "Camiseta leve para treino intenso e uso no dia a dia.",
+    description: "Tecido respirável, modelagem atlética e secagem rápida para academia, corrida e rotina casual com estilo esportivo.",
     price: 69.9,
     compareAtPrice: null,
     status: "ACTIVE",
@@ -172,14 +174,16 @@ export const fallbackProducts = [
         sortOrder: 1,
       },
     ],
-    variants: ["PP", "P", "M", "G", "GG"].map((size, index) => ({
-      id: `fallback-camiseta-${size}`,
-      name: size,
-      sku: `XN-ROUPA-DRY-${size}`,
-      attributes: { tamanho: size, cor: "Preta" },
-      priceAdjustment: 0,
-      inventory: { quantity: 10 + index, reserved: 0 },
-    })),
+    variants: [
+      {
+        id: "fallback-camiseta-preta",
+        name: "Preta",
+        sku: "XN-ROUPA-DRY-PRETA",
+        attributes: { cor: "Preta" },
+        priceAdjustment: 0,
+        inventory: { quantity: 60, reserved: 0 },
+      },
+    ],
     inventory: [{ quantity: 60, reserved: 0 }],
     reviews: [],
   },
@@ -188,7 +192,7 @@ export const fallbackProducts = [
 export const fallbackHero = {
   title: "Xnutri Suplementos Nutricionais",
   subtitle:
-    "Suplementos, roupas fitness com tamanhos e acessorios para treinos reais em Mirassol-SP.",
+    "Suplementos, moda fitness e acessórios para treinos reais em Mirassol-SP.",
   imageUrl: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1800&q=85",
   ctaLabel: "Comprar agora",
   ctaHref: "/catalogo",
@@ -205,7 +209,7 @@ export const fallbackPickup = {
   city: "Mirassol",
   state: "SP",
   instructions:
-    "Retire seu pedido apresentando documento com foto e o protocolo gerado no checkout. Atendimento de segunda a sexta das 9h as 18h e sabado das 9h as 13h.",
+    "Retire seu pedido apresentando documento com foto e o protocolo gerado no checkout. Atendimento de segunda a sexta das 9h às 18h e sábado das 9h às 13h.",
   active: true,
   createdAt: new Date(),
   updatedAt: new Date(),

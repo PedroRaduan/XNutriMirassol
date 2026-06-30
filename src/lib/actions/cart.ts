@@ -34,7 +34,7 @@ function availableStock(inventory?: { quantity: number; reserved: number } | nul
 }
 
 function stockError(available: number) {
-  return `Estoque insuficiente. Disponivel: ${available} unidade(s).`;
+  return `Estoque insuficiente. Disponível: ${available} unidade(s).`;
 }
 
 export async function addToCart(formData: FormData): Promise<CartActionState> {
@@ -44,7 +44,7 @@ export async function addToCart(formData: FormData): Promise<CartActionState> {
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Nao foi possivel adicionar este produto.",
+      message: error instanceof Error ? error.message : "Não foi possível adicionar este produto.",
     };
   }
 }
@@ -181,7 +181,7 @@ export async function updateCartItem(formData: FormData) {
     });
 
     if (!item) {
-      throw new Error("Item do carrinho nao encontrado.");
+      throw new Error("Item do carrinho não encontrado.");
     }
 
     const inventory = item.variant?.inventory ?? item.product.inventory.find((entry) => entry.variantId === null) ?? null;
@@ -242,7 +242,7 @@ export async function applyCoupon(_: CouponActionState, formData: FormData): Pro
   });
 
   if (!parsed.success) {
-    return { ok: false, message: "Informe um cupom valido." };
+    return { ok: false, message: "Informe um cupom válido." };
   }
 
   if (!current.id || current.items.length === 0) {
@@ -265,27 +265,27 @@ export async function applyCoupon(_: CouponActionState, formData: FormData): Pro
   }
 
   if (!coupon) {
-    return { ok: false, message: "Cupom nao encontrado." };
+    return { ok: false, message: "Cupom não encontrado." };
   }
 
   if (!isCouponActive(coupon)) {
-    return { ok: false, message: "Este cupom nao esta ativo ou ja expirou." };
+    return { ok: false, message: "Este cupom não está ativo ou já expirou." };
   }
 
   if (coupon.minSubtotal && current.subtotal < toNumber(coupon.minSubtotal)) {
     return {
       ok: false,
-      message: `Este cupom exige subtotal minimo de ${toNumber(coupon.minSubtotal).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+      message: `Este cupom exige subtotal mínimo de ${toNumber(coupon.minSubtotal).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
     };
   }
 
   if (coupon.type === "FREE_SHIPPING" && current.shippingCost <= 0) {
-    return { ok: false, message: "Escolha uma entrega paga antes de aplicar frete gratis." };
+    return { ok: false, message: "Escolha uma entrega paga antes de aplicar frete grátis." };
   }
 
   const discount = calculateDiscount(coupon, current.subtotal, current.shippingCost, current.items);
   if (discount <= 0) {
-    return { ok: false, message: "Este cupom nao se aplica aos itens atuais do carrinho." };
+    return { ok: false, message: "Este cupom não se aplica aos itens atuais do carrinho." };
   }
 
   await prisma.cart.update({

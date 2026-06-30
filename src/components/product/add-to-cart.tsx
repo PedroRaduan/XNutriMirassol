@@ -11,16 +11,27 @@ type Props = {
   variantId?: string;
   quantity?: number;
   className?: string;
+  idleLabel?: string;
+  addedLabel?: string;
+  redirectTo?: string;
 };
 
-export function AddToCartButton({ productId, variantId, quantity = 1, className = "btn btn-primary w-full" }: Props) {
+export function AddToCartButton({
+  productId,
+  variantId,
+  quantity = 1,
+  className = "btn btn-primary w-full",
+  idleLabel = "Adicionar ao carrinho",
+  addedLabel = "Adicionado",
+  redirectTo,
+}: Props) {
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<"idle" | "added" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
   const Icon = feedback === "added" ? CheckCircle2 : feedback === "error" ? XCircle : ShoppingCart;
   const errorLabel = errorMessage.toLowerCase().includes("estoque") ? "Sem estoque" : "Tente novamente";
-  const label = pending ? "Adicionando..." : feedback === "added" ? "Adicionado" : feedback === "error" ? errorLabel : "Adicionar";
+  const label = pending ? "Adicionando..." : feedback === "added" ? addedLabel : feedback === "error" ? errorLabel : idleLabel;
 
   return (
     <button
@@ -40,6 +51,10 @@ export function AddToCartButton({ productId, variantId, quantity = 1, className 
 
           if (result.ok) {
             setFeedback("added");
+            if (redirectTo) {
+              window.location.href = redirectTo;
+              return;
+            }
             window.setTimeout(() => setFeedback("idle"), 2200);
             return;
           }

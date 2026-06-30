@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PackageCheck, Tag } from "lucide-react";
+import { PackageCheck, ShoppingCart, Tag } from "lucide-react";
 import { CartLine } from "@/components/cart/cart-line";
 import { CouponForm } from "@/components/cart/coupon-form";
 import { ShippingEstimator } from "@/components/cart/shipping-estimator";
@@ -9,6 +9,11 @@ import { getPickupOptions } from "@/lib/shipping/quote";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "Carrinho",
+  description: "Revise seus produtos, calcule frete, escolha retirada na loja e siga para o checkout da XNutri.",
+};
 
 export default async function CartPage() {
   const [cart, pickupOptions] = await Promise.all([getCartForDisplay(), getPickupOptions()]);
@@ -28,9 +33,14 @@ export default async function CartPage() {
 
   return (
     <div className="container-x pb-28 pt-6 md:py-10">
-      <div className="rounded-lg bg-[var(--ink)] p-5 text-white shadow-xl md:bg-transparent md:p-0 md:text-[var(--ink)] md:shadow-none">
-        <h1 className="text-3xl font-black md:text-4xl">Carrinho</h1>
-        <p className="mt-2 text-sm text-white/70 md:text-[var(--muted)]">{cart.items.length} item(ns) selecionado(s)</p>
+      <div className="relative overflow-hidden rounded-lg border border-[#ffd2ca] bg-gradient-to-br from-white via-[#fff7f6] to-[#ffe7e2] p-5 text-[var(--ink)] shadow-xl md:p-8">
+        <div className="absolute right-[-5rem] top-[-5rem] h-48 w-48 rounded-full bg-[var(--brand)]/12 blur-2xl" />
+        <span className="relative inline-flex items-center gap-2 rounded-full border border-[#ffc4bc] bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-dark)]">
+          <ShoppingCart size={14} className="text-[var(--brand)]" />
+          Carrinho XNutri
+        </span>
+        <h1 className="relative mt-4 text-3xl font-black md:text-5xl">Confira seu pedido</h1>
+        <p className="relative mt-2 text-sm text-[var(--muted)]">{cart.items.length} item(ns) selecionado(s) para compra online, entrega ou retirada em Mirassol.</p>
       </div>
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_360px]">
         <section className="surface p-4 md:p-5">
@@ -72,6 +82,7 @@ export default async function CartPage() {
               <div className="flex justify-between border-t border-[var(--line)] pt-3 text-lg font-black"><dt>Total</dt><dd>{formatCurrency(cart.total)}</dd></div>
             </dl>
             <Link href="/checkout" className="btn btn-primary mt-5 w-full">Ir para checkout</Link>
+            <Link href="/catalogo" className="btn btn-secondary mt-2 w-full">Continuar comprando</Link>
           </div>
         </aside>
       </div>

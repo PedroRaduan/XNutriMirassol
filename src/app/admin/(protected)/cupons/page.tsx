@@ -27,18 +27,18 @@ function CouponForm({
         <select className="field" name="type" defaultValue={coupon?.type ?? "PERCENTAGE"}>
           <option value="PERCENTAGE">Porcentagem</option>
           <option value="FIXED_AMOUNT">Valor fixo</option>
-          <option value="FREE_SHIPPING">Frete gratis</option>
+          <option value="FREE_SHIPPING">Frete grátis</option>
         </select>
       </div>
-      <input className="field" name="description" placeholder="Descricao interna" defaultValue={coupon?.description ?? ""} />
+      <input className="field" name="description" placeholder="Descrição interna" defaultValue={coupon?.description ?? ""} />
       <div className="grid gap-3 sm:grid-cols-3">
         <input className="field" name="value" type="number" step="0.01" min={0} placeholder="Valor" defaultValue={coupon ? Number(coupon.value) : ""} required />
-        <input className="field" name="minSubtotal" type="number" step="0.01" min={0} placeholder="Compra minima" defaultValue={coupon?.minSubtotal ? Number(coupon.minSubtotal) : ""} />
-        <input className="field" name="maxDiscount" type="number" step="0.01" min={0} placeholder="Desconto maximo" defaultValue={coupon?.maxDiscount ? Number(coupon.maxDiscount) : ""} />
+        <input className="field" name="minSubtotal" type="number" step="0.01" min={0} placeholder="Compra mínima" defaultValue={coupon?.minSubtotal ? Number(coupon.minSubtotal) : ""} />
+        <input className="field" name="maxDiscount" type="number" step="0.01" min={0} placeholder="Desconto máximo" defaultValue={coupon?.maxDiscount ? Number(coupon.maxDiscount) : ""} />
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
-        <label className="text-sm font-black">Inicio<input className="field mt-2" name="startsAt" type="datetime-local" defaultValue={dateInput(coupon?.startsAt)} /></label>
-        <label className="text-sm font-black">Expiracao<input className="field mt-2" name="endsAt" type="datetime-local" defaultValue={dateInput(coupon?.endsAt)} /></label>
+        <label className="text-sm font-black">Início<input className="field mt-2" name="startsAt" type="datetime-local" defaultValue={dateInput(coupon?.startsAt)} /></label>
+        <label className="text-sm font-black">Expiração<input className="field mt-2" name="endsAt" type="datetime-local" defaultValue={dateInput(coupon?.endsAt)} /></label>
         <label className="text-sm font-black">Limite<input className="field mt-2" name="usageLimit" type="number" min={0} defaultValue={coupon?.usageLimit ?? ""} /></label>
       </div>
       <label className="text-sm font-black">Produtos permitidos
@@ -91,7 +91,7 @@ export default async function AdminCouponsPage() {
                   <p className="mt-2 text-sm text-[var(--muted)]">{coupon.description}</p>
                   <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-3">
                     <span><strong className="block text-[var(--ink)]">Desconto</strong>{coupon.type === "PERCENTAGE" ? `${coupon.value}%` : formatCurrency(coupon.value)}</span>
-                    <span><strong className="block text-[var(--ink)]">Compra minima</strong>{coupon.minSubtotal ? formatCurrency(coupon.minSubtotal) : "Sem minimo"}</span>
+                    <span><strong className="block text-[var(--ink)]">Compra mínima</strong>{coupon.minSubtotal ? formatCurrency(coupon.minSubtotal) : "Sem mínimo"}</span>
                     <span><strong className="block text-[var(--ink)]">Uso</strong>{coupon.usageCount}/{coupon.usageLimit ?? "sem limite"}</span>
                   </div>
                   <p className="mt-2 text-xs font-bold text-[var(--muted)]">

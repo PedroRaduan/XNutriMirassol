@@ -98,16 +98,16 @@ export async function loginAdminWithCredentials(_: ActionState, formData: FormDa
   }
 
   if (!admin?.user.passwordHash) {
-    return { ok: false, message: "Acesso administrativo nao autorizado." };
+    return { ok: false, message: "Acesso administrativo não autorizado." };
   }
 
   if (isSafePOSTarget && !canAccessAdminModule(admin.role, "pos")) {
-    return { ok: false, message: "Este usuario nao tem permissao para acessar o PDV." };
+    return { ok: false, message: "Este usuário não tem permissão para acessar o PDV." };
   }
 
   const passwordMatches = await bcrypt.compare(parsed.data.password, admin.user.passwordHash);
   if (!passwordMatches) {
-    return { ok: false, message: "Acesso administrativo nao autorizado." };
+    return { ok: false, message: "Acesso administrativo não autorizado." };
   }
 
   try {
@@ -118,7 +118,7 @@ export async function loginAdminWithCredentials(_: ActionState, formData: FormDa
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { ok: false, message: "Acesso administrativo nao autorizado." };
+      return { ok: false, message: "Acesso administrativo não autorizado." };
     }
 
     if (isDatabaseUnavailable(error)) {

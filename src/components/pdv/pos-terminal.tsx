@@ -67,8 +67,8 @@ type PaymentLine = {
 const methodLabels: Record<PaymentMethod, string> = {
   CASH: "Dinheiro",
   PIX: "Pix",
-  DEBIT_CARD: "Debito",
-  CREDIT_CARD: "Credito",
+  DEBIT_CARD: "Débito",
+  CREDIT_CARD: "Crédito",
   MERCADO_PAGO: "Mercado Pago",
 };
 
@@ -101,9 +101,9 @@ const demoProducts: ProductRow[] = [
   {
     id: "demo-legging",
     productId: "demo-legging",
-    variantId: "demo-legging-m",
-    displayName: "Legging Compression XNutri - M",
-    sku: "PDV-LEGGING-M",
+    variantId: "demo-legging-grafite",
+    displayName: "Legging Compression XNutri Grafite",
+    sku: "PDV-LEGGING-GRAFITE",
     barcode: "7890000000028",
     ean: "7890000000028",
     internalCode: "RF-002",
@@ -189,7 +189,7 @@ export function POSTerminal({
         const data = (await response.json()) as { products: ProductRow[]; exactCount: number };
         setProducts(data.products);
       } catch {
-        if (!controller.signal.aborted) setMessage({ type: "error", text: "Nao foi possivel buscar produtos." });
+        if (!controller.signal.aborted) setMessage({ type: "error", text: "Não foi possível buscar produtos." });
       } finally {
         if (!controller.signal.aborted) setLoadingProducts(false);
       }
@@ -235,13 +235,13 @@ export function POSTerminal({
 
   function addToCart(product: ProductRow) {
     if (product.stock <= 0) {
-      setMessage({ type: "error", text: `${product.displayName} esta sem estoque.` });
+      setMessage({ type: "error", text: `${product.displayName} está sem estoque.` });
       return;
     }
 
     const currentItem = cart.find((item) => item.id === product.id);
     if (currentItem && currentItem.quantity >= product.stock) {
-      setMessage({ type: "error", text: `Estoque maximo de ${product.stock} unidade(s) para ${product.displayName}.` });
+      setMessage({ type: "error", text: `Estoque máximo de ${product.stock} unidade(s) para ${product.displayName}.` });
       return;
     }
 
@@ -294,7 +294,7 @@ export function POSTerminal({
     setLoadingProducts(true);
     try {
       const response = await fetch(`/api/pdv/products?q=${encodeURIComponent(lookup)}`);
-      if (!response.ok) throw new Error("Busca indisponivel.");
+      if (!response.ok) throw new Error("Busca indisponível.");
       const data = (await response.json()) as { products: ProductRow[]; exactCount: number };
       setProducts(data.products);
       const exact = data.exactCount === 1 ? data.products.find((product) => product.exact) : null;
@@ -304,7 +304,7 @@ export function POSTerminal({
       if (!product) {
         setMessage({
           type: "error",
-          text: data.products.length > 1 ? "Mais de um produto encontrado. Escolha a variacao correta." : "Produto nao encontrado.",
+          text: data.products.length > 1 ? "Mais de um produto encontrado. Escolha a variação correta." : "Produto não encontrado.",
         });
         return;
       }
@@ -312,7 +312,7 @@ export function POSTerminal({
       addToCart(product);
       setQuery("");
     } catch {
-      setMessage({ type: "error", text: "Nao foi possivel buscar este codigo agora." });
+      setMessage({ type: "error", text: "Não foi possível buscar este código agora." });
     } finally {
       setLoadingProducts(false);
     }
@@ -336,12 +336,12 @@ export function POSTerminal({
     const paid = round(payments.reduce((sum, payment) => sum + payment.amount, 0));
 
     if (paid > total + 0.01) {
-      setMessage({ type: "error", text: "A soma dos pagamentos ja passou do total. Ajuste os valores antes de adicionar outra forma." });
+      setMessage({ type: "error", text: "A soma dos pagamentos já passou do total. Ajuste os valores antes de adicionar outra forma." });
       return;
     }
 
     if (paid >= total - 0.01 && payments.length > 1) {
-      setMessage({ type: "info", text: "O total ja esta dividido. Ajuste os valores existentes se quiser mudar o pagamento misto." });
+      setMessage({ type: "info", text: "O total já está dividido. Ajuste os valores existentes se quiser mudar o pagamento misto." });
       return;
     }
 
@@ -397,7 +397,7 @@ export function POSTerminal({
     }
 
     if (isDemo) {
-      setMessage({ type: "info", text: "Modo demo sem banco: a tela simula a venda, mas nao grava estoque nem relatorios." });
+      setMessage({ type: "info", text: "Modo de treinamento: a tela simula a venda, mas não grava estoque nem relatórios." });
       return;
     }
     if (cart.length === 0) {
@@ -452,7 +452,7 @@ export function POSTerminal({
           router.refresh();
         }
       } catch {
-        setMessage({ type: "error", text: "Nao foi possivel finalizar a venda agora. Tente novamente." });
+        setMessage({ type: "error", text: "Não foi possível finalizar a venda agora. Tente novamente." });
       } finally {
         submittingRef.current = false;
       }
@@ -496,14 +496,14 @@ export function POSTerminal({
               </div>
               <Link className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15" href="/pdv/relatorios">
                 <ReceiptText size={18} />
-                Relatorios
+                Relatórios
               </Link>
             </div>
           </div>
 
           <div className="grid gap-3 p-4">
             <label className="text-sm font-black">
-              Buscar produto, SKU ou codigo de barras
+              Buscar produto, SKU ou código de barras
               <div className="field mt-2 flex min-h-14 items-center gap-3 border-2 text-lg">
                 <Barcode className="text-[var(--brand)]" size={24} />
                 <input

@@ -180,17 +180,17 @@ export default async function AdminDashboardPage() {
   const posNetRevenue = Math.max(posRevenue - toNumber(posFinance._sum.feeTotal ?? 0), 0);
   const stats = [
     { label: "Faturamento total", value: formatCurrency(onlineRevenue + posRevenue), Icon: DollarSign, hint: "Online + PDV presencial" },
-    { label: "Lucro estimado", value: formatCurrency(toNumber(finance._sum.netProfit ?? 0) + toNumber(posFinance._sum.netProfit ?? 0)), Icon: DollarSign, hint: "Analise gerencial, nao contabil" },
-    { label: "Receita liquida", value: formatCurrency(onlineNetRevenue + posNetRevenue), Icon: DollarSign, hint: "Online + PDV apos taxas principais" },
+    { label: "Lucro estimado", value: formatCurrency(toNumber(finance._sum.netProfit ?? 0) + toNumber(posFinance._sum.netProfit ?? 0)), Icon: DollarSign, hint: "Análise gerencial, não contábil" },
+    { label: "Receita líquida", value: formatCurrency(onlineNetRevenue + posNetRevenue), Icon: DollarSign, hint: "Online + PDV após taxas principais" },
     { label: "Custo vendido", value: formatCurrency(toNumber(finance._sum.productsCost ?? 0) + toNumber(posFinance._sum.costTotal ?? 0)), Icon: Package, hint: "Custo dos produtos vendidos" },
-    { label: "Vendas do mes", value: monthSales + posMonthSales, Icon: ShoppingBag, hint: "Pedidos online + vendas PDV" },
-    { label: "Vendas PDV", value: posMonthSales, Icon: Store, hint: "Presenciais no mes" },
-    { label: "Pedidos para olhar", value: pendingOrders, Icon: AlertTriangle, hint: "Ainda aguardam pagamento ou atualizacao" },
+    { label: "Vendas do mês", value: monthSales + posMonthSales, Icon: ShoppingBag, hint: "Pedidos online + vendas PDV" },
+    { label: "Vendas PDV", value: posMonthSales, Icon: Store, hint: "Presenciais no mês" },
+    { label: "Pedidos para olhar", value: pendingOrders, Icon: AlertTriangle, hint: "Ainda aguardam pagamento ou atualização" },
     { label: "Pedidos pagos", value: paidOrders, Icon: DollarSign, hint: "Prontos para separar ou acompanhar" },
     { label: "Estoque baixo", value: lowStockCount, Icon: Package, hint: "Itens que merecem reposicao" },
     { label: "Clientes", value: customerCount, Icon: Users, hint: "Contas de clientes" },
     { label: "Produtos", value: productCount, Icon: Package, hint: "Ativos e rascunhos" },
-    { label: "Cupons ativos", value: activeCoupons, Icon: TicketPercent, hint: "Disponiveis para checkout" },
+    { label: "Cupons ativos", value: activeCoupons, Icon: TicketPercent, hint: "Disponíveis para checkout" },
   ];
   const quickActions = [
     {
@@ -202,7 +202,7 @@ export default async function AdminDashboardPage() {
     {
       href: "/admin/produtos",
       title: "Cadastrar produto",
-      text: "Adicione suplementos ou roupas fitness com preco, imagem e estoque.",
+      text: "Adicione suplementos ou moda fitness com preço, imagem e estoque.",
       Icon: Package,
     },
     {
@@ -219,8 +219,8 @@ export default async function AdminDashboardPage() {
     },
     {
       href: "/admin/financeiro",
-      title: "Ver analise financeira",
-      text: "Acompanhe lucro, margem, taxas, custos e alertas de precificacao.",
+      title: "Ver análise financeira",
+      text: "Acompanhe lucro, margem, taxas, custos e alertas de precificação.",
       Icon: DollarSign,
     },
     {
@@ -273,7 +273,7 @@ export default async function AdminDashboardPage() {
               <Icon size={20} className="text-[var(--brand)]" />
               <strong className="mt-3 block text-[var(--ink)]">{title}</strong>
               <span className="mt-1 block text-sm leading-6 text-[var(--muted)]">
-                {isDemo ? "Disponivel quando o PostgreSQL estiver ligado." : text}
+                {isDemo ? "Disponível quando o PostgreSQL estiver ligado." : text}
               </span>
             </Link>
           ))}

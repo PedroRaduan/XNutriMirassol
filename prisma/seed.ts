@@ -44,27 +44,27 @@ const categorySeeds = [
   {
     key: "suplementos",
     name: "Suplementos",
-    description: "Whey, creatina, pre-treinos, vitaminas e itens de apoio para performance.",
+    description: "Whey, creatina, pré-treinos, vitaminas e itens de apoio para performance.",
     imageUrl:
       "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "whey-protein",
     name: "Whey Protein",
-    description: "Proteinas para pos-treino, receitas e metas diarias.",
+    description: "Proteínas para pós-treino, receitas e metas diárias.",
     imageUrl:
       "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "creatina",
     name: "Creatina",
-    description: "Creatinas e blends para forca, potencia e consistencia.",
+    description: "Creatinas e blends para força, potência e consistência.",
     imageUrl:
       "https://images.unsplash.com/photo-1596357395217-80de13130e92?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "pre-treino",
-    name: "Pre-treino",
+    name: "Pré-treino",
     description: "Energia, foco e pump para treinos mais intensos.",
     imageUrl:
       "https://images.unsplash.com/photo-1558611848-73f7eb4001a1?auto=format&fit=crop&w=1200&q=80",
@@ -78,35 +78,35 @@ const categorySeeds = [
   },
   {
     key: "roupas-fitness",
-    name: "Roupas Fitness",
-    description: "Pecas confortaveis para treinar com mobilidade e estilo.",
+    name: "Moda Fitness",
+    description: "Peças confortáveis para treinar com mobilidade e estilo.",
     imageUrl:
       "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "masculino",
     name: "Masculino",
-    description: "Roupas e acessorios fitness masculinos.",
+    description: "Roupas e acessórios fitness masculinos.",
     imageUrl:
       "https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "feminino",
     name: "Feminino",
-    description: "Roupas e acessorios fitness femininos.",
+    description: "Roupas e acessórios fitness femininos.",
     imageUrl:
       "https://images.unsplash.com/photo-1518310383802-640c2de311b2?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "acessorios",
-    name: "Acessorios",
+    name: "Acessórios",
     description: "Coqueteleiras, straps e itens de apoio para treino.",
     imageUrl:
       "https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?auto=format&fit=crop&w=1200&q=80",
   },
   {
     key: "promocoes",
-    name: "Promocoes",
+    name: "Promoções",
     description: "Ofertas, combos e queimas de estoque da XNutri.",
     imageUrl:
       "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80",
@@ -114,7 +114,7 @@ const categorySeeds = [
 ];
 
 const supplementFlavors = ["Chocolate", "Baunilha", "Morango"];
-const clothingSizes = ["PP", "P", "M", "G", "GG"];
+const clothingSizes = ["Modelo principal"];
 
 const products: SeedProduct[] = [
   {
@@ -123,9 +123,9 @@ const products: SeedProduct[] = [
     sku: "XN-WHEY-ISO-900",
     price: 169.9,
     compareAtPrice: 189.9,
-    shortDescription: "Whey isolado com alta concentracao proteica e baixa lactose.",
+    shortDescription: "Whey isolado com alta concentração proteica e baixa lactose.",
     description:
-      "Formula premium para quem busca recuperacao muscular eficiente, alta digestibilidade e excelente perfil de aminoacidos por dose.",
+      "Fórmula premium para quem busca recuperação muscular eficiente, alta digestibilidade e excelente perfil de aminoácidos por dose.",
     imageUrl:
       "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=1200&q=80",
     featured: true,
@@ -144,9 +144,9 @@ const products: SeedProduct[] = [
     name: "Whey Protein Concentrado XNutri 1kg",
     sku: "XN-WHEY-CON-1KG",
     price: 119.9,
-    shortDescription: "Proteina concentrada para uso diario com otimo custo-beneficio.",
+    shortDescription: "Proteína concentrada para uso diário com ótimo custo-benefício.",
     description:
-      "Ideal para bater metas de proteina com praticidade, textura cremosa e sabores pensados para receitas fitness.",
+      "Ideal para bater metas de proteína com praticidade, textura cremosa e sabores pensados para receitas fitness.",
     imageUrl:
       "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1200&q=80",
     featured: true,
@@ -166,7 +166,7 @@ const products: SeedProduct[] = [
     price: 149.9,
     shortDescription: "Blend de whey concentrado, isolado e hidrolisado.",
     description:
-      "Combina velocidades de absorcao para suporte proteico completo no pos-treino ou entre refeicoes.",
+      "Combina velocidades de absorção para suporte proteico completo no pós-treino ou entre refeições.",
     imageUrl:
       "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=1200&q=80",
     bestSeller: true,
@@ -183,9 +183,9 @@ const products: SeedProduct[] = [
     name: "Whey Zero Lactose XNutri 750g",
     sku: "XN-WHEY-ZL-750",
     price: 139.9,
-    shortDescription: "Proteina sem lactose para dietas sensiveis.",
+    shortDescription: "Proteína sem lactose para dietas sensíveis.",
     description:
-      "Opcao leve e pratica para manter ingestao proteica sem abrir mao de sabor e conforto digestivo.",
+      "Opção leve e prática para manter ingestão proteica sem abrir mão de sabor e conforto digestivo.",
     imageUrl:
       "https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 900,
@@ -201,9 +201,9 @@ const products: SeedProduct[] = [
     name: "Protein Blend XNutri Night 800g",
     sku: "XN-BLEND-NIGHT-800",
     price: 134.9,
-    shortDescription: "Blend proteico para saciedade e recuperacao noturna.",
+    shortDescription: "Blend proteico para saciedade e recuperação noturna.",
     description:
-      "Mistura de proteinas com digestao gradual, indicada para complementar a dieta antes de dormir.",
+      "Mistura de proteínas com digestão gradual, indicada para complementar a dieta antes de dormir.",
     imageUrl:
       "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 950,
@@ -221,7 +221,7 @@ const products: SeedProduct[] = [
     price: 79.9,
     shortDescription: "Doses individuais para levar na bolsa ou mochila.",
     description:
-      "Pacote com 12 saches de whey para rotina corrida, viagens e controle preciso de porcoes.",
+      "Pacote com 12 sachês de whey para rotina corrida, viagens e controle preciso de porções.",
     imageUrl:
       "https://images.unsplash.com/photo-1605296866985-34ba3c531d5c?auto=format&fit=crop&w=1200&q=80",
     promotion: true,
@@ -239,9 +239,9 @@ const products: SeedProduct[] = [
     sku: "XN-CREA-MONO-300",
     price: 89.9,
     compareAtPrice: 99.9,
-    shortDescription: "Creatina pura micronizada para forca e potencia.",
+    shortDescription: "Creatina pura micronizada para força e potência.",
     description:
-      "Creatina monohidratada sem sabor, facil de misturar e indicada para ciclos continuos de desempenho.",
+      "Creatina monohidratada sem sabor, fácil de misturar e indicada para ciclos contínuos de desempenho.",
     imageUrl:
       "https://images.unsplash.com/photo-1596357395217-80de13130e92?auto=format&fit=crop&w=1200&q=80",
     featured: true,
@@ -260,9 +260,9 @@ const products: SeedProduct[] = [
     name: "Creatina Creapure XNutri 250g",
     sku: "XN-CREA-CREA-250",
     price: 119.9,
-    shortDescription: "Materia-prima premium para alta pureza.",
+    shortDescription: "Matéria-prima premium para alta pureza.",
     description:
-      "Creatina com padrao premium, ideal para atletas que buscam consistencia de qualidade e rastreabilidade.",
+      "Creatina com padrão premium, ideal para atletas que buscam consistência de qualidade e rastreabilidade.",
     imageUrl:
       "https://images.unsplash.com/photo-1605296867424-35fc25c9212a?auto=format&fit=crop&w=1200&q=80",
     bestSeller: true,
@@ -279,9 +279,9 @@ const products: SeedProduct[] = [
     name: "Creatina Gummies XNutri 60un",
     sku: "XN-CREA-GUM-60",
     price: 74.9,
-    shortDescription: "Creatina em gummies para suplementacao pratica.",
+    shortDescription: "Creatina em gummies para suplementação prática.",
     description:
-      "Formato mastigavel para quem quer praticidade sem shaker, com porcoes controladas e sabor frutado.",
+      "Formato mastigável para quem quer praticidade sem shaker, com porções controladas e sabor frutado.",
     imageUrl:
       "https://images.unsplash.com/photo-1612532275214-e4ca76d0e4d1?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 300,
@@ -297,13 +297,13 @@ const products: SeedProduct[] = [
     name: "Creatina + Beta Alanina XNutri 300g",
     sku: "XN-CREA-BA-300",
     price: 99.9,
-    shortDescription: "Blend para potencia, resistencia e intensidade.",
+    shortDescription: "Blend para potência, resistência e intensidade.",
     description:
-      "Combina creatina monohidratada e beta alanina em formula pensada para treinos de alta demanda.",
+      "Combina creatina monohidratada e beta alanina em fórmula pensada para treinos de alta demanda.",
     imageUrl:
       "https://images.unsplash.com/photo-1549476464-37392f717541?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 420,
-    variants: ["Limao", "Sem sabor"].map((flavor, index) => ({
+    variants: ["Limão", "Sem sabor"].map((flavor, index) => ({
       name: flavor,
       sku: `XN-CREA-BA-300-${index + 1}`,
       attributes: { sabor: flavor, peso: "300g" },
@@ -318,13 +318,13 @@ const products: SeedProduct[] = [
     compareAtPrice: 129.9,
     shortDescription: "Energia e pump para treinos intensos.",
     description:
-      "Formula com cafeina, citrulina e taurina para foco, disposicao e melhor sensacao muscular durante o treino.",
+      "Fórmula com cafeína, citrulina e taurina para foco, disposição e melhor sensação muscular durante o treino.",
     imageUrl:
       "https://images.unsplash.com/photo-1558611848-73f7eb4001a1?auto=format&fit=crop&w=1200&q=80",
     featured: true,
     promotion: true,
     weightGrams: 430,
-    variants: ["Blue ice", "Melancia", "Limao"].map((flavor, index) => ({
+    variants: ["Blue ice", "Melancia", "Limão"].map((flavor, index) => ({
       name: flavor,
       sku: `XN-PRE-XPUMP-300-${index + 1}`,
       attributes: { sabor: flavor, peso: "300g" },
@@ -336,9 +336,9 @@ const products: SeedProduct[] = [
     name: "Pre-Treino Caffeine Free XNutri 250g",
     sku: "XN-PRE-FREE-250",
     price: 94.9,
-    shortDescription: "Pre-treino sem cafeina para treinos noturnos.",
+    shortDescription: "Pré-treino sem cafeína para treinos noturnos.",
     description:
-      "Opcao com foco em vasodilatacao e resistencia, sem estimulantes, para quem treina a noite.",
+      "Opção com foco em vasodilatação e resistência, sem estimulantes, para quem treina à noite.",
     imageUrl:
       "https://images.unsplash.com/photo-1534258936925-c58bed479fcb?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 360,
@@ -354,14 +354,14 @@ const products: SeedProduct[] = [
     name: "Energy Shot XNutri 12un",
     sku: "XN-SHOT-12",
     price: 59.9,
-    shortDescription: "Shots de energia para consumo rapido.",
+    shortDescription: "Shots de energia para consumo rápido.",
     description:
-      "Caixa com 12 unidades de shot energetico para dias corridos, treinos rapidos e competicoes.",
+      "Caixa com 12 unidades de shot energético para dias corridos, treinos rápidos e competições.",
     imageUrl:
       "https://images.unsplash.com/photo-1576678927484-cc907957088c?auto=format&fit=crop&w=1200&q=80",
     bestSeller: true,
     weightGrams: 850,
-    variants: ["Limao", "Tropical"].map((flavor, index) => ({
+    variants: ["Limão", "Tropical"].map((flavor, index) => ({
       name: flavor,
       sku: `XN-SHOT-12-${index + 1}`,
       attributes: { sabor: flavor, unidades: "12" },
@@ -373,13 +373,13 @@ const products: SeedProduct[] = [
     name: "Pump Caps XNutri 120 caps",
     sku: "XN-PUMP-CAPS-120",
     price: 84.9,
-    shortDescription: "Capsulas para suporte de pump e foco.",
+    shortDescription: "Cápsulas para suporte de pump e foco.",
     description:
-      "Capsulas praticas para incluir na rotina pre-treino com dosagem simples e sem preparo.",
+      "Cápsulas práticas para incluir na rotina pré-treino com dosagem simples e sem preparo.",
     imageUrl:
       "https://images.unsplash.com/photo-1581009137042-c552e485697a?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 230,
-    variants: ["120 capsulas"].map((flavor) => ({
+    variants: ["120 cápsulas"].map((flavor) => ({
       name: flavor,
       sku: "XN-PUMP-CAPS-120-UN",
       attributes: { formato: flavor },
@@ -388,18 +388,18 @@ const products: SeedProduct[] = [
   },
   {
     category: "suplementos",
-    name: "Multivitaminico XNutri Daily 120 caps",
+    name: "Multivitamínico XNutri Daily 120 caps",
     sku: "XN-VIT-MULTI-120",
     price: 64.9,
     shortDescription: "Vitaminas e minerais para rotina ativa.",
     description:
-      "Combinacao de micronutrientes essenciais para complementar a alimentacao e apoiar energia diaria.",
+      "Combinação de micronutrientes essenciais para complementar a alimentação e apoiar energia diária.",
     imageUrl:
       "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=1200&q=80",
     featured: true,
     bestSeller: true,
     weightGrams: 220,
-    variants: ["120 capsulas"].map((flavor) => ({
+    variants: ["120 cápsulas"].map((flavor) => ({
       name: flavor,
       sku: "XN-VIT-MULTI-120-UN",
       attributes: { formato: flavor },
@@ -411,14 +411,14 @@ const products: SeedProduct[] = [
     name: "Omega 3 XNutri Ultra 90 caps",
     sku: "XN-VIT-OMEGA-90",
     price: 79.9,
-    shortDescription: "EPA e DHA para saude cardiovascular.",
+    shortDescription: "EPA e DHA para saúde cardiovascular.",
     description:
-      "Capsulas de omega 3 com concentracao equilibrada para suporte a rotina de bem-estar.",
+      "Cápsulas de ômega 3 com concentração equilibrada para suporte à rotina de bem-estar.",
     imageUrl:
       "https://images.unsplash.com/photo-1576602976047-174e57a47881?auto=format&fit=crop&w=1200&q=80",
     bestSeller: true,
     weightGrams: 240,
-    variants: ["90 capsulas"].map((flavor) => ({
+    variants: ["90 cápsulas"].map((flavor) => ({
       name: flavor,
       sku: "XN-VIT-OMEGA-90-UN",
       attributes: { formato: flavor },
@@ -432,11 +432,11 @@ const products: SeedProduct[] = [
     price: 54.9,
     shortDescription: "Suporte a ossos, imunidade e metabolismo.",
     description:
-      "Formula com vitamina D3 e K2 em capsulas de facil ingestao para uso diario.",
+      "Fórmula com vitamina D3 e K2 em cápsulas de fácil ingestão para uso diário.",
     imageUrl:
       "https://images.unsplash.com/photo-1576602976047-174e57a47881?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 160,
-    variants: ["60 capsulas"].map((flavor) => ({
+    variants: ["60 cápsulas"].map((flavor) => ({
       name: flavor,
       sku: "XN-VIT-D3K2-60-UN",
       attributes: { formato: flavor },
@@ -445,12 +445,12 @@ const products: SeedProduct[] = [
   },
   {
     category: "suplementos",
-    name: "Magnesio Dimalato XNutri 120 tabs",
+    name: "Magnésio Dimalato XNutri 120 tabs",
     sku: "XN-VIT-MAG-120",
     price: 69.9,
-    shortDescription: "Magnesio para desempenho e recuperacao.",
+    shortDescription: "Magnésio para desempenho e recuperação.",
     description:
-      "Comprimidos de magnesio dimalato para suporte muscular, metabolismo energetico e rotina ativa.",
+      "Comprimidos de magnésio dimalato para suporte muscular, metabolismo energético e rotina ativa.",
     imageUrl:
       "https://images.unsplash.com/photo-1628771065518-0d82f1938462?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 260,
@@ -468,12 +468,12 @@ const products: SeedProduct[] = [
     price: 44.9,
     shortDescription: "Suporte antioxidante e imunidade.",
     description:
-      "Combinacao de vitamina C e zinco para complementar a rotina de cuidados diarios.",
+      "Combinação de vitamina C e zinco para complementar a rotina de cuidados diários.",
     imageUrl:
       "https://images.unsplash.com/photo-1584362917165-526a968579e8?auto=format&fit=crop&w=1200&q=80",
     promotion: true,
     weightGrams: 190,
-    variants: ["90 capsulas"].map((flavor) => ({
+    variants: ["90 cápsulas"].map((flavor) => ({
       name: flavor,
       sku: "XN-VIT-CZ-90-UN",
       attributes: { formato: flavor },
@@ -487,15 +487,15 @@ const products: SeedProduct[] = [
     price: 69.9,
     shortDescription: "Camiseta leve para treino intenso.",
     description:
-      "Tecido respiravel com toque macio, modelagem atletica e secagem rapida para uso na academia.",
+      "Tecido respirável com toque macio, modelagem atlética e secagem rápida para uso na academia.",
     imageUrl:
       "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=80",
     featured: true,
     weightGrams: 250,
     variants: clothingSizes.map((size, index) => ({
       name: size,
-      sku: `XN-ROUPA-DRY-PRETA-${size}`,
-      attributes: { tamanho: size, cor: "Preta" },
+      sku: `XN-ROUPA-DRY-PRETA-${index + 1}`,
+      attributes: { modelo: size, cor: "Preta" },
       stock: 12 + index,
     })),
   },
@@ -504,16 +504,16 @@ const products: SeedProduct[] = [
     name: "Regata Treino XNutri Verde",
     sku: "XN-ROUPA-REGATA-VERDE",
     price: 59.9,
-    shortDescription: "Regata com mobilidade para musculacao.",
+    shortDescription: "Regata com mobilidade para musculação.",
     description:
-      "Corte confortavel para amplitude de movimentos, indicada para treinos de superiores e dias quentes.",
+      "Corte confortável para amplitude de movimentos, indicada para treinos de superiores e dias quentes.",
     imageUrl:
       "https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 220,
     variants: clothingSizes.map((size, index) => ({
       name: size,
-      sku: `XN-ROUPA-REGATA-VERDE-${size}`,
-      attributes: { tamanho: size, cor: "Verde" },
+      sku: `XN-ROUPA-REGATA-VERDE-${index + 1}`,
+      attributes: { modelo: size, cor: "Verde" },
       stock: 10 + index,
     })),
   },
@@ -522,17 +522,17 @@ const products: SeedProduct[] = [
     name: "Legging Compression XNutri Feminina",
     sku: "XN-ROUPA-LEGGING-COMP",
     price: 119.9,
-    shortDescription: "Legging de compressao com cintura alta.",
+    shortDescription: "Legging de compressão com cintura alta.",
     description:
-      "Peca firme e confortavel para treino funcional, musculacao e corrida, com tecido de alta elasticidade.",
+      "Peça firme e confortável para treino funcional, musculação e corrida, com tecido de alta elasticidade.",
     imageUrl:
       "https://images.unsplash.com/photo-1518310383802-640c2de311b2?auto=format&fit=crop&w=1200&q=80",
     bestSeller: true,
     weightGrams: 360,
     variants: clothingSizes.map((size, index) => ({
       name: size,
-      sku: `XN-ROUPA-LEGGING-COMP-${size}`,
-      attributes: { tamanho: size, cor: "Grafite" },
+      sku: `XN-ROUPA-LEGGING-COMP-${index + 1}`,
+      attributes: { modelo: size, cor: "Grafite" },
       stock: 8 + index,
     })),
   },
@@ -543,14 +543,14 @@ const products: SeedProduct[] = [
     price: 89.9,
     shortDescription: "Shorts leve com bolso e ajuste firme.",
     description:
-      "Shorts para musculacao, corrida e funcional, com tecido resistente e liberdade de movimento.",
+      "Shorts para musculação, corrida e funcional, com tecido resistente e liberdade de movimento.",
     imageUrl:
       "https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 310,
     variants: clothingSizes.map((size, index) => ({
       name: size,
-      sku: `XN-ROUPA-SHORTS-PERF-${size}`,
-      attributes: { tamanho: size, cor: "Preto" },
+      sku: `XN-ROUPA-SHORTS-PERF-${index + 1}`,
+      attributes: { modelo: size, cor: "Preto" },
       stock: 9 + index,
     })),
   },
@@ -561,7 +561,7 @@ const products: SeedProduct[] = [
     price: 29.9,
     shortDescription: "Coqueteleira resistente com marcador de volume.",
     description:
-      "Shaker com tampa segura e misturador interno para whey, creatina e pre-treinos no dia a dia.",
+      "Shaker com tampa segura e misturador interno para whey, creatina e pré-treinos no dia a dia.",
     imageUrl:
       "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1200&q=80",
     promotion: true,
@@ -580,11 +580,11 @@ const products: SeedProduct[] = [
     price: 39.9,
     shortDescription: "Strap para puxadas, remadas e levantamentos.",
     description:
-      "Acessorio reforcado para auxiliar pegada em treinos pesados, com costura resistente e bom conforto.",
+      "Acessório reforçado para auxiliar pegada em treinos pesados, com costura resistente e bom conforto.",
     imageUrl:
       "https://images.unsplash.com/photo-1534367507873-d2d7e24c797f?auto=format&fit=crop&w=1200&q=80",
     weightGrams: 120,
-    variants: ["Par unico"].map((item) => ({
+    variants: ["Par único"].map((item) => ({
       name: item,
       sku: "XN-ACESS-STRAP-PRO-PAR",
       attributes: { unidade: item },
@@ -821,7 +821,7 @@ async function main() {
     data: [
       {
         title: "Xnutri Suplementos Nutricionais",
-        subtitle: "Suplementos, roupas fitness com tamanhos e acessórios selecionados para treinos reais em Mirassol-SP.",
+        subtitle: "Suplementos, moda fitness e acessórios selecionados para treinos reais em Mirassol-SP.",
         imageUrl:
           "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1800&q=85",
         ctaLabel: "Comprar agora",
@@ -849,12 +849,12 @@ async function main() {
         description: "Dados públicos da loja",
         value: {
           name: "XNutri",
-          legalName: "XNutri Comercio de Suplementos",
+          legalName: "XNutri Comércio de Suplementos",
           phone: "(17) 99700-0000",
           city: "Mirassol",
           state: "SP",
           address: "Rua 9 de Julho, 1250 - Centro",
-          businessHours: "Segunda a sexta das 9h as 18h. Sabado das 9h as 13h.",
+          businessHours: "Segunda a sexta das 9h às 18h. Sábado das 9h às 13h.",
           whatsapp: "5517997000000",
           email: "contato@xnutri.com.br",
           instagram: "https://instagram.com/xnutri",
@@ -864,16 +864,16 @@ async function main() {
         key: "home",
         description: "Conteudo editavel da home",
         value: {
-          heroTitle: "Performance, saude e estilo em um so lugar.",
+          heroTitle: "Performance, saúde e estilo em um só lugar.",
           heroSubtitle:
-            "Suplementos, roupas fitness e acessorios para quem treina de verdade. Compre online e retire na loja em Mirassol.",
+            "Suplementos, moda fitness e acessórios para quem treina de verdade. Compre online e retire na loja em Mirassol.",
           heroPrimaryLabel: "Ver produtos",
           heroPrimaryHref: "/catalogo",
           heroSecondaryLabel: "Retirar na loja",
           heroSecondaryHref: "/retirada-na-loja",
           institutionalText:
-            "Suplementos, vitaminas, roupas e acessorios fitness com compra online, retirada na loja e suporte proximo em Mirassol-SP.",
-          footerText: "Treino, saude e estilo com atendimento local.",
+            "Suplementos, vitaminas, moda fitness e acessórios com compra online, retirada na loja e suporte próximo em Mirassol-SP.",
+          footerText: "Treino, saúde e estilo com atendimento local.",
         },
       },
       {
@@ -889,13 +889,13 @@ async function main() {
       },
       {
         key: "delivery",
-        description: "Configuracoes gerais de entrega",
+        description: "Configurações gerais de entrega",
         value: {
           pickupEnabled: true,
           manualShippingEnabled: true,
           correiosEnabled: true,
           freeShippingMinValue: 299,
-          estimatedDeliveryText: "Entrega regional em 1 a 2 dias uteis. Correios conforme CEP.",
+          estimatedDeliveryText: "Entrega regional em 1 a 2 dias úteis. Correios conforme CEP.",
         },
       },
       {

@@ -70,7 +70,7 @@ function ProductForm({
       <section className="rounded-lg border border-[#ffd8d1] bg-[#fff8f7] p-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h3 className="text-base font-black">Analise financeira do produto</h3>
+            <h3 className="text-base font-black">Análise financeira do produto</h3>
             <p className="text-xs font-semibold text-[var(--muted)]">Use valores gerenciais. Isso ajuda o painel a estimar lucro e margem.</p>
           </div>
           {product && (
@@ -88,7 +88,7 @@ function ProductForm({
         {product && (
           <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
             <div className="rounded-md bg-white p-3">
-              <span className="block text-xs font-bold text-[var(--muted)]">Preco sugerido</span>
+              <span className="block text-xs font-bold text-[var(--muted)]">Preço sugerido</span>
               <strong>{suggestedPrice > 0 ? formatCurrency(suggestedPrice) : "Cadastre o custo"}</strong>
             </div>
             <div className="rounded-md bg-white p-3">
@@ -138,15 +138,15 @@ function VariantForm({ productId, variant }: { productId: string; variant?: Awai
         <input className="field" name="priceAdjustment" type="number" min={0} step="0.01" placeholder="Preço extra" defaultValue={variant ? Number(variant.priceAdjustment) : ""} />
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
-        <input className="field" name="barcode" inputMode="numeric" placeholder="Codigo de barras" defaultValue={variant?.barcode ?? ""} />
-        <input className="field" name="ean" inputMode="numeric" placeholder="EAN da variacao" defaultValue={variant?.ean ?? ""} />
-        <input className="field" name="internalCode" placeholder="Codigo interno" defaultValue={variant?.internalCode ?? ""} />
+        <input className="field" name="barcode" inputMode="numeric" placeholder="Código de barras" defaultValue={variant?.barcode ?? ""} />
+        <input className="field" name="ean" inputMode="numeric" placeholder="EAN da variação" defaultValue={variant?.ean ?? ""} />
+        <input className="field" name="internalCode" placeholder="Código interno" defaultValue={variant?.internalCode ?? ""} />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <input className="field" name="costPrice" type="number" min={0} step="0.01" placeholder="Custo desta variacao" defaultValue={variant?.costPrice ? Number(variant.costPrice) : ""} />
-        <input className="field" name="packagingCost" type="number" min={0} step="0.01" placeholder="Embalagem desta variacao" defaultValue={variant?.packagingCost ? Number(variant.packagingCost) : ""} />
+        <input className="field" name="costPrice" type="number" min={0} step="0.01" placeholder="Custo desta variação" defaultValue={variant?.costPrice ? Number(variant.costPrice) : ""} />
+        <input className="field" name="packagingCost" type="number" min={0} step="0.01" placeholder="Embalagem desta variação" defaultValue={variant?.packagingCost ? Number(variant.packagingCost) : ""} />
       </div>
-      <textarea className="field min-h-20" name="attributes" placeholder={"sabor=Chocolate\ntamanho=M\ncor=Preta"} defaultValue={variant ? attributesToText(variant.attributes) : ""} required />
+      <textarea className="field min-h-20" name="attributes" placeholder={"sabor=Chocolate\ncor=Preta\nvolume=700ml"} defaultValue={variant ? attributesToText(variant.attributes) : ""} required />
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
         <input className="field" name="stock" type="number" min={0} placeholder="Estoque" defaultValue={variant?.inventory?.quantity ?? 0} required />
         <input className="field" name="lowStockThreshold" type="number" min={0} placeholder="Mínimo" defaultValue={variant?.inventory?.lowStockThreshold ?? 5} />
@@ -203,7 +203,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       <div className="admin-page-heading mb-6">
         <span className="admin-eyebrow">Catálogo</span>
         <h1 className="mt-2 text-3xl font-black md:text-4xl">Produtos</h1>
-        <p className="admin-page-copy mt-2 text-sm">Cadastre e edite produtos com imagens, preços, estoque, status, tamanhos e sabores.</p>
+        <p className="admin-page-copy mt-2 text-sm">Cadastre e edite produtos com imagens, preços, estoque, status, sabores, cores e opções.</p>
       </div>
 
       <form className="surface mb-5 grid gap-3 p-4 md:grid-cols-[1fr_220px_auto]">
@@ -275,7 +275,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                 <details>
                   <summary className="flex cursor-pointer items-center gap-2 p-4 font-black text-[var(--brand)]">
                     <Plus size={16} />
-                    Tamanhos, sabores e variações ({product.variants.length})
+                    Sabores, cores e variações ({product.variants.length})
                   </summary>
                   <div className="grid gap-3 border-t border-[var(--line)] p-4">
                     {product.variants.map((variant) => (
@@ -300,7 +300,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 
         <aside className="surface self-start p-5 xl:sticky xl:top-8">
           <h2 className="text-xl font-black">Novo produto</h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">Preencha o básico primeiro. Depois você pode adicionar tamanhos, sabores ou cores.</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">Preencha o básico primeiro. Depois você pode adicionar sabores, cores ou outras opções.</p>
           <div className="mt-4">
             <ProductForm categories={categories} />
           </div>

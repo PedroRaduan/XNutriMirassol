@@ -154,7 +154,7 @@ export async function createOrderFromCheckout(formData: FormData) {
       const available = inventory ? inventory.quantity - inventory.reserved : 0;
 
       if (available < item.quantity) {
-        throw new Error(`Estoque insuficiente para ${item.product.name}. Disponivel: ${available} unidade(s).`);
+        throw new Error(`Estoque insuficiente para ${item.product.name}. Disponível: ${available} unidade(s).`);
       }
     }
 

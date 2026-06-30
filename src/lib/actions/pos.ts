@@ -19,7 +19,7 @@ export type POSActionState = {
   receiptUrl?: string;
 };
 
-const initialFailure = { ok: false, message: "Nao foi possivel concluir a acao." };
+const initialFailure = { ok: false, message: "Não foi possível concluir a ação." };
 
 const paymentMethods = ["CASH", "PIX", "DEBIT_CARD", "CREDIT_CARD", "MERCADO_PAGO"] as const;
 
@@ -473,7 +473,7 @@ async function resolvePOSCustomer(
 ) {
   if (customerId) {
     const existing = await tx.user.findUnique({ where: { id: customerId }, select: { id: true } });
-    if (!existing) throw new Error("Cliente informado nao existe.");
+    if (!existing) throw new Error("Cliente informado não existe.");
     return existing.id;
   }
 
@@ -525,19 +525,19 @@ async function resolveSaleLine(
   const product = variant?.product ?? productRecord;
 
   if (!product || product.status !== "ACTIVE") {
-    throw new Error("Produto indisponivel para venda.");
+    throw new Error("Produto indisponível para venda.");
   }
 
   if (variant && (!variant.active || variant.productId !== product.id)) {
-    throw new Error(`Variacao indisponivel para ${product.name}.`);
+    throw new Error(`Variação indisponível para ${product.name}.`);
   }
 
   const inventory = variant?.inventory ?? productRecord?.inventory.find((entry) => entry.variantId === null) ?? productRecord?.inventory[0] ?? null;
-  if (!inventory) throw new Error(`Estoque nao cadastrado para ${product.name}.`);
+  if (!inventory) throw new Error(`Estoque não cadastrado para ${product.name}.`);
 
   const available = inventory.quantity - inventory.reserved;
   if (!allowNegativeStock && available < item.quantity) {
-    throw new Error(`Estoque insuficiente para ${product.name}${variant ? ` - ${variant.name}` : ""}. Disponivel: ${Math.max(available, 0)}.`);
+    throw new Error(`Estoque insuficiente para ${product.name}${variant ? ` - ${variant.name}` : ""}. Disponível: ${Math.max(available, 0)}.`);
   }
 
   const unitPrice = roundMoney(toNumber(product.price) + toNumber(variant?.priceAdjustment ?? 0));
@@ -572,7 +572,7 @@ export async function cancelPOSSale(input: unknown): Promise<POSActionState> {
   await assertSameOrigin();
   const admin = await requirePOS(true);
   const parsed = cancelSaleSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Cancelamento invalido." };
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Cancelamento inválido." };
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -580,12 +580,12 @@ export async function cancelPOSSale(input: unknown): Promise<POSActionState> {
         where: { id: parsed.data.saleId },
         include: { items: true, payments: true, session: true },
       });
-      if (!sale) throw new Error("Venda nao encontrada.");
+      if (!sale) throw new Error("Venda não encontrada.");
       if (admin.adminRole === "CASHIER" && sale.cashierId !== admin.id) {
-        throw new Error("Voce so pode cancelar suas proprias vendas.");
+        throw new Error("Você só pode cancelar suas próprias vendas.");
       }
       if (sale.status === "CANCELED" || sale.status === "REFUNDED") {
-        throw new Error("Esta venda ja foi cancelada ou devolvida.");
+        throw new Error("Esta venda já foi cancelada ou devolvida.");
       }
 
       await tx.pOSSale.update({
@@ -690,7 +690,7 @@ export async function returnPOSSaleItemFromForm(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Devolucao invalida.");
+    throw new Error(parsed.error.issues[0]?.message ?? "Devolução inválida.");
   }
 
   await prisma.$transaction(async (tx) => {
@@ -699,17 +699,17 @@ export async function returnPOSSaleItemFromForm(formData: FormData) {
       include: { sale: { include: { items: true, payments: true, session: true } } },
     });
 
-    if (!item) throw new Error("Item da venda nao encontrado.");
+    if (!item) throw new Error("Item da venda não encontrado.");
     if (admin.adminRole === "CASHIER" && item.sale.cashierId !== admin.id) {
-      throw new Error("Voce so pode devolver itens das suas proprias vendas.");
+      throw new Error("Você só pode devolver itens das suas próprias vendas.");
     }
     if (item.sale.status === "CANCELED" || item.sale.status === "REFUNDED") {
-      throw new Error("Esta venda nao aceita nova devolucao.");
+      throw new Error("Esta venda não aceita nova devolução.");
     }
 
     const remaining = item.quantity - item.returnedQuantity;
     if (parsed.data.quantity > remaining) {
-      throw new Error(`Quantidade maxima para devolver: ${remaining}.`);
+      throw new Error(`Quantidade máxima para devolver: ${remaining}.`);
     }
 
     const unitTotal = toNumber(item.total) / item.quantity;

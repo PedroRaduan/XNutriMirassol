@@ -21,7 +21,7 @@ export async function quoteShipping(zipCode: string, subtotal: number): Promise<
 
   const address = await lookupCep(cep);
   if (!address) {
-    throw new Error("CEP nao encontrado. Confira o numero informado.");
+    throw new Error("CEP não encontrado. Confira o número informado.");
   }
 
   const methods = await prisma.shippingMethod.findMany({

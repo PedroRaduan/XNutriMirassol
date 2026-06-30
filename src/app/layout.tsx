@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: "%s | XNutri",
   },
   description:
-    "E-commerce da XNutri em Mirassol-SP com suplementos, whey protein, creatina, pre-treinos, vitaminas, roupas e acessorios fitness.",
+    "E-commerce da XNutri em Mirassol-SP com suplementos, whey protein, creatina, pré-treinos, vitaminas, moda fitness e acessórios.",
   openGraph: {
     title: "XNutri | Suplementos e Moda Fitness",
     description: "Suplementos e fitness para treinos reais em Mirassol-SP.",

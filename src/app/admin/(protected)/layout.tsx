@@ -18,7 +18,7 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
               <p className="mt-2 text-sm font-semibold text-[var(--muted)]">
                 Logado como <strong className="text-[var(--graphite)]">{admin.name ?? admin.email}</strong>
                 <span className="mx-2 text-[var(--silver)]">/</span>
-                perfil {admin.adminRole}{isDemo ? " demo" : ""}
+                perfil {admin.adminRole}{isDemo ? " treinamento" : ""}
               </p>
             </div>
             <form action={logout}>
@@ -30,7 +30,7 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
           </header>
           {isDemo && (
             <div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold leading-6 text-red-800">
-              Modo demo ativo: o PostgreSQL esta offline. Voce consegue visualizar o painel com dados simulados, mas cadastros, estoque, pedidos e relatorios reais ficam disponiveis quando o banco for iniciado e migrado.
+              Modo de treinamento ativo: o banco está offline. Você consegue visualizar o painel com dados simulados, mas cadastros, estoque, pedidos e relatórios reais ficam disponíveis quando o banco for iniciado e migrado.
             </div>
           )}
           {children}

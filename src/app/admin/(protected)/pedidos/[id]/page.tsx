@@ -76,7 +76,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               <div className="flex justify-between border-t border-[var(--line)] pt-3"><dt>Custo dos produtos</dt><dd>{formatCurrency(order.productsCost)}</dd></div>
               <div className="flex justify-between"><dt>Taxas estimadas</dt><dd>{formatCurrency(Number(order.paymentFee) + Number(order.fixedFee))}</dd></div>
               <div className="flex justify-between"><dt>Embalagem + imposto</dt><dd>{formatCurrency(Number(order.packagingCost) + Number(order.estimatedTax))}</dd></div>
-              <div className="flex justify-between text-base font-black"><dt>Lucro liquido estimado</dt><dd>{formatCurrency(order.netProfit)} · {Number(order.profitMargin).toFixed(2)}%</dd></div>
+              <div className="flex justify-between text-base font-black"><dt>Lucro líquido estimado</dt><dd>{formatCurrency(order.netProfit)} · {Number(order.profitMargin).toFixed(2)}%</dd></div>
             </dl>
             {order.coupon && <p className="mt-3 text-sm font-bold text-[var(--muted)]">Cupom: {order.coupon.code}</p>}
           </div>
@@ -115,7 +115,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               <span><strong className="text-[var(--ink)]">Nome:</strong> {order.customerName}</span>
               <span><strong className="text-[var(--ink)]">E-mail:</strong> {order.customerEmail}</span>
               <span><strong className="text-[var(--ink)]">Telefone:</strong> {order.customerPhone}</span>
-              <span><strong className="text-[var(--ink)]">CPF/CNPJ:</strong> {order.document ?? "Nao informado"}</span>
+              <span><strong className="text-[var(--ink)]">CPF/CNPJ:</strong> {order.document ?? "Não informado"}</span>
             </div>
           </div>
 

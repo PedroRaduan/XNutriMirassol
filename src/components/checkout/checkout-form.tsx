@@ -118,7 +118,7 @@ export function CheckoutForm({ shippingMethodId, shippingZipCode, pickupLocation
     const controller = new AbortController();
     const handle = window.setTimeout(async () => {
       lastCepLookupRef.current = digits;
-      setCepLookup({ status: "loading", message: "Buscando endereco pelo CEP...", digits });
+      setCepLookup({ status: "loading", message: "Buscando endereço pelo CEP...", digits });
 
       try {
         const response = await fetch(`/api/cep/${digits}`, { signal: controller.signal });
@@ -126,7 +126,7 @@ export function CheckoutForm({ shippingMethodId, shippingZipCode, pickupLocation
 
         if (!response.ok || "error" in payload) {
           const errorPayload = payload as { error?: string };
-          throw new Error(errorPayload.error ?? "CEP nao encontrado.");
+          throw new Error(errorPayload.error ?? "CEP não encontrado.");
         }
 
         const address = payload as CepApiResponse;
@@ -139,7 +139,7 @@ export function CheckoutForm({ shippingMethodId, shippingZipCode, pickupLocation
 
         setCepLookup({
           status: "ok",
-          message: address.street ? "Endereco preenchido pelo CEP. Confira o numero antes de finalizar." : "CEP encontrado. Complete rua, bairro e numero.",
+          message: address.street ? "Endereço preenchido pelo CEP. Confira o número antes de finalizar." : "CEP encontrado. Complete rua, bairro e número.",
           digits,
         });
       } catch (error) {
@@ -147,7 +147,7 @@ export function CheckoutForm({ shippingMethodId, shippingZipCode, pickupLocation
         lastCepLookupRef.current = "";
         setCepLookup({
           status: "error",
-          message: error instanceof Error ? error.message : "Nao foi possivel buscar este CEP agora.",
+          message: error instanceof Error ? error.message : "Não foi possível buscar este CEP agora.",
           digits,
         });
       }
@@ -168,7 +168,7 @@ export function CheckoutForm({ shippingMethodId, shippingZipCode, pickupLocation
       }}
     >
       <section className="surface grid gap-5 p-5 md:p-6">
-        <StepTitle number="1" title="Dados do cliente" text="Informacoes para contato, nota e confirmacao do pedido." icon={UserRound} />
+        <StepTitle number="1" title="Dados do cliente" text="Informações para contato, nota e confirmação do pedido." icon={UserRound} />
         <div className="grid gap-4 md:grid-cols-2">
           <label className="text-sm font-black">Nome<input className="field mt-2" autoComplete="name" {...form.register("customerName")} name="customerName" /></label>
           <label className="text-sm font-black">E-mail<input className="field mt-2" type="email" inputMode="email" autoComplete="email" {...form.register("customerEmail")} name="customerEmail" /></label>
@@ -178,14 +178,14 @@ export function CheckoutForm({ shippingMethodId, shippingZipCode, pickupLocation
       </section>
 
       <section className="surface grid gap-5 p-5 md:p-6">
-        <StepTitle number="2" title="Entrega ou retirada" text="Retire na loja sem frete ou receba no endereco informado." icon={Truck} />
+        <StepTitle number="2" title="Entrega ou retirada" text="Retire na loja sem frete ou receba no endereço informado." icon={Truck} />
         <div className="grid gap-3 sm:grid-cols-2">
           <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${shippingType === "DELIVERY" ? "border-[var(--brand)] bg-[#fff1ef] shadow-[0_12px_28px_rgb(242_56_47_/_10%)]" : "border-[var(--line)] bg-white"}`}>
             <input className="accent-[var(--brand)]" type="radio" value="DELIVERY" {...shippingTypeRegister} name="shippingType" />
             <MapPin size={21} className="text-[var(--brand)]" />
             <span>
-              <span className="block font-black">Receber no endereco</span>
-              <span className="text-xs font-semibold text-[var(--muted)]">Calculo por CEP e metodo escolhido</span>
+              <span className="block font-black">Receber no endereço</span>
+              <span className="text-xs font-semibold text-[var(--muted)]">Cálculo por CEP e método escolhido</span>
             </span>
           </label>
           <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${shippingType === "PICKUP" ? "border-[var(--brand)] bg-[#fff1ef] shadow-[0_12px_28px_rgb(242_56_47_/_10%)]" : "border-[var(--line)] bg-white"}`}>
@@ -212,7 +212,7 @@ export function CheckoutForm({ shippingMethodId, shippingZipCode, pickupLocation
               {form.formState.errors.zipCode?.message && <span className="mt-1 block text-xs font-bold text-red-700">{form.formState.errors.zipCode.message}</span>}
             </label>
             <label className="text-sm font-black">Rua<input className="field mt-2" autoComplete="address-line1" {...form.register("street")} name="street" /></label>
-            <label className="text-sm font-black">Numero<input className="field mt-2" inputMode="numeric" autoComplete="address-line2" {...form.register("number")} name="number" /></label>
+            <label className="text-sm font-black">Número<input className="field mt-2" inputMode="numeric" autoComplete="address-line2" {...form.register("number")} name="number" /></label>
             <label className="text-sm font-black">Complemento<input className="field mt-2" autoComplete="address-line3" {...form.register("complement")} name="complement" /></label>
             <label className="text-sm font-black">Bairro<input className="field mt-2" autoComplete="address-level3" {...form.register("district")} name="district" /></label>
             <label className="text-sm font-black">Cidade<input className="field mt-2" autoComplete="address-level2" {...form.register("city")} name="city" /></label>
@@ -249,25 +249,37 @@ export function CheckoutForm({ shippingMethodId, shippingZipCode, pickupLocation
       </section>
 
       <section className="surface grid gap-5 p-5 md:p-6">
-        <StepTitle number="3" title="Pagamento Mercado Pago" text="PIX ou cartao com retorno automatico de status." icon={ShieldCheck} />
+        <StepTitle number="3" title="Pagamento Mercado Pago" text="PIX ou cartão com retorno automático de status." icon={ShieldCheck} />
         <div className="grid gap-3 sm:grid-cols-2">
           <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${paymentMethod === "PIX" ? "border-[var(--brand)] bg-[#fff1ef] shadow-[0_12px_28px_rgb(242_56_47_/_10%)]" : "border-[var(--line)] bg-white"}`}>
             <input className="accent-[var(--brand)]" type="radio" value="PIX" {...paymentMethodRegister} name="paymentMethod" />
             <QrCode size={21} className="text-[var(--brand)]" />
             <span>
               <span className="block font-black">PIX</span>
-              <span className="text-xs font-semibold text-[var(--muted)]">Rapido para confirmar</span>
+              <span className="text-xs font-semibold text-[var(--muted)]">Rápido para confirmar</span>
             </span>
           </label>
           <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${paymentMethod === "CREDIT_CARD" ? "border-[var(--brand)] bg-[#fff1ef] shadow-[0_12px_28px_rgb(242_56_47_/_10%)]" : "border-[var(--line)] bg-white"}`}>
             <input className="accent-[var(--brand)]" type="radio" value="CREDIT_CARD" {...paymentMethodRegister} name="paymentMethod" />
             <CreditCard size={21} className="text-[var(--brand)]" />
             <span>
-              <span className="block font-black">Cartao</span>
+              <span className="block font-black">Cartão</span>
               <span className="text-xs font-semibold text-[var(--muted)]">Processado pelo Mercado Pago</span>
             </span>
           </label>
         </div>
+      </section>
+
+      <section className="surface grid gap-4 p-5 md:p-6">
+        <StepTitle number="4" title="Observações" text="Informe detalhes úteis para separação, entrega ou retirada do pedido." icon={Store} />
+        <label className="text-sm font-black">
+          Observações do pedido
+          <textarea
+            className="field mt-2 min-h-24"
+            placeholder="Ex.: melhor horário para entrega, referência do endereço ou dúvida sobre retirada."
+            {...form.register("notes")}
+          />
+        </label>
       </section>
 
       {Object.values(form.formState.errors)[0]?.message && (

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const required = "Campo obrigatorio";
+const required = "Campo obrigatório";
 
 const optionalNumber = z.preprocess((value) => {
   if (value === "" || value === null || value === undefined) return undefined;
@@ -23,31 +23,31 @@ const optionalCode = z.preprocess((value) => {
 }, z.string().min(3).max(64).optional());
 
 export const loginSchema = z.object({
-  email: z.string().email("E-mail invalido").toLowerCase(),
+  email: z.string().email("E-mail inválido").toLowerCase(),
   password: z.string().min(8, "Informe pelo menos 8 caracteres"),
 });
 
 export const registerSchema = z.object({
   name: z.string().min(3, "Informe seu nome completo"),
-  email: z.string().email("E-mail invalido").toLowerCase(),
-  phone: z.string().min(10, "Telefone invalido"),
+  email: z.string().email("E-mail inválido").toLowerCase(),
+  phone: z.string().min(10, "Telefone inválido"),
   password: z.string().min(8, "Use pelo menos 8 caracteres"),
 });
 
 export const passwordRecoverySchema = z.object({
-  email: z.string().email("E-mail invalido").toLowerCase(),
+  email: z.string().email("E-mail inválido").toLowerCase(),
 });
 
 export const addressSchema = z.object({
   label: z.string().min(2, required),
   recipient: z.string().min(3, required),
-  zipCode: z.string().regex(/^\d{5}-?\d{3}$/, "CEP invalido"),
+  zipCode: z.string().regex(/^\d{5}-?\d{3}$/, "CEP inválido"),
   street: z.string().min(2, required),
   number: z.string().min(1, required),
   complement: z.string().optional(),
   district: z.string().min(2, required),
   city: z.string().min(2, required),
-  state: z.string().length(2, "UF invalida").toUpperCase(),
+  state: z.string().length(2, "UF inválida").toUpperCase(),
   reference: z.string().optional(),
 });
 
@@ -62,15 +62,15 @@ export const couponSchema = z.object({
 });
 
 export const shippingQuoteSchema = z.object({
-  zipCode: z.string().regex(/^\d{5}-?\d{3}$/, "CEP invalido"),
+  zipCode: z.string().regex(/^\d{5}-?\d{3}$/, "CEP inválido"),
   subtotal: z.coerce.number().min(0),
 });
 
 export const checkoutSchema = z
   .object({
     customerName: z.string().min(3, required),
-    customerEmail: z.string().email("E-mail invalido").toLowerCase(),
-    customerPhone: z.string().min(10, "Telefone invalido"),
+    customerEmail: z.string().email("E-mail inválido").toLowerCase(),
+    customerPhone: z.string().min(10, "Telefone inválido"),
     document: z.string().optional(),
     shippingType: z.enum(["DELIVERY", "PICKUP"]),
     paymentMethod: z.enum(["PIX", "CREDIT_CARD"]),
@@ -110,7 +110,7 @@ export const productAdminSchema = z.object({
   internalCode: optionalCode,
   shortDescription: z.string().min(10, required),
   description: z.string().min(20, required),
-  price: z.coerce.number().min(0, "Preco invalido"),
+  price: z.coerce.number().min(0, "Preço inválido"),
   compareAtPrice: optionalNumber,
   costPrice: optionalNumber,
   packagingCost: optionalNumber,
@@ -151,7 +151,7 @@ export const categoryAdminSchema = z.object({
   name: z.string().min(2, required),
   slug: z.string().min(2).optional(),
   description: z.string().optional(),
-  imageUrl: z.string().url("URL invalida").optional().or(z.literal("")),
+  imageUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   active: z.coerce.boolean().optional(),
   sortOrder: optionalInt,
 });
@@ -176,7 +176,7 @@ export const bannerAdminSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(3, required),
   subtitle: z.string().optional(),
-  imageUrl: z.string().url("URL invalida"),
+  imageUrl: z.string().url("URL inválida"),
   ctaLabel: z.string().optional(),
   ctaHref: z.string().optional(),
   location: z.enum(["HOME_HERO", "HOME_PROMO", "CATALOG"]),
@@ -208,13 +208,13 @@ export const shippingMethodAdminSchema = z.object({
 export const pickupLocationAdminSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, required),
-  zipCode: z.string().regex(/^\d{5}-?\d{3}$/, "CEP invalido"),
+  zipCode: z.string().regex(/^\d{5}-?\d{3}$/, "CEP inválido"),
   street: z.string().min(2, required),
   number: z.string().min(1, required),
   complement: z.string().optional(),
   district: z.string().min(2, required),
   city: z.string().min(2, required),
-  state: z.string().length(2, "UF invalida").toUpperCase(),
+  state: z.string().length(2, "UF inválida").toUpperCase(),
   instructions: z.string().min(10, required),
   active: z.coerce.boolean().optional(),
 });
@@ -240,10 +240,10 @@ export const storeSettingsAdminSchema = z.object({
   legalName: z.string().optional(),
   phone: z.string().optional(),
   whatsapp: z.string().optional(),
-  email: z.string().email("E-mail invalido"),
+  email: z.string().email("E-mail inválido"),
   address: z.string().optional(),
   city: z.string().min(2, required),
-  state: z.string().length(2, "UF invalida").toUpperCase(),
+  state: z.string().length(2, "UF inválida").toUpperCase(),
   businessHours: z.string().optional(),
   instagram: z.string().optional(),
   paymentInfo: z.string().optional(),
@@ -263,6 +263,6 @@ export const homeContentAdminSchema = z.object({
 });
 
 export const newsletterSchema = z.object({
-  email: z.string().email("E-mail invalido").toLowerCase(),
+  email: z.string().email("E-mail inválido").toLowerCase(),
   name: z.string().optional(),
 });

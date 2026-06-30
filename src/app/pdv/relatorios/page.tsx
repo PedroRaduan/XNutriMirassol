@@ -112,7 +112,7 @@ export default async function PDVReportsPage({ searchParams }: { searchParams: R
         <div className="container-x flex min-h-16 items-center justify-between gap-3 py-3">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.16em] text-white/60">PDV XNutri</p>
-            <h1 className="text-2xl font-black">Relatorios presenciais</h1>
+            <h1 className="text-2xl font-black">Relatórios presenciais</h1>
           </div>
           <Link className="btn border border-white/15 bg-white/10 text-white hover:bg-white/15" href="/pdv">
             Voltar ao caixa
@@ -124,15 +124,15 @@ export default async function PDVReportsPage({ searchParams }: { searchParams: R
         <section className="surface mb-5 p-4">
           <div className="mb-3 flex items-center gap-2">
             <CalendarDays size={18} className="text-[var(--brand)]" />
-            <h2 className="text-lg font-black">Periodo</h2>
+            <h2 className="text-lg font-black">Período</h2>
           </div>
           <div className="flex flex-wrap gap-2">
             {[
               ["today", "Hoje"],
-              ["7d", "Ultimos 7 dias"],
-              ["30d", "Ultimos 30 dias"],
-              ["month", "Mes atual"],
-              ["last-month", "Mes passado"],
+              ["7d", "Últimos 7 dias"],
+              ["30d", "Últimos 30 dias"],
+              ["month", "Mês atual"],
+              ["last-month", "Mês passado"],
               ["year", "Ano atual"],
             ].map(([key, label]) => (
               <Link key={key} href={`/pdv/relatorios?period=${key}`} className={`btn px-3 ${period === key ? "btn-primary" : "btn-secondary"}`}>
@@ -152,18 +152,18 @@ export default async function PDVReportsPage({ searchParams }: { searchParams: R
           <Metric label="Vendas" value={completed.length.toString()} Icon={ReceiptText} />
           <Metric label="Faturamento" value={formatCurrency(revenue)} Icon={CircleDollarSign} />
           <Metric label="Lucro estimado" value={formatCurrency(profit)} Icon={TrendingUp} />
-          <Metric label="Ticket medio" value={formatCurrency(ticket)} Icon={Users} />
+          <Metric label="Ticket médio" value={formatCurrency(ticket)} Icon={Users} />
           <Metric label="Descontos" value={formatCurrency(discounts)} Icon={BarChart3} />
           <Metric label="Taxas" value={formatCurrency(fees)} Icon={CircleDollarSign} />
           <Metric label="CMV" value={formatCurrency(costs)} Icon={Package} />
-          <Metric label="Margem media" value={`${margin.toFixed(1)}%`} Icon={TrendingUp} />
+          <Metric label="Margem média" value={`${margin.toFixed(1)}%`} Icon={TrendingUp} />
         </section>
 
         <section className="mt-5 grid gap-5 xl:grid-cols-2">
           <Panel title="Formas de pagamento">
             <Bars data={[...byPayment.entries()].map(([label, value]) => ({ label, value }))} money />
           </Panel>
-          <Panel title="Vendas por funcionario">
+          <Panel title="Vendas por funcionário">
             <Bars data={[...byCashier.entries()].map(([label, value]) => ({ label, value: value.total, hint: `${value.count} venda(s)` }))} money />
           </Panel>
           <Panel title="Produtos mais vendidos no PDV">
@@ -186,14 +186,14 @@ export default async function PDVReportsPage({ searchParams }: { searchParams: R
                   <strong>{formatCurrency(sale.total)}</strong>
                 </Link>
               ))}
-              {sales.length === 0 && <p className="text-sm text-[var(--muted)]">Nenhuma venda no periodo.</p>}
+              {sales.length === 0 && <p className="text-sm text-[var(--muted)]">Nenhuma venda no período.</p>}
             </div>
           </Panel>
         </section>
 
         <section className="surface mt-5 p-4 text-sm leading-6 text-[var(--muted)]">
-          <h2 className="text-lg font-black text-[var(--graphite)]">Como ler estes numeros</h2>
-          <p className="mt-2"><strong>Faturamento bruto</strong> e o total antes de descontos, custos e taxas. <strong>Receita liquida</strong> e o valor vendido apos descontos e taxas principais. <strong>CMV</strong> mostra quanto a loja pagou pelos produtos vendidos. <strong>Lucro liquido estimado</strong> desconta custo, taxas, embalagem e imposto configurado. <strong>Margem</strong> e a porcentagem de lucro sobre a venda.</p>
+          <h2 className="text-lg font-black text-[var(--graphite)]">Como ler estes números</h2>
+          <p className="mt-2"><strong>Faturamento bruto</strong> é o total antes de descontos, custos e taxas. <strong>Receita líquida</strong> é o valor vendido após descontos e taxas principais. <strong>CMV</strong> mostra quanto a loja pagou pelos produtos vendidos. <strong>Lucro líquido estimado</strong> desconta custo, taxas, embalagem e imposto configurado. <strong>Margem</strong> é a porcentagem de lucro sobre a venda.</p>
         </section>
       </div>
     </main>

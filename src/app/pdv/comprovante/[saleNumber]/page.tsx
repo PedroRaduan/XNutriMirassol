@@ -32,7 +32,7 @@ export default async function POSReceiptPage({
 
   const whatsappText = encodeURIComponent(`Comprovante XNutri ${sale.saleNumber} - total ${formatCurrency(sale.total)}`);
   const emailSubject = encodeURIComponent(`Comprovante XNutri ${sale.saleNumber}`);
-  const emailBody = encodeURIComponent(`Ola, segue o resumo da venda ${sale.saleNumber}. Total: ${formatCurrency(sale.total)}.`);
+  const emailBody = encodeURIComponent(`Olá, segue o resumo da venda ${sale.saleNumber}. Total: ${formatCurrency(sale.total)}.`);
 
   return (
     <main className="min-h-screen bg-[#f4f4f5] py-6 print:bg-white print:py-0">
@@ -64,8 +64,8 @@ export default async function POSReceiptPage({
           <section className="grid gap-2 border-b border-dashed border-[var(--line)] py-4 text-sm">
             <div className="flex justify-between gap-3"><span>Venda</span><strong>{sale.saleNumber}</strong></div>
             <div className="flex justify-between gap-3"><span>Data</span><strong>{formatDate(sale.createdAt)}</strong></div>
-            <div className="flex justify-between gap-3"><span>Funcionario</span><strong>{sale.cashier.name ?? sale.cashier.email}</strong></div>
-            <div className="flex justify-between gap-3"><span>Cliente</span><strong>{sale.customer?.name ?? sale.customer?.email ?? "Nao identificado"}</strong></div>
+            <div className="flex justify-between gap-3"><span>Funcionário</span><strong>{sale.cashier.name ?? sale.cashier.email}</strong></div>
+            <div className="flex justify-between gap-3"><span>Cliente</span><strong>{sale.customer?.name ?? sale.customer?.email ?? "Não identificado"}</strong></div>
             <div className="flex justify-between gap-3"><span>Status</span><strong>{sale.status}</strong></div>
           </section>
 
@@ -85,11 +85,11 @@ export default async function POSReceiptPage({
                   </p>
                   {sale.status !== "CANCELED" && sale.status !== "REFUNDED" && item.returnedQuantity < item.quantity && (
                     <details className="mt-2 rounded-md border border-[#ffd8d1] bg-[#fff8f7] p-2 print:hidden">
-                      <summary className="cursor-pointer text-xs font-black text-[var(--brand-dark)]">Registrar devolucao deste item</summary>
+                      <summary className="cursor-pointer text-xs font-black text-[var(--brand-dark)]">Registrar devolução deste item</summary>
                       <form action={returnPOSSaleItemFromForm} className="mt-2 grid gap-2 sm:grid-cols-[90px_1fr_auto]">
                         <input type="hidden" name="saleItemId" value={item.id} />
                         <input className="field" name="quantity" type="number" min={1} max={item.quantity - item.returnedQuantity} defaultValue={1} />
-                        <input className="field" name="reason" placeholder="Motivo da devolucao" required />
+                        <input className="field" name="reason" placeholder="Motivo da devolução" required />
                         <button className="btn btn-secondary border-red-200 bg-white text-red-700">Devolver</button>
                       </form>
                     </details>
@@ -119,8 +119,8 @@ export default async function POSReceiptPage({
           </section>
 
           <footer className="pt-4 text-center text-sm font-semibold text-[var(--muted)]">
-            Obrigado pela compra. Performance, saude e estilo em um so lugar.
-            <p className="mt-2 text-xs">Este comprovante nao substitui documento fiscal.</p>
+            Obrigado pela compra. Performance, saúde e estilo em um só lugar.
+            <p className="mt-2 text-xs">Este comprovante não substitui documento fiscal.</p>
           </footer>
         </article>
       </div>

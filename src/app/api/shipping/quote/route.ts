@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ quotes });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Nao foi possivel calcular o frete." },
+      { error: error instanceof Error ? error.message : "Não foi possível calcular o frete." },
       { status: 400 },
     );
   }

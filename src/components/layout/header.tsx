@@ -1,26 +1,44 @@
 import Link from "next/link";
-import { Menu, Search, ShoppingCart, UserRound } from "lucide-react";
+import { Menu, MessageCircle, Search, ShoppingCart, Store, Truck, UserRound } from "lucide-react";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
 import { getCurrentUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/db/prisma";
 import { getCartForDisplay } from "@/lib/ecommerce/cart";
+import { getWhatsAppHref } from "@/lib/whatsapp";
 
 const nav = [
-  { href: "/catalogo", label: "Catalogo" },
+  { href: "/catalogo", label: "Catálogo" },
   { href: "/catalogo?category=suplementos", label: "Suplementos" },
-  { href: "/catalogo?category=roupas-fitness", label: "Roupas Fitness" },
+  { href: "/catalogo?category=roupas-fitness", label: "Moda fitness" },
   { href: "/retirada-na-loja", label: "Retirada" },
   { href: "/contato", label: "Contato" },
 ];
 
+type SettingValue = Record<string, string | number | boolean | null | undefined>;
+
+function getText(value: unknown, key: string, fallback = "") {
+  if (!value || typeof value !== "object") return fallback;
+  const item = (value as SettingValue)[key];
+  return item === undefined || item === null ? fallback : String(item);
+}
+
 export async function Header() {
-  const [user, cart] = await Promise.all([getCurrentUser(), getCartForDisplay()]);
+  const [user, cart, storeSetting] = await Promise.all([
+    getCurrentUser(),
+    getCartForDisplay(),
+    prisma.storeSetting.findUnique({ where: { key: "store" } }).catch(() => null),
+  ]);
+  const whatsappHref = getWhatsAppHref(getText(storeSetting?.value, "whatsapp", "5517997000000"));
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/70 bg-white/95 shadow-[0_10px_30px_rgb(17_17_17_/_6%)] backdrop-blur-xl">
-      <div className="hidden bg-[var(--ink)] text-white sm:block">
-        <div className="container-x flex items-center justify-between gap-4 py-2 text-xs font-medium">
-          <span>XNutri Mirassol-SP</span>
-          <span className="hidden text-white/75 sm:inline">Entrega regional e retirada na loja em Mirassol</span>
+      <div className="hidden border-b border-[#ffd2ca] bg-[#fff7f6] text-[var(--brand-dark)] sm:block">
+        <div className="container-x flex items-center justify-between gap-4 py-2 text-xs font-black">
+          <span className="inline-flex items-center gap-2"><Store size={14} /> XNutri Mirassol/SP</span>
+          <span className="hidden items-center gap-2 text-[var(--graphite)] lg:inline-flex">
+            <Truck size={14} className="text-[var(--brand)]" />
+            Entrega regional, retirada na loja e atendimento pelo WhatsApp
+          </span>
         </div>
       </div>
 
@@ -40,8 +58,13 @@ export async function Header() {
 
         <form action="/catalogo" className="ml-auto hidden w-full max-w-xs items-center gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] px-3 py-2.5 shadow-inner xl:max-w-sm md:flex">
           <Search size={18} className="text-[var(--muted)]" />
-          <input name="q" placeholder="Buscar suplementos ou roupas..." className="w-full bg-transparent text-sm outline-none" />
+          <input name="q" placeholder="Buscar suplementos ou moda fitness..." className="w-full bg-transparent text-sm outline-none" />
         </form>
+
+        <a href={whatsappHref} target="_blank" rel="noreferrer" className="btn btn-secondary hidden px-3 xl:inline-flex" aria-label="Falar no WhatsApp">
+          <MessageCircle size={18} />
+          WhatsApp
+        </a>
 
         <Link href={user ? "/cliente" : "/login"} className="btn btn-secondary hidden px-3 md:inline-flex" aria-label="Minha conta">
           <UserRound size={18} />
@@ -74,6 +97,9 @@ export async function Header() {
               <Link href={user ? "/cliente" : "/login"} className="rounded-md px-3 py-2.5 text-sm font-black text-[var(--graphite)] hover:bg-[#fff0ee] hover:text-[var(--brand)]">
                 Minha conta
               </Link>
+              <a href={whatsappHref} target="_blank" rel="noreferrer" className="rounded-md px-3 py-2.5 text-sm font-black text-[var(--graphite)] hover:bg-[#fff0ee] hover:text-[var(--brand)]">
+                Falar no WhatsApp
+              </a>
             </nav>
           </div>
         </details>
@@ -82,7 +108,7 @@ export async function Header() {
       <form action="/catalogo" className="container-x flex pb-3 md:hidden">
         <div className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] px-3 shadow-inner">
           <Search size={17} className="text-[var(--brand)]" />
-          <input name="q" placeholder="Buscar suplementos ou roupas..." className="w-full bg-transparent text-[16px] outline-none" />
+          <input name="q" placeholder="Buscar suplementos ou moda fitness..." className="w-full bg-transparent text-[16px] outline-none" />
         </div>
       </form>
     </header>

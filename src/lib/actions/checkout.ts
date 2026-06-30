@@ -31,7 +31,7 @@ export async function submitCheckout(_: CheckoutActionState, formData: FormData)
 
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Nao foi possivel finalizar o pedido.",
+      message: error instanceof Error ? error.message : "Não foi possível finalizar o pedido.",
     };
   }
 

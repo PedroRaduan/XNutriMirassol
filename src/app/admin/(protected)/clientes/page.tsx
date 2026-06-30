@@ -60,9 +60,9 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                 </div>
                 <div className="grid gap-1 text-sm font-bold text-[var(--muted)] md:text-right">
                   <span>{customer.orders.length} pedido(s)</span>
-                  <span>{customer.addresses.length} endereco(s)</span>
+                  <span>{customer.addresses.length} endereço(s)</span>
                   <span>{formatCurrency(total)} gasto total</span>
-                  <span>Ultimo pedido: {lastOrder ? formatDate(lastOrder.createdAt) : "sem pedido"}</span>
+                  <span>Último pedido: {lastOrder ? formatDate(lastOrder.createdAt) : "sem pedido"}</span>
                 </div>
               </div>
 
@@ -85,7 +85,7 @@ export default async function AdminCustomersPage({ searchParams }: { searchParam
                     </div>
                   </section>
                   <section>
-                    <h2 className="font-black">Enderecos</h2>
+                    <h2 className="font-black">Endereços</h2>
                     <div className="mt-3 grid gap-2">
                       {customer.addresses.map((address) => (
                         <div key={address.id} className="rounded-lg border border-[var(--line)] p-3 text-sm text-[var(--muted)]">

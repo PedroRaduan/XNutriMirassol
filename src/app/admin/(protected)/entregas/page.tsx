@@ -26,11 +26,11 @@ function ShippingMethodForm({ method }: { method?: Awaited<ReturnType<typeof get
           <option value="PICKUP">Retirada</option>
         </select>
         <input className="field" name="basePrice" type="number" min={0} step="0.01" placeholder="Valor" defaultValue={method ? Number(method.basePrice) : 0} />
-        <input className="field" name="freeAbove" type="number" min={0} step="0.01" placeholder="Gratis acima de" defaultValue={method?.freeAbove ? Number(method.freeAbove) : ""} />
+        <input className="field" name="freeAbove" type="number" min={0} step="0.01" placeholder="Grátis acima de" defaultValue={method?.freeAbove ? Number(method.freeAbove) : ""} />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <input className="field" name="deliveryDaysMin" type="number" min={0} placeholder="Prazo minimo" defaultValue={method?.deliveryDaysMin ?? 1} />
-        <input className="field" name="deliveryDaysMax" type="number" min={0} placeholder="Prazo maximo" defaultValue={method?.deliveryDaysMax ?? 3} />
+        <input className="field" name="deliveryDaysMin" type="number" min={0} placeholder="Prazo mínimo" defaultValue={method?.deliveryDaysMin ?? 1} />
+        <input className="field" name="deliveryDaysMax" type="number" min={0} placeholder="Prazo máximo" defaultValue={method?.deliveryDaysMax ?? 3} />
       </div>
       <textarea
         className="field min-h-28 font-mono text-sm"
@@ -55,7 +55,7 @@ function PickupForm({ pickup }: { pickup?: Awaited<ReturnType<typeof getPickupLo
       <div className="grid gap-3 sm:grid-cols-2">
         <input className="field" name="zipCode" placeholder="CEP" defaultValue={pickup?.zipCode} required />
         <input className="field" name="street" placeholder="Rua" defaultValue={pickup?.street} required />
-        <input className="field" name="number" placeholder="Numero" defaultValue={pickup?.number} required />
+        <input className="field" name="number" placeholder="Número" defaultValue={pickup?.number} required />
         <input className="field" name="complement" placeholder="Complemento" defaultValue={pickup?.complement ?? ""} />
         <input className="field" name="district" placeholder="Bairro" defaultValue={pickup?.district} required />
         <input className="field" name="city" placeholder="Cidade" defaultValue={pickup?.city ?? "Mirassol"} required />
@@ -132,7 +132,7 @@ export default async function AdminShippingPage() {
 
           <div className="surface p-5">
             <h2 className="text-xl font-black">Pontos de retirada</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">Pedidos com retirada ficam sem frete e podem ir para Aguardando retirada apos pagamento.</p>
+            <p className="mt-1 text-sm text-[var(--muted)]">Pedidos com retirada ficam sem frete e podem ir para Aguardando retirada após pagamento.</p>
           </div>
 
           {pickups.map((pickup) => (

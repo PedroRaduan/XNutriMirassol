@@ -96,7 +96,7 @@ function Bars({ data, money = false }: { data: Array<{ label: string; value: num
           </div>
         </div>
       ))}
-      {data.length === 0 && <p className="text-sm text-[var(--muted)]">Sem dados no periodo.</p>}
+      {data.length === 0 && <p className="text-sm text-[var(--muted)]">Sem dados no período.</p>}
     </div>
   );
 }
@@ -214,7 +214,7 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
     const rows: Array<{ type: string; text: string }> = [];
     const productCost = toNumber(product.costPrice ?? 0);
     if (productCost <= 0) {
-      rows.push({ type: "Custo nao cadastrado", text: `${product.name} esta sem custo do produto.` });
+      rows.push({ type: "Custo não cadastrado", text: `${product.name} está sem custo do produto.` });
     }
     const finance = calculateUnitFinance({
       price: toNumber(product.price),
@@ -223,14 +223,14 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
       taxRate: toNumber(product.estimatedTaxRate ?? settings.estimatedTaxRate),
     });
     if (productCost > 0 && finance.margin < settings.lowMarginAlert) {
-      rows.push({ type: "Margem baixa", text: `${product.name} esta com margem estimada de ${finance.margin.toFixed(2)}%.` });
+      rows.push({ type: "Margem baixa", text: `${product.name} está com margem estimada de ${finance.margin.toFixed(2)}%.` });
     }
     if (productCost > 0 && finance.netProfit < 0) {
-      rows.push({ type: "Prejuizo", text: `${product.name} tem lucro estimado negativo por unidade.` });
+      rows.push({ type: "Prejuízo", text: `${product.name} tem lucro estimado negativo por unidade.` });
     }
     for (const variant of product.variants) {
       if (variant.costPrice === null) {
-        rows.push({ type: "Custo de variacao", text: `${product.name} / ${variant.name} esta sem custo especifico.` });
+        rows.push({ type: "Custo de variação", text: `${product.name} / ${variant.name} está sem custo específico.` });
       }
     }
     return rows;
@@ -256,7 +256,7 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
       <div className="admin-page-heading mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <span className="admin-eyebrow">Lucro gerencial</span>
-          <h1 className="mt-2 text-3xl font-black md:text-4xl">Analise financeira</h1>
+          <h1 className="mt-2 text-3xl font-black md:text-4xl">Análise financeira</h1>
           <p className="admin-page-copy mt-2 max-w-3xl text-sm">
             Veja quanto a loja vendeu e quanto provavelmente lucrou, usando custos, taxas, descontos, frete pago pela loja, embalagem e impostos estimados.
           </p>
@@ -269,10 +269,10 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
       <form className="surface mb-5 grid gap-3 p-4 md:grid-cols-[220px_1fr_1fr_auto]">
         <select className="field" name="period" defaultValue={period}>
           <option value="today">Hoje</option>
-          <option value="7d">Ultimos 7 dias</option>
-          <option value="30d">Ultimos 30 dias</option>
-          <option value="month">Mes atual</option>
-          <option value="last-month">Mes passado</option>
+          <option value="7d">Últimos 7 dias</option>
+          <option value="30d">Últimos 30 dias</option>
+          <option value="month">Mês atual</option>
+          <option value="last-month">Mês passado</option>
           <option value="year">Ano atual</option>
           <option value="custom">Personalizado</option>
         </select>
@@ -282,17 +282,17 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
       </form>
 
       <div className="mb-5 rounded-lg border border-[var(--line)] bg-white px-4 py-3 text-sm font-bold text-[var(--muted)]">
-        Periodo analisado: {formatDate(from)} ate {formatDate(to)}
+        Período analisado: {formatDate(from)} até {formatDate(to)}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Metric label="Faturamento bruto" value={formatCurrency(grossRevenue)} hint="Total vendido antes de descontos, custos e taxas." />
-        <Metric label="Receita liquida" value={formatCurrency(netRevenue)} hint="Valor depois de descontos e taxas principais." />
+        <Metric label="Receita líquida" value={formatCurrency(netRevenue)} hint="Valor depois de descontos e taxas principais." />
         <Metric label="Custo dos produtos vendidos" value={formatCurrency(productsCost)} hint="Quanto a loja pagou pelos produtos vendidos." />
-        <Metric label="Lucro liquido estimado" value={formatCurrency(netProfit)} hint="Venda menos custos, taxas, frete, embalagem e imposto estimado." />
+        <Metric label="Lucro líquido estimado" value={formatCurrency(netProfit)} hint="Venda menos custos, taxas, frete, embalagem e imposto estimado." />
         <Metric label="Lucro bruto" value={formatCurrency(grossProfit)} hint="Venda menos custo do produto." />
-        <Metric label="Margem media" value={`${averageMargin.toFixed(2)}%`} hint="Percentual de lucro sobre a receita." />
-        <Metric label="Ticket medio" value={formatCurrency(averageTicket)} hint="Faturamento dividido por pedidos pagos." />
+        <Metric label="Margem média" value={`${averageMargin.toFixed(2)}%`} hint="Percentual de lucro sobre a receita." />
+        <Metric label="Ticket médio" value={formatCurrency(averageTicket)} hint="Faturamento dividido por pedidos pagos." />
         <Metric label="Descontos e taxas" value={formatCurrency(totalDiscounts + totalFees)} hint={`${formatCurrency(totalDiscounts)} em descontos e ${formatCurrency(totalFees)} em taxas.`} />
       </div>
 
@@ -300,9 +300,9 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
         <div className="surface p-5">
           <div className="flex items-center gap-2">
             <TrendingUp size={20} className="text-[var(--brand)]" />
-            <h2 className="text-xl font-black">Faturamento x lucro por periodo</h2>
+            <h2 className="text-xl font-black">Faturamento x lucro por período</h2>
           </div>
-          <p className="mt-1 text-sm text-[var(--muted)]">Vermelho: faturamento bruto. Grafite: lucro liquido estimado.</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">Vermelho: faturamento bruto. Grafite: lucro líquido estimado.</p>
           <div className="mt-5">
             <ComparisonBars data={dailyRows.map((item) => ({ label: item.label, gross: item.gross, profit: item.profit }))} />
           </div>
@@ -311,7 +311,7 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
         <AdminActionForm actionName="updateFinancialSettings" className="surface grid gap-3 p-5">
           <div className="flex items-center gap-2">
             <CircleDollarSign size={20} className="text-[var(--brand)]" />
-            <h2 className="text-xl font-black">Configuracoes financeiras</h2>
+            <h2 className="text-xl font-black">Configurações financeiras</h2>
           </div>
           <label className="text-sm font-black">Taxa Mercado Pago %<input className="field mt-2" name="mercadoPagoRate" type="number" step="0.01" min={0} defaultValue={settings.mercadoPagoRate} /></label>
           <label className="text-sm font-black">Taxa fixa por pedido<input className="field mt-2" name="fixedTransactionFee" type="number" step="0.01" min={0} defaultValue={settings.fixedTransactionFee} /></label>
@@ -320,8 +320,8 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <label className="text-sm font-black">Dinheiro %<input className="field mt-2" name="posCashRate" type="number" step="0.01" min={0} defaultValue={settings.posCashRate} /></label>
               <label className="text-sm font-black">Pix %<input className="field mt-2" name="posPixRate" type="number" step="0.01" min={0} defaultValue={settings.posPixRate} /></label>
-              <label className="text-sm font-black">Debito %<input className="field mt-2" name="posDebitRate" type="number" step="0.01" min={0} defaultValue={settings.posDebitRate} /></label>
-              <label className="text-sm font-black">Credito %<input className="field mt-2" name="posCreditRate" type="number" step="0.01" min={0} defaultValue={settings.posCreditRate} /></label>
+              <label className="text-sm font-black">Débito %<input className="field mt-2" name="posDebitRate" type="number" step="0.01" min={0} defaultValue={settings.posDebitRate} /></label>
+              <label className="text-sm font-black">Crédito %<input className="field mt-2" name="posCreditRate" type="number" step="0.01" min={0} defaultValue={settings.posCreditRate} /></label>
               <label className="text-sm font-black sm:col-span-2">Mercado Pago PDV %<input className="field mt-2" name="posMercadoPagoRate" type="number" step="0.01" min={0} defaultValue={settings.posMercadoPagoRate} /></label>
             </div>
             <label className="mt-3 flex items-center gap-2 text-sm font-bold">
@@ -330,8 +330,8 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
             </label>
           </div>
           <label className="text-sm font-black">Imposto estimado %<input className="field mt-2" name="estimatedTaxRate" type="number" step="0.01" min={0} defaultValue={settings.estimatedTaxRate} /></label>
-          <label className="text-sm font-black">Embalagem padrao<input className="field mt-2" name="defaultPackagingCost" type="number" step="0.01" min={0} defaultValue={settings.defaultPackagingCost} /></label>
-          <label className="text-sm font-black">Margem minima desejada %<input className="field mt-2" name="minimumMargin" type="number" step="0.01" min={0} defaultValue={settings.minimumMargin} /></label>
+          <label className="text-sm font-black">Embalagem padrão<input className="field mt-2" name="defaultPackagingCost" type="number" step="0.01" min={0} defaultValue={settings.defaultPackagingCost} /></label>
+          <label className="text-sm font-black">Margem mínima desejada %<input className="field mt-2" name="minimumMargin" type="number" step="0.01" min={0} defaultValue={settings.minimumMargin} /></label>
           <label className="text-sm font-black">Alerta de margem baixa %<input className="field mt-2" name="lowMarginAlert" type="number" step="0.01" min={0} defaultValue={settings.lowMarginAlert} /></label>
           <label className="text-sm font-black">Frete pago pela loja<input className="field mt-2" name="defaultShippingCostPaidByStore" type="number" step="0.01" min={0} defaultValue={settings.defaultShippingCostPaidByStore} /></label>
           <AdminSubmitButton pendingText="Salvando financeiro...">Salvar financeiro</AdminSubmitButton>
@@ -340,7 +340,7 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
 
       <section className="mt-6 grid gap-6 xl:grid-cols-4">
         <div className="surface p-5">
-          <h2 className="text-xl font-black">Receita liquida por periodo</h2>
+          <h2 className="text-xl font-black">Receita líquida por período</h2>
           <div className="mt-4"><Bars money data={dailyRows.map((item) => ({ label: item.label, value: item.netRevenue }))} /></div>
         </div>
         <div className="surface p-5">
@@ -384,7 +384,7 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
           </div>
           <div className="mt-4 grid gap-3">
             {[...productAlerts, ...lowProfitOrders.map((order) => ({
-              type: order.profit < 0 ? "Pedido com prejuizo" : "Pedido com lucro baixo",
+              type: order.profit < 0 ? "Pedido com prejuízo" : "Pedido com lucro baixo",
               text: `${order.orderNumber}: lucro ${formatCurrency(order.profit)}, margem ${order.margin.toFixed(2)}%${order.coupon ? `, cupom ${order.coupon}` : ""}.`,
             }))].slice(0, 14).map((alert, index) => (
               <div key={`${alert.type}-${index}`} className="rounded-lg border border-[#ffd8d1] bg-[#fff8f7] p-3 text-sm">
@@ -401,7 +401,7 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
         <div className="surface p-5">
           <div className="flex items-center gap-2">
             <ReceiptText size={20} className="text-[var(--brand)]" />
-            <h2 className="text-xl font-black">Pedidos mais rentaveis</h2>
+            <h2 className="text-xl font-black">Pedidos mais rentáveis</h2>
           </div>
           <div className="mt-4 grid gap-2">
             {bestOrders.map((order) => (
@@ -410,7 +410,7 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
                 <span>{formatCurrency(order.profit)} · {order.margin.toFixed(2)}%</span>
               </Link>
             ))}
-            {bestOrders.length === 0 && <p className="text-sm text-[var(--muted)]">Sem pedidos pagos no periodo.</p>}
+            {bestOrders.length === 0 && <p className="text-sm text-[var(--muted)]">Sem pedidos pagos no período.</p>}
           </div>
         </div>
       </section>
@@ -418,10 +418,10 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
       <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         {[
           ["Faturamento bruto", "Total vendido antes de descontos, custos e taxas."],
-          ["Receita liquida", "Valor apos descontos e taxas principais."],
+          ["Receita líquida", "Valor após descontos e taxas principais."],
           ["Custo dos produtos vendidos", "Quanto a loja pagou pelos produtos vendidos."],
           ["Lucro bruto", "Venda menos custo do produto."],
-          ["Margem de lucro", "Porcentagem de lucro sobre o preco de venda."],
+          ["Margem de lucro", "Porcentagem de lucro sobre o preço de venda."],
         ].map(([title, text]) => (
           <div key={title} className="rounded-lg border border-[var(--line)] bg-white p-4">
             <Percent size={18} className="text-[var(--brand)]" />
