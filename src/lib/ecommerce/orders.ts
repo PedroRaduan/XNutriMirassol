@@ -12,9 +12,18 @@ import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
 import { createMercadoPagoPreference } from "@/lib/payments/mercado-pago";
 import { marginPercent, roundMoney } from "@/lib/finance/calculations";
 import { getFinancialSettings } from "@/lib/finance/settings";
+import { validateAddressAgainstCep } from "@/lib/shipping/cep";
+
+function formString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : "";
+}
 
 function optionalFormValue(formData: FormData, key: string) {
-  return formData.get(key) ?? undefined;
+  const value = formData.get(key);
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
 }
 
 export async function createOrderFromCheckout(formData: FormData) {
@@ -27,12 +36,12 @@ export async function createOrderFromCheckout(formData: FormData) {
   }
 
   const parsed = checkoutSchema.safeParse({
-    customerName: formData.get("customerName"),
-    customerEmail: formData.get("customerEmail"),
-    customerPhone: formData.get("customerPhone"),
+    customerName: formString(formData, "customerName"),
+    customerEmail: formString(formData, "customerEmail"),
+    customerPhone: formString(formData, "customerPhone"),
     document: optionalFormValue(formData, "document"),
-    shippingType: formData.get("shippingType"),
-    paymentMethod: formData.get("paymentMethod"),
+    shippingType: formString(formData, "shippingType"),
+    paymentMethod: formString(formData, "paymentMethod"),
     zipCode: optionalFormValue(formData, "zipCode"),
     street: optionalFormValue(formData, "street"),
     number: optionalFormValue(formData, "number"),
@@ -50,6 +59,20 @@ export async function createOrderFromCheckout(formData: FormData) {
   }
 
   const data = parsed.data;
+  if (data.shippingType === "DELIVERY") {
+    const addressValidation = await validateAddressAgainstCep({
+      zipCode: data.zipCode,
+      street: data.street,
+      district: data.district,
+      city: data.city,
+      state: data.state,
+    });
+
+    if (!addressValidation.ok) {
+      throw new Error(addressValidation.message);
+    }
+  }
+
   if (cart.id === "demo-cart") {
     const demoOrder = await createDemoOrder({
       customerName: sanitizeText(data.customerName),
@@ -74,7 +97,7 @@ export async function createOrderFromCheckout(formData: FormData) {
         coupon: true,
         items: {
           include: {
-            product: { include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } } },
+            product: { include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, inventory: true } },
             variant: { include: { inventory: true } },
           },
         },
@@ -86,12 +109,11 @@ export async function createOrderFromCheckout(formData: FormData) {
     }
 
     for (const item of dbCart.items) {
-      const available = item.variant?.inventory
-        ? item.variant.inventory.quantity - item.variant.inventory.reserved
-        : 0;
+      const inventory = item.variant?.inventory ?? item.product.inventory.find((entry) => entry.variantId === null) ?? null;
+      const available = inventory ? inventory.quantity - inventory.reserved : 0;
 
       if (available < item.quantity) {
-        throw new Error(`Estoque insuficiente para ${item.product.name}.`);
+        throw new Error(`Estoque insuficiente para ${item.product.name}. Disponivel: ${available} unidade(s).`);
       }
     }
 

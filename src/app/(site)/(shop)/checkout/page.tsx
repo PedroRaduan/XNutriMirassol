@@ -55,6 +55,7 @@ export default async function CheckoutPage() {
           shippingMethodId={cart.shippingMethod?.id}
           pickupLocationId={cart.pickupLocation?.id}
           pickupOptions={pickupOptions.map((pickup) => ({ id: pickup.id, name: pickup.name, instructions: pickup.instructions }))}
+          total={cart.total}
         />
 
         <aside className="order-first self-start lg:sticky lg:top-28 lg:order-none">

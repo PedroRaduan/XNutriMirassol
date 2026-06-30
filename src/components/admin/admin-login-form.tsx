@@ -10,7 +10,7 @@ import { loginSchema } from "@/lib/validations";
 
 const initialState: ActionState = { ok: false, message: "" };
 
-export function AdminLoginForm({ callbackUrl }: { callbackUrl?: string }) {
+export function AdminLoginForm({ callbackUrl, submitLabel = "Entrar no admin" }: { callbackUrl?: string; submitLabel?: string }) {
   const [state, action, pending] = useActionState(loginAdminWithCredentials, initialState);
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -37,7 +37,7 @@ export function AdminLoginForm({ callbackUrl }: { callbackUrl?: string }) {
       )}
       <button className="btn btn-primary min-h-12" disabled={pending} type="submit">
         <LockKeyhole size={18} />
-        {pending ? "Validando..." : "Entrar no admin"}
+        {pending ? "Validando..." : submitLabel}
       </button>
     </form>
   );

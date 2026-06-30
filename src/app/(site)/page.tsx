@@ -1,8 +1,8 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  CheckCircle2,
   Dumbbell,
   MapPin,
   PackageCheck,
@@ -14,11 +14,15 @@ import {
 import { ProductCard } from "@/components/product/product-card";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
 import { prisma } from "@/lib/db/prisma";
-import { subscribeNewsletter } from "@/lib/actions/newsletter";
+import { NewsletterForm } from "@/components/forms/newsletter-form";
 import { fallbackCategories, fallbackProducts, storefrontCategorySlugs } from "@/lib/fallback/catalog";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 type HomeContent = {
   heroTitle?: string;
@@ -289,16 +293,7 @@ export default async function Home() {
             ))}
           </div>
         </div>
-        <form action={subscribeNewsletter} className="surface self-start p-5">
-          <div className="flex items-center gap-2 text-[var(--brand)]">
-            <CheckCircle2 size={20} />
-            <span className="text-xs font-black uppercase">Novidades e ofertas</span>
-          </div>
-          <h2 className="mt-3 text-2xl font-black">Newsletter</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Receba promoções, reposição de estoque e campanhas da XNutri.</p>
-          <input className="field mt-4" type="email" name="email" placeholder="seu@email.com" required />
-          <button className="btn btn-primary mt-3 w-full" type="submit">Cadastrar</button>
-        </form>
+        <NewsletterForm />
       </section>
     </>
   );

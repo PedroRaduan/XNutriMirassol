@@ -101,6 +101,25 @@ function findFallbackProduct(productId: string) {
   return fallbackProducts.find((product) => product.id === productId);
 }
 
+function getFallbackVariantStock(productId: string, variantId?: string) {
+  const product = findFallbackProduct(productId);
+  const variant = product?.variants.find((candidate) => candidate.id === variantId) ?? product?.variants[0];
+
+  return {
+    product,
+    selectedVariantId: variant?.id,
+    availableStock: variant?.inventory?.quantity ?? 0,
+  };
+}
+
+function assertDemoStock(productId: string, variantId: string | undefined, quantity: number) {
+  const { availableStock } = getFallbackVariantStock(productId, variantId);
+
+  if (quantity > availableStock) {
+    throw new Error(`Estoque insuficiente. Disponivel: ${availableStock} unidade(s).`);
+  }
+}
+
 function demoDiscount(code: string | undefined, subtotal: number, shippingCost: number) {
   const coupon = fallbackCoupons.find((item) => item.code === code);
   if (!coupon || subtotal < coupon.minSubtotal) return 0;
@@ -157,17 +176,21 @@ export async function getDemoCartForDisplay() {
 }
 
 export async function addDemoCartItem(productId: string, variantId: string | undefined, quantity: number) {
-  const product = findFallbackProduct(productId);
+  const { product, selectedVariantId, availableStock } = getFallbackVariantStock(productId, variantId);
   if (!product) {
     throw new Error("Produto demo nao encontrado.");
   }
 
-  const selectedVariantId = variantId ?? product.variants[0]?.id;
   const cart = await readDemoCart();
   const existing = cart.items.find((item) => item.productId === productId && item.variantId === selectedVariantId);
+  const nextQuantity = (existing?.quantity ?? 0) + quantity;
+
+  if (nextQuantity > availableStock) {
+    throw new Error(`Estoque insuficiente. Disponivel: ${availableStock} unidade(s).`);
+  }
 
   if (existing) {
-    existing.quantity = Math.min(existing.quantity + quantity, 99);
+    existing.quantity = Math.min(nextQuantity, 99);
   } else {
     cart.items.push({ productId, variantId: selectedVariantId, quantity });
   }
@@ -177,6 +200,12 @@ export async function addDemoCartItem(productId: string, variantId: string | und
 
 export async function updateDemoCartItem(itemId: string, quantity: number) {
   const cart = await readDemoCart();
+  const current = cart.items.find((item) => `${item.productId}:${item.variantId ?? "padrao"}` === itemId);
+
+  if (current && quantity > 0) {
+    assertDemoStock(current.productId, current.variantId, Math.min(quantity, 99));
+  }
+
   cart.items = cart.items
     .map((item) => {
       const id = `${item.productId}:${item.variantId ?? "padrao"}`;
@@ -248,6 +277,12 @@ async function writeDemoOrders(orders: DemoOrder[]) {
 export async function createDemoOrder(data: DemoCheckoutData) {
   const cart = await getDemoCartForDisplay();
   if (!cart.id || cart.items.length === 0) throw new Error("Carrinho vazio.");
+
+  for (const item of cart.items) {
+    if (item.quantity > item.availableStock) {
+      throw new Error(`Estoque insuficiente para ${item.name}. Disponivel: ${item.availableStock} unidade(s).`);
+    }
+  }
 
   const now = new Date();
   const order: DemoOrder = {

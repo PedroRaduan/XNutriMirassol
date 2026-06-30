@@ -33,6 +33,7 @@ export function ShippingEstimator({ subtotal }: { subtotal: number }) {
       const data = await response.json();
 
       if (!response.ok) {
+        setQuotes([]);
         setMessage(data.error ?? "Não foi possível calcular o frete.");
         return;
       }
@@ -47,15 +48,21 @@ export function ShippingEstimator({ subtotal }: { subtotal: number }) {
         <Truck size={18} />
         <h2 className="font-black">Frete</h2>
       </div>
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
         <input
           className="field"
           value={zipCode}
-          onChange={(event) => setZipCode(event.target.value)}
+          onChange={(event) => {
+            setZipCode(event.target.value);
+            setMessage("");
+            setQuotes([]);
+          }}
           placeholder="Digite seu CEP"
           inputMode="numeric"
+          enterKeyHint="search"
+          aria-label="CEP para calcular frete"
         />
-        <button className="btn btn-secondary" type="button" onClick={quote} disabled={loading}>
+        <button className="btn btn-secondary min-w-24 px-3" type="button" onClick={quote} disabled={loading}>
           {loading ? "..." : "Calcular"}
         </button>
       </div>
@@ -72,7 +79,12 @@ export function ShippingEstimator({ subtotal }: { subtotal: number }) {
               formData.set("zipCode", zipCode);
               formData.set("methodId", quoteItem.methodId);
               startSelecting(async () => {
-                await selectShipping(formData);
+                try {
+                  await selectShipping(formData);
+                  setMessage("");
+                } catch (error) {
+                  setMessage(error instanceof Error ? error.message : "Nao foi possivel selecionar este frete.");
+                }
               });
             }}
           >

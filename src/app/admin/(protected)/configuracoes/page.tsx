@@ -1,5 +1,5 @@
+import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton } from "@/components/admin/admin-submit";
-import { updateStoreSettings } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 
@@ -35,7 +35,7 @@ export default async function AdminSettingsPage() {
         </p>
       </div>
 
-      <form action={updateStoreSettings} className="grid gap-6">
+      <AdminActionForm actionName="updateStoreSettings" className="grid gap-6">
         <section className="surface p-5">
           <h2 className="text-xl font-black">Dados da loja</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -75,7 +75,7 @@ export default async function AdminSettingsPage() {
           </p>
           <AdminSubmitButton pendingText="Salvando configurações...">Salvar configurações</AdminSubmitButton>
         </div>
-      </form>
+      </AdminActionForm>
     </div>
   );
 }

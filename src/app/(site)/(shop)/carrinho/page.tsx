@@ -27,7 +27,7 @@ export default async function CartPage() {
   }
 
   return (
-    <div className="container-x py-6 md:py-10">
+    <div className="container-x pb-28 pt-6 md:py-10">
       <div className="rounded-lg bg-[var(--ink)] p-5 text-white shadow-xl md:bg-transparent md:p-0 md:text-[var(--ink)] md:shadow-none">
         <h1 className="text-3xl font-black md:text-4xl">Carrinho</h1>
         <p className="mt-2 text-sm text-white/70 md:text-[var(--muted)]">{cart.items.length} item(ns) selecionado(s)</p>
@@ -74,6 +74,17 @@ export default async function CartPage() {
             <Link href="/checkout" className="btn btn-primary mt-5 w-full">Ir para checkout</Link>
           </div>
         </aside>
+      </div>
+
+      <div className="mobile-sticky-action md:hidden">
+        <div className="min-w-0">
+          <span className="block text-xs font-black uppercase text-[var(--muted)]">Total do carrinho</span>
+          <strong className="block truncate text-lg">{formatCurrency(cart.total)}</strong>
+          <span className="mt-1 block text-[11px] font-bold text-[var(--muted)]">{cart.count} item(ns)</span>
+        </div>
+        <Link href="/checkout" className="btn btn-primary min-w-[156px] px-4">
+          Checkout
+        </Link>
       </div>
     </div>
   );

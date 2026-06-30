@@ -6,6 +6,7 @@ import slugify from "slugify";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
+import { isDatabaseUnavailable } from "@/lib/db/errors";
 import { decrementInventoryForOrder } from "@/lib/ecommerce/inventory";
 import { assertSameOrigin, getClientIp } from "@/lib/security/request";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
@@ -125,6 +126,9 @@ export async function upsertProduct(formData: FormData) {
     name: formData.get("name"),
     slug: emptyToUndefined(formData.get("slug")),
     sku: formData.get("sku"),
+    barcode: emptyToUndefined(formData.get("barcode")),
+    ean: emptyToUndefined(formData.get("ean")),
+    internalCode: emptyToUndefined(formData.get("internalCode")),
     shortDescription: formData.get("shortDescription"),
     description: formData.get("description"),
     price: formData.get("price"),
@@ -167,6 +171,9 @@ export async function upsertProduct(formData: FormData) {
         name: sanitizeText(data.name),
         slug: productSlug,
         sku: sanitizeText(data.sku),
+        barcode: data.barcode ? sanitizeText(data.barcode) : null,
+        ean: data.ean ? sanitizeText(data.ean) : null,
+        internalCode: data.internalCode ? sanitizeText(data.internalCode) : null,
         shortDescription: sanitizeText(data.shortDescription),
         description: sanitizeText(data.description),
         price: data.price,
@@ -312,6 +319,9 @@ export async function upsertProductVariant(formData: FormData) {
     productId: formData.get("productId"),
     name: formData.get("name"),
     sku: formData.get("sku"),
+    barcode: emptyToUndefined(formData.get("barcode")),
+    ean: emptyToUndefined(formData.get("ean")),
+    internalCode: emptyToUndefined(formData.get("internalCode")),
     attributes: formData.get("attributes"),
     priceAdjustment: emptyToUndefined(formData.get("priceAdjustment")),
     costPrice: emptyToUndefined(formData.get("costPrice")),
@@ -336,6 +346,9 @@ export async function upsertProductVariant(formData: FormData) {
             data: {
               name: sanitizeText(data.name),
               sku: sanitizeText(data.sku),
+              barcode: data.barcode ? sanitizeText(data.barcode) : null,
+              ean: data.ean ? sanitizeText(data.ean) : null,
+              internalCode: data.internalCode ? sanitizeText(data.internalCode) : null,
               attributes: parseAttributes(data.attributes),
               priceAdjustment: data.priceAdjustment ?? 0,
               costPrice: data.costPrice,
@@ -348,6 +361,9 @@ export async function upsertProductVariant(formData: FormData) {
               productId: data.productId,
               name: sanitizeText(data.name),
               sku: sanitizeText(data.sku),
+              barcode: data.barcode ? sanitizeText(data.barcode) : null,
+              ean: data.ean ? sanitizeText(data.ean) : null,
+              internalCode: data.internalCode ? sanitizeText(data.internalCode) : null,
               attributes: parseAttributes(data.attributes),
               priceAdjustment: data.priceAdjustment ?? 0,
               costPrice: data.costPrice,
@@ -971,6 +987,12 @@ export async function updateFinancialSettings(formData: FormData) {
   const parsed = financialSettingsAdminSchema.safeParse({
     mercadoPagoRate: formData.get("mercadoPagoRate") || 0,
     fixedTransactionFee: formData.get("fixedTransactionFee") || 0,
+    posCashRate: formData.get("posCashRate") || 0,
+    posPixRate: formData.get("posPixRate") || 0,
+    posDebitRate: formData.get("posDebitRate") || 0,
+    posCreditRate: formData.get("posCreditRate") || 0,
+    posMercadoPagoRate: formData.get("posMercadoPagoRate") || 0,
+    allowNegativeStock: formData.get("allowNegativeStock") === "on",
     estimatedTaxRate: formData.get("estimatedTaxRate") || 0,
     defaultPackagingCost: formData.get("defaultPackagingCost") || 0,
     minimumMargin: formData.get("minimumMargin") || 0,
@@ -1031,4 +1053,100 @@ export async function updateHomeContent(formData: FormData) {
   });
   revalidatePath("/admin/banners");
   revalidatePath("/");
+}
+
+export type AdminActionName =
+  | "upsertProduct"
+  | "archiveProduct"
+  | "upsertProductVariant"
+  | "deactivateProductVariant"
+  | "upsertCategory"
+  | "deactivateCategory"
+  | "adjustInventory"
+  | "upsertCoupon"
+  | "deactivateCoupon"
+  | "upsertBanner"
+  | "deactivateBanner"
+  | "updateOrderStatus"
+  | "upsertShippingMethod"
+  | "deactivateShippingMethod"
+  | "upsertPickupLocation"
+  | "updateStoreSettings"
+  | "updateFinancialSettings"
+  | "updateHomeContent";
+
+export type AdminActionState = {
+  ok: boolean;
+  message: string;
+};
+
+const adminActionHandlers: Record<AdminActionName, (formData: FormData) => Promise<unknown>> = {
+  upsertProduct,
+  archiveProduct,
+  upsertProductVariant,
+  deactivateProductVariant,
+  upsertCategory,
+  deactivateCategory,
+  adjustInventory,
+  upsertCoupon,
+  deactivateCoupon,
+  upsertBanner,
+  deactivateBanner,
+  updateOrderStatus,
+  upsertShippingMethod,
+  deactivateShippingMethod,
+  upsertPickupLocation,
+  updateStoreSettings,
+  updateFinancialSettings,
+  updateHomeContent,
+};
+
+const adminSuccessMessages: Record<AdminActionName, string> = {
+  upsertProduct: "Produto salvo com sucesso.",
+  archiveProduct: "Produto arquivado com sucesso.",
+  upsertProductVariant: "Variação salva com sucesso.",
+  deactivateProductVariant: "Variação desativada com sucesso.",
+  upsertCategory: "Categoria salva com sucesso.",
+  deactivateCategory: "Categoria desativada com sucesso.",
+  adjustInventory: "Estoque ajustado com sucesso.",
+  upsertCoupon: "Cupom salvo com sucesso.",
+  deactivateCoupon: "Cupom desativado com sucesso.",
+  upsertBanner: "Banner salvo com sucesso.",
+  deactivateBanner: "Banner desativado com sucesso.",
+  updateOrderStatus: "Status do pedido atualizado.",
+  upsertShippingMethod: "Método de entrega salvo com sucesso.",
+  deactivateShippingMethod: "Método de entrega desativado.",
+  upsertPickupLocation: "Ponto de retirada salvo com sucesso.",
+  updateStoreSettings: "Configurações da loja salvas.",
+  updateFinancialSettings: "Configurações financeiras salvas.",
+  updateHomeContent: "Conteúdo da home atualizado.",
+};
+
+function adminErrorMessage(error: unknown) {
+  if (isDatabaseUnavailable(error)) {
+    return "Banco de dados indisponível. Confira o PostgreSQL e tente novamente.";
+  }
+
+  if (error instanceof SyntaxError) {
+    return "Há um campo com formato inválido. Revise atributos e dados estruturados.";
+  }
+
+  if (error instanceof Error && error.name === "Error" && error.message.length <= 220) {
+    return error.message;
+  }
+
+  return "Não foi possível concluir esta alteração. Revise os dados e tente novamente.";
+}
+
+export async function runAdminAction(
+  actionName: AdminActionName,
+  _: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  try {
+    await adminActionHandlers[actionName](formData);
+    return { ok: true, message: adminSuccessMessages[actionName] };
+  } catch (error) {
+    return { ok: false, message: adminErrorMessage(error) };
+  }
 }

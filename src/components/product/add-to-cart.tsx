@@ -16,30 +16,37 @@ type Props = {
 export function AddToCartButton({ productId, variantId, quantity = 1, className = "btn btn-primary w-full" }: Props) {
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<"idle" | "added" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const Icon = feedback === "added" ? CheckCircle2 : feedback === "error" ? XCircle : ShoppingCart;
-  const label = pending ? "Adicionando..." : feedback === "added" ? "Adicionado" : feedback === "error" ? "Tente novamente" : "Adicionar";
+  const errorLabel = errorMessage.toLowerCase().includes("estoque") ? "Sem estoque" : "Tente novamente";
+  const label = pending ? "Adicionando..." : feedback === "added" ? "Adicionado" : feedback === "error" ? errorLabel : "Adicionar";
 
   return (
     <button
       type="button"
       className={cn(className, feedback === "added" && "bg-[var(--ink)] shadow-[0_14px_30px_rgb(11_11_13_/_22%)]")}
       disabled={pending}
+      title={feedback === "error" ? errorMessage : undefined}
       onClick={() => {
         setFeedback("idle");
+        setErrorMessage("");
         const formData = new FormData();
         formData.set("productId", productId);
         if (variantId) formData.set("variantId", variantId);
         formData.set("quantity", String(quantity));
         startTransition(async () => {
-          try {
-            await addToCart(formData);
+          const result = await addToCart(formData);
+
+          if (result.ok) {
             setFeedback("added");
             window.setTimeout(() => setFeedback("idle"), 2200);
-          } catch {
-            setFeedback("error");
-            window.setTimeout(() => setFeedback("idle"), 2600);
+            return;
           }
+
+          setFeedback("error");
+          setErrorMessage(result.message);
+          window.setTimeout(() => setFeedback("idle"), 2600);
         });
       }}
       aria-live="polite"

@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowUpRight, DollarSign, Package, ShoppingBag, TicketPercent, Users, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, DollarSign, Package, ShoppingBag, Store, TicketPercent, Users, type LucideIcon } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { getDemoOrders } from "@/lib/ecommerce/demo-cart";
 import { fallbackProducts } from "@/lib/fallback/catalog";
-import { formatCurrency, statusBadgeClass, statusLabel } from "@/lib/utils";
+import { formatCurrency, statusBadgeClass, statusLabel, toNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +61,8 @@ export default async function AdminDashboardPage() {
   let pendingOrders;
   let paidOrders;
   let finance;
+  let posFinance;
+  let posMonthSales;
   let activeCoupons;
   let topProducts;
   let dailySales;
@@ -82,6 +84,8 @@ export default async function AdminDashboardPage() {
     pendingOrders = demoOrders.length;
     paidOrders = 0;
     finance = { _sum: { netProfit: total * 0.28, netRevenue: total * 0.94, productsCost: total * 0.58 } };
+    posFinance = { _sum: { total: total * 0.22, netProfit: total * 0.08, costTotal: total * 0.13, feeTotal: total * 0.01 } };
+    posMonthSales = 2;
     activeCoupons = 3;
     topProducts = fallbackProducts.slice(0, 5).map((product, index) => ({
       productName: product.name,
@@ -97,45 +101,90 @@ export default async function AdminDashboardPage() {
       { label: "Roupas Fitness", value: BigInt(9) },
     ];
   } else {
-    orders = await prisma.order.findMany({ include: { payments: true }, orderBy: { createdAt: "desc" }, take: 8 });
-    productCount = await prisma.product.count({ where: { status: { not: "ARCHIVED" } } });
-    customerCount = await prisma.user.count({ where: { role: "CLIENT" } });
-    const inventoryItems = await prisma.inventory.findMany({ select: { quantity: true, lowStockThreshold: true } });
+    const [
+      storedOrders,
+      storedProductCount,
+      storedCustomerCount,
+      inventoryItems,
+      storedRevenue,
+      storedMonthSales,
+      storedPendingOrders,
+      storedPaidOrders,
+      storedFinance,
+      storedPOSFinance,
+      storedPOSMonthSales,
+      storedActiveCoupons,
+      storedTopProducts,
+      storedDailySales,
+      storedCategorySales,
+    ] = await Promise.all([
+      prisma.order.findMany({ include: { payments: true }, orderBy: { createdAt: "desc" }, take: 8 }),
+      prisma.product.count({ where: { status: { not: "ARCHIVED" } } }),
+      prisma.user.count({ where: { role: "CLIENT" } }),
+      prisma.inventory.findMany({ select: { quantity: true, lowStockThreshold: true } }),
+      prisma.order.aggregate({ where: { status: { in: [...paidStatuses] } }, _sum: { total: true } }),
+      prisma.order.count({ where: { createdAt: { gte: startOfMonth }, status: { in: [...paidStatuses] } } }),
+      prisma.order.count({ where: { status: "PENDING" } }),
+      prisma.order.count({ where: { status: { in: [...paidStatuses] } } }),
+      prisma.order.aggregate({
+        where: { status: { in: [...paidStatuses] } },
+        _sum: { netProfit: true, netRevenue: true, productsCost: true },
+      }),
+      prisma.pOSSale.aggregate({
+        where: { status: { in: ["COMPLETED", "PARTIALLY_REFUNDED"] } },
+        _sum: { total: true, netProfit: true, costTotal: true, feeTotal: true },
+      }),
+      prisma.pOSSale.count({
+        where: { createdAt: { gte: startOfMonth }, status: { in: ["COMPLETED", "PARTIALLY_REFUNDED"] } },
+      }),
+      prisma.coupon.count({ where: { active: true } }),
+      prisma.orderItem.groupBy({ by: ["productName"], _sum: { quantity: true }, orderBy: { _sum: { quantity: "desc" } }, take: 5 }),
+      prisma.$queryRaw<Array<{ label: string; value: bigint }>>`
+        SELECT to_char("createdAt", 'DD/MM') AS label, count(*)::bigint AS value
+        FROM "orders"
+        WHERE "createdAt" >= NOW() - INTERVAL '14 days'
+        GROUP BY label
+        ORDER BY min("createdAt") ASC
+      `,
+      prisma.$queryRaw<Array<{ label: string; value: bigint }>>`
+        SELECT c.name AS label, COALESCE(sum(oi.quantity), 0)::bigint AS value
+        FROM "order_items" oi
+        JOIN "products" p ON p.id = oi."productId"
+        JOIN "categories" c ON c.id = p."categoryId"
+        GROUP BY c.name
+        ORDER BY value DESC
+        LIMIT 5
+      `,
+    ]);
+
+    orders = storedOrders;
+    productCount = storedProductCount;
+    customerCount = storedCustomerCount;
     lowStockCount = inventoryItems.filter((item) => item.quantity <= item.lowStockThreshold).length;
-    revenue = await prisma.order.aggregate({ where: { status: { in: [...paidStatuses] } }, _sum: { total: true } });
-    monthSales = await prisma.order.count({ where: { createdAt: { gte: startOfMonth }, status: { in: [...paidStatuses] } } });
-    pendingOrders = await prisma.order.count({ where: { status: "PENDING" } });
-    paidOrders = await prisma.order.count({ where: { status: { in: [...paidStatuses] } } });
-    finance = await prisma.order.aggregate({
-      where: { status: { in: [...paidStatuses] } },
-      _sum: { netProfit: true, netRevenue: true, productsCost: true },
-    });
-    activeCoupons = await prisma.coupon.count({ where: { active: true } });
-    topProducts = await prisma.orderItem.groupBy({ by: ["productName"], _sum: { quantity: true }, orderBy: { _sum: { quantity: "desc" } }, take: 5 });
-    dailySales = await prisma.$queryRaw<Array<{ label: string; value: bigint }>>`
-      SELECT to_char("createdAt", 'DD/MM') AS label, count(*)::bigint AS value
-      FROM "orders"
-      WHERE "createdAt" >= NOW() - INTERVAL '14 days'
-      GROUP BY label
-      ORDER BY min("createdAt") ASC
-    `;
-    categorySales = await prisma.$queryRaw<Array<{ label: string; value: bigint }>>`
-      SELECT c.name AS label, COALESCE(sum(oi.quantity), 0)::bigint AS value
-      FROM "order_items" oi
-      JOIN "products" p ON p.id = oi."productId"
-      JOIN "categories" c ON c.id = p."categoryId"
-      GROUP BY c.name
-      ORDER BY value DESC
-      LIMIT 5
-    `;
+    revenue = storedRevenue;
+    monthSales = storedMonthSales;
+    pendingOrders = storedPendingOrders;
+    paidOrders = storedPaidOrders;
+    finance = storedFinance;
+    posFinance = storedPOSFinance;
+    posMonthSales = storedPOSMonthSales;
+    activeCoupons = storedActiveCoupons;
+    topProducts = storedTopProducts;
+    dailySales = storedDailySales;
+    categorySales = storedCategorySales;
   }
 
+  const onlineRevenue = toNumber(revenue._sum.total ?? 0);
+  const posRevenue = toNumber(posFinance._sum.total ?? 0);
+  const onlineNetRevenue = toNumber(finance._sum.netRevenue ?? 0);
+  const posNetRevenue = Math.max(posRevenue - toNumber(posFinance._sum.feeTotal ?? 0), 0);
   const stats = [
-    { label: "Faturamento total", value: formatCurrency(revenue._sum.total ?? 0), Icon: DollarSign, hint: "Pedidos pagos e em andamento" },
-    { label: "Lucro estimado", value: formatCurrency(finance._sum.netProfit ?? 0), Icon: DollarSign, hint: "Analise gerencial, nao contabil" },
-    { label: "Receita liquida", value: formatCurrency(finance._sum.netRevenue ?? 0), Icon: DollarSign, hint: "Apos descontos e taxas principais" },
-    { label: "Custo vendido", value: formatCurrency(finance._sum.productsCost ?? 0), Icon: Package, hint: "Custo dos produtos vendidos" },
-    { label: "Vendas do mes", value: monthSales, Icon: ShoppingBag, hint: "Desde o primeiro dia do mes" },
+    { label: "Faturamento total", value: formatCurrency(onlineRevenue + posRevenue), Icon: DollarSign, hint: "Online + PDV presencial" },
+    { label: "Lucro estimado", value: formatCurrency(toNumber(finance._sum.netProfit ?? 0) + toNumber(posFinance._sum.netProfit ?? 0)), Icon: DollarSign, hint: "Analise gerencial, nao contabil" },
+    { label: "Receita liquida", value: formatCurrency(onlineNetRevenue + posNetRevenue), Icon: DollarSign, hint: "Online + PDV apos taxas principais" },
+    { label: "Custo vendido", value: formatCurrency(toNumber(finance._sum.productsCost ?? 0) + toNumber(posFinance._sum.costTotal ?? 0)), Icon: Package, hint: "Custo dos produtos vendidos" },
+    { label: "Vendas do mes", value: monthSales + posMonthSales, Icon: ShoppingBag, hint: "Pedidos online + vendas PDV" },
+    { label: "Vendas PDV", value: posMonthSales, Icon: Store, hint: "Presenciais no mes" },
     { label: "Pedidos para olhar", value: pendingOrders, Icon: AlertTriangle, hint: "Ainda aguardam pagamento ou atualizacao" },
     { label: "Pedidos pagos", value: paidOrders, Icon: DollarSign, hint: "Prontos para separar ou acompanhar" },
     { label: "Estoque baixo", value: lowStockCount, Icon: Package, hint: "Itens que merecem reposicao" },
@@ -144,6 +193,12 @@ export default async function AdminDashboardPage() {
     { label: "Cupons ativos", value: activeCoupons, Icon: TicketPercent, hint: "Disponiveis para checkout" },
   ];
   const quickActions = [
+    {
+      href: "/pdv",
+      title: "Abrir PDV",
+      text: "Venda presencial, receba no caixa e baixe estoque automaticamente.",
+      Icon: Store,
+    },
     {
       href: "/admin/produtos",
       title: "Cadastrar produto",

@@ -1,6 +1,6 @@
 import Image from "next/image";
+import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton, ConfirmSubmitButton } from "@/components/admin/admin-submit";
-import { deactivateCategory, upsertCategory } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 function CategoryForm({ category }: { category?: Awaited<ReturnType<typeof getCategories>>[number] }) {
   return (
-    <form action={upsertCategory} className="grid gap-3">
+    <AdminActionForm actionName="upsertCategory" className="grid gap-3">
       {category && <input type="hidden" name="id" value={category.id} />}
       <div className="grid gap-3 sm:grid-cols-2">
         <input className="field" name="name" placeholder="Nome" defaultValue={category?.name} required />
@@ -24,7 +24,7 @@ function CategoryForm({ category }: { category?: Awaited<ReturnType<typeof getCa
         </label>
       </div>
       <AdminSubmitButton>{category ? "Salvar categoria" : "Criar categoria"}</AdminSubmitButton>
-    </form>
+    </AdminActionForm>
   );
 }
 
@@ -64,10 +64,10 @@ export default async function AdminCategoriesPage() {
                   <p className="mt-2 text-sm text-[var(--muted)]">{category.description}</p>
                   <span className="mt-3 block text-xs font-bold text-[var(--muted)]">{category._count.products} produto(s)</span>
                 </div>
-                <form action={deactivateCategory}>
+                <AdminActionForm actionName="deactivateCategory">
                   <input type="hidden" name="id" value={category.id} />
                   <ConfirmSubmitButton message="Desativar esta categoria?">Desativar</ConfirmSubmitButton>
-                </form>
+                </AdminActionForm>
               </div>
               <details className="border-t border-[var(--line)]">
                 <summary className="cursor-pointer p-4 font-black text-[var(--brand)]">Editar</summary>

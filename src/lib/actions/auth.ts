@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
 import { clearDemoAdminSession, createDemoAdminSession } from "@/lib/auth/demo-admin";
-import { requireUser } from "@/lib/auth/session";
+import { canAccessAdminModule, requireUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { isDatabaseUnavailable } from "@/lib/db/errors";
 import { rateLimit } from "@/lib/security/rate-limit";
@@ -63,6 +63,11 @@ export async function loginAdminWithCredentials(_: ActionState, formData: FormDa
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Dados invalidos." };
   }
 
+  const callbackUrl = String(formData.get("callbackUrl") ?? "/admin");
+  const isSafeAdminTarget = callbackUrl.startsWith("/admin") && callbackUrl !== "/admin/login";
+  const isSafePOSTarget = callbackUrl.startsWith("/pdv") && callbackUrl !== "/pdv/login";
+  const redirectTo = isSafeAdminTarget || isSafePOSTarget ? callbackUrl : "/admin";
+
   let admin;
 
   try {
@@ -78,8 +83,15 @@ export async function loginAdminWithCredentials(_: ActionState, formData: FormDa
     });
   } catch (error) {
     if (isDatabaseUnavailable(error)) {
-      await createDemoAdminSession();
-      redirect("/admin?demo=1");
+      if (process.env.NODE_ENV !== "production") {
+        await createDemoAdminSession();
+        redirect(isSafePOSTarget ? "/pdv?demo=1" : "/admin?demo=1");
+      }
+
+      return {
+        ok: false,
+        message: "Banco de dados indisponível. Confira o PostgreSQL e tente novamente.",
+      };
     }
 
     throw error;
@@ -89,13 +101,14 @@ export async function loginAdminWithCredentials(_: ActionState, formData: FormDa
     return { ok: false, message: "Acesso administrativo nao autorizado." };
   }
 
+  if (isSafePOSTarget && !canAccessAdminModule(admin.role, "pos")) {
+    return { ok: false, message: "Este usuario nao tem permissao para acessar o PDV." };
+  }
+
   const passwordMatches = await bcrypt.compare(parsed.data.password, admin.user.passwordHash);
   if (!passwordMatches) {
     return { ok: false, message: "Acesso administrativo nao autorizado." };
   }
-
-  const callbackUrl = String(formData.get("callbackUrl") ?? "/admin");
-  const redirectTo = callbackUrl.startsWith("/admin") && callbackUrl !== "/admin/login" ? callbackUrl : "/admin";
 
   try {
     await signIn("credentials", {
@@ -175,8 +188,20 @@ export async function logout() {
 
 export async function enterDemoAdmin() {
   await assertSameOrigin();
+  if (process.env.NODE_ENV === "production") {
+    redirect("/admin/login?error=database");
+  }
   await createDemoAdminSession();
   redirect("/admin?demo=1");
+}
+
+export async function enterDemoPOS() {
+  await assertSameOrigin();
+  if (process.env.NODE_ENV === "production") {
+    redirect("/pdv/login?error=database");
+  }
+  await createDemoAdminSession();
+  redirect("/pdv?demo=1");
 }
 
 export async function requestPasswordRecovery(_: ActionState, formData: FormData): Promise<ActionState> {

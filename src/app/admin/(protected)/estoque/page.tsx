@@ -1,5 +1,5 @@
+import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton } from "@/components/admin/admin-submit";
-import { adjustInventory } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { formatDate } from "@/lib/utils";
@@ -108,7 +108,7 @@ export default async function AdminInventoryPage({ searchParams }: { searchParam
                   </table>
                 </div>
               </div>
-              <form action={adjustInventory} className="grid gap-3 self-start rounded-lg border border-[var(--line)] bg-[#f8f9fb] p-4">
+              <AdminActionForm actionName="adjustInventory" className="grid gap-3 self-start rounded-lg border border-[var(--line)] bg-[#f8f9fb] p-4">
                 <input type="hidden" name="inventoryId" value={item.id} />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="text-sm font-black">Novo estoque<input className="field mt-2" name="quantity" type="number" defaultValue={item.quantity} min={0} /></label>
@@ -116,7 +116,7 @@ export default async function AdminInventoryPage({ searchParams }: { searchParam
                 </div>
                 <input className="field" name="reason" placeholder="Motivo" defaultValue="Ajuste manual" />
                 <AdminSubmitButton pendingText="Ajustando...">Ajustar estoque</AdminSubmitButton>
-              </form>
+              </AdminActionForm>
             </article>
           );
         })}

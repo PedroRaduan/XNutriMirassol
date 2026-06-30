@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { lookupCep } from "@/lib/shipping/cep";
+import { lookupCep, validateCep } from "@/lib/shipping/cep";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getClientIp } from "@/lib/security/request";
 
@@ -12,6 +12,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ cep: strin
   }
 
   const { cep } = await params;
+  if (!validateCep(cep)) {
+    return NextResponse.json({ error: "CEP invalido." }, { status: 400 });
+  }
+
   const address = await lookupCep(cep);
 
   if (!address) {

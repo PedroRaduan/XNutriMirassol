@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton } from "@/components/admin/admin-submit";
-import { updateOrderStatus } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDate, statusBadgeClass, statusLabel } from "@/lib/utils";
@@ -99,7 +99,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
         </section>
 
         <aside className="grid gap-6 self-start xl:sticky xl:top-8">
-          <form action={updateOrderStatus} className="surface grid gap-3 p-5">
+          <AdminActionForm actionName="updateOrderStatus" className="surface grid gap-3 p-5">
             <h2 className="text-xl font-black">Atualizar pedido</h2>
             <input type="hidden" name="id" value={order.id} />
             <select className="field" name="status" defaultValue={order.status}>
@@ -107,7 +107,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             </select>
             <textarea className="field min-h-28" name="notes" placeholder="Observações internas" defaultValue={order.notes ?? ""} />
             <AdminSubmitButton pendingText="Atualizando...">Salvar status</AdminSubmitButton>
-          </form>
+          </AdminActionForm>
 
           <div className="surface p-5">
             <h2 className="text-xl font-black">Cliente</h2>

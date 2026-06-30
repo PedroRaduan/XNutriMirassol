@@ -17,6 +17,11 @@ const optionalDateString = z.preprocess((value) => {
   return value;
 }, z.string().optional());
 
+const optionalCode = z.preprocess((value) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  return String(value).trim();
+}, z.string().min(3).max(64).optional());
+
 export const loginSchema = z.object({
   email: z.string().email("E-mail invalido").toLowerCase(),
   password: z.string().min(8, "Informe pelo menos 8 caracteres"),
@@ -100,6 +105,9 @@ export const productAdminSchema = z.object({
   name: z.string().min(3, required),
   slug: z.string().min(3).optional(),
   sku: z.string().min(3, required),
+  barcode: optionalCode,
+  ean: optionalCode,
+  internalCode: optionalCode,
   shortDescription: z.string().min(10, required),
   description: z.string().min(20, required),
   price: z.coerce.number().min(0, "Preco invalido"),
@@ -126,6 +134,9 @@ export const productVariantAdminSchema = z.object({
   productId: z.string().min(1, required),
   name: z.string().min(2, required),
   sku: z.string().min(3, required),
+  barcode: optionalCode,
+  ean: optionalCode,
+  internalCode: optionalCode,
   attributes: z.string().min(2, "Informe os atributos"),
   priceAdjustment: optionalNumber,
   costPrice: optionalNumber,
@@ -211,6 +222,12 @@ export const pickupLocationAdminSchema = z.object({
 export const financialSettingsAdminSchema = z.object({
   mercadoPagoRate: z.coerce.number().min(0).max(100),
   fixedTransactionFee: z.coerce.number().min(0),
+  posCashRate: z.coerce.number().min(0).max(100),
+  posPixRate: z.coerce.number().min(0).max(100),
+  posDebitRate: z.coerce.number().min(0).max(100),
+  posCreditRate: z.coerce.number().min(0).max(100),
+  posMercadoPagoRate: z.coerce.number().min(0).max(100),
+  allowNegativeStock: z.coerce.boolean().optional(),
   estimatedTaxRate: z.coerce.number().min(0).max(100),
   defaultPackagingCost: z.coerce.number().min(0),
   minimumMargin: z.coerce.number().min(0).max(1000),

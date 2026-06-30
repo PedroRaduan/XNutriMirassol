@@ -1,6 +1,12 @@
 export type FinancialSettingsValues = {
   mercadoPagoRate: number;
   fixedTransactionFee: number;
+  posCashRate: number;
+  posPixRate: number;
+  posDebitRate: number;
+  posCreditRate: number;
+  posMercadoPagoRate: number;
+  allowNegativeStock: boolean;
   estimatedTaxRate: number;
   defaultPackagingCost: number;
   minimumMargin: number;
@@ -11,6 +17,12 @@ export type FinancialSettingsValues = {
 export const defaultFinancialSettings: FinancialSettingsValues = {
   mercadoPagoRate: 4.99,
   fixedTransactionFee: 0,
+  posCashRate: 0,
+  posPixRate: 0,
+  posDebitRate: 1.99,
+  posCreditRate: 3.99,
+  posMercadoPagoRate: 4.99,
+  allowNegativeStock: false,
   estimatedTaxRate: 0,
   defaultPackagingCost: 0,
   minimumMargin: 20,

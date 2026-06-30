@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton } from "@/components/admin/admin-submit";
-import { updateOrderStatus } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDate, statusBadgeClass, statusLabel } from "@/lib/utils";
@@ -80,14 +80,14 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
                 <span><strong className="block text-[var(--ink)]">Entrega</strong>{order.shippingType === "PICKUP" ? order.pickupLocation?.name ?? "Retirada" : order.shippingMethod?.name ?? "Entrega"}</span>
                 <span><strong className="block text-[var(--ink)]">Cliente</strong>{order.customerPhone}</span>
               </div>
-              <form action={updateOrderStatus} className="grid gap-2 sm:grid-cols-[220px_1fr_auto]">
+              <AdminActionForm actionName="updateOrderStatus" className="grid gap-2 sm:grid-cols-[220px_1fr_auto]">
                 <input type="hidden" name="id" value={order.id} />
                 <select className="field" name="status" defaultValue={order.status}>
                   {statuses.map((item) => <option key={item} value={item}>{statusLabel(item)}</option>)}
                 </select>
                 <input className="field" name="notes" placeholder="Observação interna" defaultValue={order.notes ?? ""} />
                 <AdminSubmitButton pendingText="Atualizando...">Atualizar</AdminSubmitButton>
-              </form>
+              </AdminActionForm>
             </div>
           </article>
         ))}

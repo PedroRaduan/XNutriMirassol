@@ -14,6 +14,7 @@ enum UserRole {
 enum AdminRole {
   ADMIN
   MANAGER
+  CASHIER
   VIEWER
 }
 
@@ -77,12 +78,50 @@ enum InventoryMovementType {
   RESERVATION
   RELEASE
   ADJUSTMENT
+  RETURN
 }
 
 enum BannerLocation {
   HOME_HERO
   HOME_PROMO
   CATALOG
+}
+
+enum POSSessionStatus {
+  OPEN
+  CLOSED
+}
+
+enum POSSaleStatus {
+  COMPLETED
+  CANCELED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum POSPaymentMethod {
+  CASH
+  PIX
+  DEBIT_CARD
+  CREDIT_CARD
+  MERCADO_PAGO
+}
+
+enum POSPaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  CANCELED
+}
+
+enum CashMovementType {
+  OPENING
+  SALE
+  CASH_IN
+  CASH_OUT
+  REFUND
+  CLOSING
+  ADJUSTMENT
 }
 
 model User {
@@ -108,6 +147,11 @@ model User {
   wishlistItems      Wishlist[]
   adminProfile       AdminUser?
   inventoryMovements InventoryMovement[]
+  posSessionsOpened  POSSession[]        @relation("POSSessionOpenedBy")
+  posSessionsClosed  POSSession[]        @relation("POSSessionClosedBy")
+  posSalesAsCashier  POSSale[]           @relation("POSSaleCashier")
+  posSalesAsCustomer POSSale[]           @relation("POSSaleCustomer")
+  cashMovements      CashMovement[]      @relation("CashMovementCreatedBy")
 
   @@map("users")
 }
@@ -220,6 +264,9 @@ model Product {
   name             String
   slug             String        @unique
   sku              String        @unique
+  barcode          String?       @unique
+  ean              String?       @unique
+  internalCode     String?       @unique
   brand            String        @default("XNutri")
   shortDescription String
   description      String
@@ -248,10 +295,14 @@ model Product {
   inventory     Inventory[]
   reviews       Review[]
   orderItems    OrderItem[]
+  posSaleItems  POSSaleItem[]
   cartItems     CartItem[]
   wishlistItems Wishlist[]
 
   @@index([categoryId, status])
+  @@index([barcode])
+  @@index([ean])
+  @@index([internalCode])
   @@index([featured, bestSeller, promotion])
   @@map("products")
 }
@@ -275,6 +326,9 @@ model ProductVariant {
   productId       String
   name            String
   sku             String   @unique
+  barcode         String?  @unique
+  ean             String?  @unique
+  internalCode    String?  @unique
   attributes      Json
   priceAdjustment Decimal  @default(0) @db.Decimal(10, 2)
   costPrice       Decimal? @db.Decimal(10, 2)
@@ -283,12 +337,16 @@ model ProductVariant {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  inventory  Inventory?
-  orderItems OrderItem[]
-  cartItems  CartItem[]
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  inventory    Inventory?
+  orderItems   OrderItem[]
+  posSaleItems POSSaleItem[]
+  cartItems    CartItem[]
 
   @@index([productId, active])
+  @@index([barcode])
+  @@index([ean])
+  @@index([internalCode])
   @@map("product_variants")
 }
 
@@ -314,6 +372,7 @@ model InventoryMovement {
   id          String                @id @default(cuid())
   inventoryId String
   orderId     String?
+  posSaleId   String?
   createdById String?
   type        InventoryMovementType
   quantity    Int
@@ -324,10 +383,12 @@ model InventoryMovement {
 
   inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
   order     Order?    @relation(fields: [orderId], references: [id])
+  posSale   POSSale?  @relation(fields: [posSaleId], references: [id])
   createdBy User?     @relation(fields: [createdById], references: [id])
 
   @@index([inventoryId, createdAt])
   @@index([orderId])
+  @@index([posSaleId])
   @@map("inventory_movements")
 }
 
@@ -629,6 +690,12 @@ model FinancialSettings {
   name                           String   @unique @default("default")
   mercadoPagoRate                Decimal  @default(4.99) @db.Decimal(5, 2)
   fixedTransactionFee            Decimal  @default(0) @db.Decimal(10, 2)
+  posCashRate                    Decimal  @default(0) @db.Decimal(5, 2)
+  posPixRate                     Decimal  @default(0) @db.Decimal(5, 2)
+  posDebitRate                   Decimal  @default(1.99) @db.Decimal(5, 2)
+  posCreditRate                  Decimal  @default(3.99) @db.Decimal(5, 2)
+  posMercadoPagoRate             Decimal  @default(4.99) @db.Decimal(5, 2)
+  allowNegativeStock             Boolean  @default(false)
   estimatedTaxRate               Decimal  @default(0) @db.Decimal(5, 2)
   defaultPackagingCost           Decimal  @default(0) @db.Decimal(10, 2)
   minimumMargin                  Decimal  @default(20) @db.Decimal(5, 2)
@@ -638,6 +705,149 @@ model FinancialSettings {
   updatedAt                      DateTime @updatedAt
 
   @@map("financial_settings")
+}
+
+model POSSession {
+  id             String           @id @default(cuid())
+  openedById     String
+  closedById     String?
+  openingAmount  Decimal          @default(0) @db.Decimal(10, 2)
+  closingAmount  Decimal?         @db.Decimal(10, 2)
+  expectedAmount Decimal          @default(0) @db.Decimal(10, 2)
+  difference     Decimal          @default(0) @db.Decimal(10, 2)
+  status         POSSessionStatus @default(OPEN)
+  notes          String?
+  openedAt       DateTime         @default(now())
+  closedAt       DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  openedBy  User           @relation("POSSessionOpenedBy", fields: [openedById], references: [id])
+  closedBy  User?          @relation("POSSessionClosedBy", fields: [closedById], references: [id])
+  sales     POSSale[]
+  movements CashMovement[]
+
+  @@index([openedById, status])
+  @@index([status, openedAt])
+  @@map("pos_sessions")
+}
+
+model POSSale {
+  id                 String           @id @default(cuid())
+  saleNumber         String           @unique
+  customerId         String?
+  cashierId          String
+  sessionId          String
+  subtotal           Decimal          @db.Decimal(12, 2)
+  discountTotal      Decimal          @default(0) @db.Decimal(10, 2)
+  total              Decimal          @db.Decimal(12, 2)
+  amountReceived     Decimal          @default(0) @db.Decimal(12, 2)
+  changeAmount       Decimal          @default(0) @db.Decimal(10, 2)
+  costTotal          Decimal          @default(0) @db.Decimal(12, 2)
+  feeTotal           Decimal          @default(0) @db.Decimal(10, 2)
+  packagingCost      Decimal          @default(0) @db.Decimal(10, 2)
+  estimatedTax       Decimal          @default(0) @db.Decimal(10, 2)
+  grossProfit        Decimal          @default(0) @db.Decimal(12, 2)
+  netProfit          Decimal          @default(0) @db.Decimal(12, 2)
+  margin             Decimal          @default(0) @db.Decimal(6, 2)
+  status             POSSaleStatus    @default(COMPLETED)
+  paymentStatus      POSPaymentStatus @default(PAID)
+  cancellationReason String?
+  receiptToken       String           @unique
+  fiscalStatus       String           @default("NOT_REQUESTED")
+  fiscalProvider     String?
+  fiscalPayload      Json?
+  notes              String?
+  canceledAt         DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  customer           User?               @relation("POSSaleCustomer", fields: [customerId], references: [id])
+  cashier            User                @relation("POSSaleCashier", fields: [cashierId], references: [id])
+  session            POSSession          @relation(fields: [sessionId], references: [id])
+  items              POSSaleItem[]
+  payments           POSPayment[]
+  cashMovements      CashMovement[]
+  inventoryMovements InventoryMovement[]
+
+  @@index([cashierId, createdAt])
+  @@index([customerId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([status, createdAt])
+  @@map("pos_sales")
+}
+
+model POSSaleItem {
+  id                  String   @id @default(cuid())
+  saleId              String
+  productId           String
+  variantId           String?
+  productNameSnapshot String
+  skuSnapshot         String
+  barcodeSnapshot     String?
+  quantity            Int
+  returnedQuantity    Int      @default(0)
+  unitPrice           Decimal  @db.Decimal(10, 2)
+  unitCost            Decimal  @default(0) @db.Decimal(10, 2)
+  unitPackagingCost   Decimal  @default(0) @db.Decimal(10, 2)
+  discount            Decimal  @default(0) @db.Decimal(10, 2)
+  subtotal            Decimal  @db.Decimal(10, 2)
+  total               Decimal  @db.Decimal(10, 2)
+  grossProfit         Decimal  @default(0) @db.Decimal(10, 2)
+  netProfit           Decimal  @default(0) @db.Decimal(10, 2)
+  margin              Decimal  @default(0) @db.Decimal(6, 2)
+  attributes          Json?
+  createdAt           DateTime @default(now())
+
+  sale    POSSale         @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@index([saleId])
+  @@index([productId])
+  @@index([variantId])
+  @@map("pos_sale_items")
+}
+
+model POSPayment {
+  id                String           @id @default(cuid())
+  saleId            String
+  method            POSPaymentMethod
+  amount            Decimal          @db.Decimal(10, 2)
+  fee               Decimal          @default(0) @db.Decimal(10, 2)
+  status            POSPaymentStatus @default(PAID)
+  amountReceived    Decimal?         @db.Decimal(10, 2)
+  changeAmount      Decimal?         @db.Decimal(10, 2)
+  externalReference String?
+  metadata          Json?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  sale POSSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
+  @@index([method, createdAt])
+  @@map("pos_payments")
+}
+
+model CashMovement {
+  id          String           @id @default(cuid())
+  sessionId   String
+  saleId      String?
+  type        CashMovementType
+  amount      Decimal          @db.Decimal(10, 2)
+  reason      String
+  createdById String
+  createdAt   DateTime         @default(now())
+
+  session   POSSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sale      POSSale?   @relation(fields: [saleId], references: [id])
+  createdBy User       @relation("CashMovementCreatedBy", fields: [createdById], references: [id])
+
+  @@index([sessionId, createdAt])
+  @@index([saleId])
+  @@index([type, createdAt])
+  @@map("cash_movements")
 }
 
 model Banner {

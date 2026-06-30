@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="XNutri">
+  <rect width="512" height="512" rx="96" fill="#101115"/>
+  <path d="M82 356 194 157h76L157 356H82Z" fill="#f2382f"/>
+  <path d="M241 356 129 157h77l112 199h-77Z" fill="#f2382f"/>
+  <path d="M189 278 69 356h54l120-78H189Z" fill="#c9ced6"/>
+  <path d="M318 187c14-18 35-29 61-29 36 0 58 22 58 57 0 12-3 25-8 39l-37 102h-59l35-96c3-8 4-15 4-21 0-12-7-19-19-19-18 0-31 12-39 34l-37 102h-59l70-193h56l-26 24Z" fill="#fff"/>
+</svg>

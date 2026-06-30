@@ -1,5 +1,5 @@
+import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton, ConfirmSubmitButton } from "@/components/admin/admin-submit";
-import { deactivateShippingMethod, upsertPickupLocation, upsertShippingMethod } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency } from "@/lib/utils";
@@ -13,7 +13,7 @@ function stringifySettings(value: unknown) {
 
 function ShippingMethodForm({ method }: { method?: Awaited<ReturnType<typeof getShippingMethods>>[number] }) {
   return (
-    <form action={upsertShippingMethod} className="grid gap-3">
+    <AdminActionForm actionName="upsertShippingMethod" className="grid gap-3">
       {method && <input type="hidden" name="id" value={method.id} />}
       <div className="grid gap-3 sm:grid-cols-2">
         <input className="field" name="name" placeholder="Nome do frete" defaultValue={method?.name} required />
@@ -43,13 +43,13 @@ function ShippingMethodForm({ method }: { method?: Awaited<ReturnType<typeof get
         Ativo
       </label>
       <AdminSubmitButton>{method ? "Salvar frete" : "Criar frete"}</AdminSubmitButton>
-    </form>
+    </AdminActionForm>
   );
 }
 
 function PickupForm({ pickup }: { pickup?: Awaited<ReturnType<typeof getPickupLocations>>[number] }) {
   return (
-    <form action={upsertPickupLocation} className="grid gap-3">
+    <AdminActionForm actionName="upsertPickupLocation" className="grid gap-3">
       {pickup && <input type="hidden" name="id" value={pickup.id} />}
       <input className="field" name="name" placeholder="Nome do ponto de retirada" defaultValue={pickup?.name ?? "XNutri Mirassol"} required />
       <div className="grid gap-3 sm:grid-cols-2">
@@ -67,7 +67,7 @@ function PickupForm({ pickup }: { pickup?: Awaited<ReturnType<typeof getPickupLo
         Retirada ativa
       </label>
       <AdminSubmitButton>{pickup ? "Salvar retirada" : "Criar ponto de retirada"}</AdminSubmitButton>
-    </form>
+    </AdminActionForm>
   );
 }
 
@@ -116,10 +116,10 @@ export default async function AdminShippingPage() {
                     Frete gratis acima de {method.freeAbove ? formatCurrency(method.freeAbove) : "não configurado"}.
                   </p>
                 </div>
-                <form action={deactivateShippingMethod}>
+                <AdminActionForm actionName="deactivateShippingMethod">
                   <input type="hidden" name="id" value={method.id} />
                   <ConfirmSubmitButton message="Desativar este metodo de frete?">Desativar</ConfirmSubmitButton>
-                </form>
+                </AdminActionForm>
               </div>
               <details className="border-t border-[var(--line)]">
                 <summary className="cursor-pointer p-4 font-black text-[var(--brand)]">Editar frete</summary>

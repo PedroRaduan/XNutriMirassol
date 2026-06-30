@@ -4,6 +4,8 @@ Guia completo para instalar, rodar, administrar e publicar o e-commerce da **XNu
 
 Este README foi escrito para quem está começando. Siga a ordem dos passos e, se algum comando der erro, veja a seção **Erros comuns** no final.
 
+> Quer colocar tudo para funcionar sem rodeios? Use o [tutorial de integração passo a passo](docs/TUTORIAL-INTEGRACAO.md).
+
 ## Sumário
 
 - [O Que É Este Projeto](#o-que-é-este-projeto)
@@ -17,6 +19,7 @@ Este README foi escrito para quem está começando. Siga a ordem dos passos e, s
 - [Variáveis De Ambiente](#variáveis-de-ambiente)
 - [Banco De Dados E Prisma](#banco-de-dados-e-prisma)
 - [Como Usar O Admin](#como-usar-o-admin)
+- [Como Usar O PDV](#como-usar-o-pdv)
 - [Produtos, Categorias E Descontos](#produtos-categorias-e-descontos)
 - [Estoque](#estoque)
 - [Cupons](#cupons)
@@ -44,6 +47,7 @@ Ele possui:
 - Pagamento preparado com Mercado Pago.
 - Login e área do cliente.
 - Painel administrativo.
+- PDV presencial em `/pdv`.
 - Controle de produtos, estoque, pedidos, clientes, cupons, banners e relatórios.
 
 Categorias públicas principais:
@@ -87,6 +91,20 @@ Dentro de `Suplementos` entram produtos como whey, creatina, pré-treino, vitami
 - Entregas e retirada.
 - Configurações.
 - Auditoria.
+
+### PDV Presencial
+
+- Caixa privado em `/pdv`.
+- Busca por nome, SKU, codigo de barras, EAN e codigo interno.
+- Venda com produtos e variacoes.
+- Pagamento em dinheiro, Pix, debito, credito, Mercado Pago e pagamento misto.
+- Calculo de troco.
+- Abertura e fechamento de caixa.
+- Sangria e reforco.
+- Baixa automatica de estoque compartilhado com o site.
+- Comprovante com impressao, PDF pelo navegador, WhatsApp e e-mail.
+- Cancelamento total e devolucao parcial.
+- Relatorios de vendas presenciais.
 
 ### Pagamentos
 
@@ -452,6 +470,30 @@ xnutri/
 | `/admin/entregas` | Entregas e retirada |
 | `/admin/configuracoes` | Configurações |
 | `/admin/auditoria` | Logs de auditoria |
+
+### PDV
+
+| Rota | Função |
+| --- | --- |
+| `/pdv/login` | Login do caixa |
+| `/pdv` | Tela principal de venda presencial |
+| `/pdv/relatorios` | Relatorios do PDV |
+| `/pdv/comprovante/[saleNumber]` | Comprovante da venda |
+
+## Como Usar O PDV
+
+O guia completo esta em [`docs/PDV.md`](docs/PDV.md).
+
+Resumo rapido:
+
+1. Entre em `/pdv/login`.
+2. Use `caixa@xnutri.com.br` / `Caixa@12345` no ambiente seedado.
+3. Abra o caixa informando o valor inicial.
+4. Busque ou escaneie produtos por nome, SKU, barcode, EAN ou codigo interno.
+5. Escolha pagamento: dinheiro, Pix, debito, credito, Mercado Pago ou misto.
+6. Finalize a venda.
+7. Imprima o comprovante.
+8. Feche o caixa no fim do expediente.
 
 ## Variáveis De Ambiente
 

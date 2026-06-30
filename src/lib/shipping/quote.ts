@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import { fallbackPickup } from "@/lib/fallback/catalog";
-import { validateCep } from "@/lib/shipping/cep";
+import { lookupCep, validateCep } from "@/lib/shipping/cep";
 import { toNumber } from "@/lib/utils";
 
 export type ShippingQuote = {
@@ -17,6 +17,11 @@ export async function quoteShipping(zipCode: string, subtotal: number): Promise<
   const cep = validateCep(zipCode);
   if (!cep) {
     throw new Error("CEP inválido.");
+  }
+
+  const address = await lookupCep(cep);
+  if (!address) {
+    throw new Error("CEP nao encontrado. Confira o numero informado.");
   }
 
   const methods = await prisma.shippingMethod.findMany({

@@ -1,5 +1,5 @@
+import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton, ConfirmSubmitButton } from "@/components/admin/admin-submit";
-import { deactivateCoupon, upsertCoupon } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -20,7 +20,7 @@ function CouponForm({
   categories: Array<{ id: string; name: string }>;
 }) {
   return (
-    <form action={upsertCoupon} className="grid gap-3">
+    <AdminActionForm actionName="upsertCoupon" className="grid gap-3">
       {coupon && <input type="hidden" name="id" value={coupon.id} />}
       <div className="grid gap-3 sm:grid-cols-2">
         <input className="field" name="code" placeholder="XNUTRI10" defaultValue={coupon?.code} required />
@@ -53,7 +53,7 @@ function CouponForm({
       </label>
       <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="active" type="checkbox" defaultChecked={coupon?.active ?? true} /> Ativo</label>
       <AdminSubmitButton>{coupon ? "Salvar cupom" : "Criar cupom"}</AdminSubmitButton>
-    </form>
+    </AdminActionForm>
   );
 }
 
@@ -98,10 +98,10 @@ export default async function AdminCouponsPage() {
                     Validade: {coupon.startsAt ? formatDate(coupon.startsAt) : "agora"} até {coupon.endsAt ? formatDate(coupon.endsAt) : "sem expiração"}
                   </p>
                 </div>
-                <form action={deactivateCoupon}>
+                <AdminActionForm actionName="deactivateCoupon">
                   <input type="hidden" name="id" value={coupon.id} />
                   <ConfirmSubmitButton message="Desativar este cupom?">Desativar</ConfirmSubmitButton>
-                </form>
+                </AdminActionForm>
               </div>
               <details className="border-t border-[var(--line)]">
                 <summary className="cursor-pointer p-4 font-black text-[var(--brand)]">Editar regras</summary>

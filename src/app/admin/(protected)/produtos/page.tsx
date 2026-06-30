@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Pencil, Plus, Search } from "lucide-react";
+import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton, ConfirmSubmitButton } from "@/components/admin/admin-submit";
-import { archiveProduct, deactivateProductVariant, upsertProduct, upsertProductVariant } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { calculateSuggestedPrice, calculateUnitFinance } from "@/lib/finance/calculations";
@@ -36,7 +36,7 @@ function ProductForm({
   const unitFinance = calculateUnitFinance({ price: salePrice, costPrice, packagingCost, taxRate: estimatedTaxRate });
 
   return (
-    <form action={upsertProduct} className="grid gap-3">
+    <AdminActionForm actionName="upsertProduct" className="grid gap-3">
       {product && <input type="hidden" name="id" value={product.id} />}
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-sm font-black">Categoria
@@ -61,6 +61,11 @@ function ProductForm({
         <label className="text-sm font-black">Código/SKU<input className="field mt-2" name="sku" defaultValue={product?.sku} required /></label>
         <label className="text-sm font-black">Preço<input className="field mt-2" name="price" type="number" step="0.01" min={0} defaultValue={product ? Number(product.price) : ""} required /></label>
         <label className="text-sm font-black">Preço anterior<input className="field mt-2" name="compareAtPrice" type="number" step="0.01" min={0} defaultValue={product?.compareAtPrice ? Number(product.compareAtPrice) : ""} /></label>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <label className="text-sm font-black">Codigo de barras<input className="field mt-2" name="barcode" inputMode="numeric" defaultValue={product?.barcode ?? ""} placeholder="Leitor ou digitacao" /></label>
+        <label className="text-sm font-black">EAN<input className="field mt-2" name="ean" inputMode="numeric" defaultValue={product?.ean ?? ""} placeholder="789..." /></label>
+        <label className="text-sm font-black">Codigo interno<input className="field mt-2" name="internalCode" defaultValue={product?.internalCode ?? ""} placeholder="XN-CAIXA-001" /></label>
       </div>
       <section className="rounded-lg border border-[#ffd8d1] bg-[#fff8f7] p-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
@@ -118,19 +123,24 @@ function ProductForm({
         <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="promotion" type="checkbox" defaultChecked={product?.promotion} /> Promoção</label>
       </div>
       <AdminSubmitButton>{product ? "Salvar alterações" : "Cadastrar produto"}</AdminSubmitButton>
-    </form>
+    </AdminActionForm>
   );
 }
 
 function VariantForm({ productId, variant }: { productId: string; variant?: Awaited<ReturnType<typeof getProducts>>[number]["variants"][number] }) {
   return (
-    <form action={upsertProductVariant} className="grid gap-3 rounded-lg border border-[var(--line)] bg-[#fafafa] p-3">
+    <AdminActionForm actionName="upsertProductVariant" className="grid gap-3 rounded-lg border border-[var(--line)] bg-[#fafafa] p-3">
       <input type="hidden" name="productId" value={productId} />
       {variant && <input type="hidden" name="id" value={variant.id} />}
       <div className="grid gap-3 sm:grid-cols-3">
         <input className="field" name="name" placeholder="Nome da variação" defaultValue={variant?.name} required />
         <input className="field" name="sku" placeholder="Código/SKU próprio" defaultValue={variant?.sku} required />
         <input className="field" name="priceAdjustment" type="number" min={0} step="0.01" placeholder="Preço extra" defaultValue={variant ? Number(variant.priceAdjustment) : ""} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <input className="field" name="barcode" inputMode="numeric" placeholder="Codigo de barras" defaultValue={variant?.barcode ?? ""} />
+        <input className="field" name="ean" inputMode="numeric" placeholder="EAN da variacao" defaultValue={variant?.ean ?? ""} />
+        <input className="field" name="internalCode" placeholder="Codigo interno" defaultValue={variant?.internalCode ?? ""} />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <input className="field" name="costPrice" type="number" min={0} step="0.01" placeholder="Custo desta variacao" defaultValue={variant?.costPrice ? Number(variant.costPrice) : ""} />
@@ -143,7 +153,7 @@ function VariantForm({ productId, variant }: { productId: string; variant?: Awai
         <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="active" type="checkbox" defaultChecked={variant?.active ?? true} /> Ativa</label>
       </div>
       <AdminSubmitButton pendingText="Salvando variação...">{variant ? "Salvar variação" : "Criar variação"}</AdminSubmitButton>
-    </form>
+    </AdminActionForm>
   );
 }
 
@@ -156,7 +166,14 @@ async function getProducts(q?: string, status?: string) {
             OR: [
               { name: { contains: q, mode: "insensitive" } },
               { sku: { contains: q, mode: "insensitive" } },
+              { barcode: { contains: q, mode: "insensitive" } },
+              { ean: { contains: q, mode: "insensitive" } },
+              { internalCode: { contains: q, mode: "insensitive" } },
               { slug: { contains: q, mode: "insensitive" } },
+              { variants: { some: { sku: { contains: q, mode: "insensitive" } } } },
+              { variants: { some: { barcode: { contains: q, mode: "insensitive" } } } },
+              { variants: { some: { ean: { contains: q, mode: "insensitive" } } } },
+              { variants: { some: { internalCode: { contains: q, mode: "insensitive" } } } },
             ],
           }
         : {}),
@@ -238,10 +255,10 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                   </div>
                   <div className="flex flex-wrap items-center gap-2 md:justify-end">
                     <Link href={`/produto/${product.slug}`} className="btn btn-secondary px-3">Ver loja</Link>
-                    <form action={archiveProduct}>
+                    <AdminActionForm actionName="archiveProduct">
                       <input type="hidden" name="id" value={product.id} />
                       <ConfirmSubmitButton message="Arquivar este produto?">Arquivar</ConfirmSubmitButton>
-                    </form>
+                    </AdminActionForm>
                   </div>
                 </div>
 
@@ -264,10 +281,10 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                     {product.variants.map((variant) => (
                       <div key={variant.id} className="grid gap-2">
                         <VariantForm productId={product.id} variant={variant} />
-                        <form action={deactivateProductVariant} className="flex justify-end">
+                        <AdminActionForm actionName="deactivateProductVariant" className="flex justify-end">
                           <input type="hidden" name="id" value={variant.id} />
                           <ConfirmSubmitButton message="Desativar esta variação?">Desativar variação</ConfirmSubmitButton>
-                        </form>
+                        </AdminActionForm>
                       </div>
                     ))}
                     <VariantForm productId={product.id} />

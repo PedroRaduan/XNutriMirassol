@@ -440,6 +440,22 @@ a {
   font-weight: 900;
 }
 
+.mobile-sticky-action {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  border-top: 1px solid rgb(225 227 231 / 90%);
+  background: rgb(255 255 255 / 94%);
+  padding: 0.72rem max(0.8rem, env(safe-area-inset-right)) calc(0.72rem + env(safe-area-inset-bottom)) max(0.8rem, env(safe-area-inset-left));
+  box-shadow: 0 -18px 40px rgb(17 17 17 / 14%);
+  backdrop-filter: blur(18px);
+}
+
 @keyframes hero-in {
   from {
     opacity: 0;
@@ -485,6 +501,10 @@ a {
 }
 
 @media (max-width: 480px) {
+  html {
+    scroll-padding-top: 7.5rem;
+  }
+
   .container-x {
     width: min(100% - 20px, 1200px);
   }
@@ -531,5 +551,11 @@ a {
   .stock-pill {
     padding: 0.22rem 0.46rem;
     font-size: 0.66rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-sticky-action {
+    display: none;
   }
 }

@@ -49,12 +49,18 @@ export default async function AdminLoginPage({
             )}
             {params.error === "database" && (
               <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                <p>Banco de dados offline. Voce pode entrar em modo demo para visualizar o painel sem gravar dados reais.</p>
-                <form action={enterDemoAdmin} className="mt-3">
-                  <button className="btn btn-secondary w-full border-red-200 bg-white text-red-700 hover:bg-red-50">
-                    Entrar no modo demo
-                  </button>
-                </form>
+                <p>
+                  Banco de dados offline. {process.env.NODE_ENV === "production"
+                    ? "Reestabeleça a conexão com o PostgreSQL antes de acessar o painel."
+                    : "Você pode entrar em modo demo para visualizar o painel sem gravar dados reais."}
+                </p>
+                {process.env.NODE_ENV !== "production" && (
+                  <form action={enterDemoAdmin} className="mt-3">
+                    <button className="btn btn-secondary w-full border-red-200 bg-white text-red-700 hover:bg-red-50">
+                      Entrar no modo demo
+                    </button>
+                  </form>
+                )}
               </div>
             )}
 

@@ -19,6 +19,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." }, { status: 400 });
   }
 
-  const quotes = await quoteShipping(parsed.data.zipCode, parsed.data.subtotal);
-  return NextResponse.json({ quotes });
+  try {
+    const quotes = await quoteShipping(parsed.data.zipCode, parsed.data.subtotal);
+    return NextResponse.json({ quotes });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Nao foi possivel calcular o frete." },
+      { status: 400 },
+    );
+  }
 }

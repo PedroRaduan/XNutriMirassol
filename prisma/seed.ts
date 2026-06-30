@@ -598,6 +598,11 @@ function slug(value: string) {
 }
 
 async function cleanDatabase() {
+  await prisma.cashMovement.deleteMany();
+  await prisma.pOSPayment.deleteMany();
+  await prisma.pOSSaleItem.deleteMany();
+  await prisma.pOSSale.deleteMany();
+  await prisma.pOSSession.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.inventoryMovement.deleteMany();
   await prisma.payment.deleteMany();
@@ -657,6 +662,7 @@ async function main() {
               "shipping",
               "settings",
               "audit",
+              "pos",
             ],
           },
         },
@@ -682,6 +688,25 @@ async function main() {
           city: "Mirassol",
           state: "SP",
           isDefault: true,
+        },
+      },
+    },
+  });
+
+  const cashier = await prisma.user.create({
+    data: {
+      name: "Caixa XNutri",
+      email: "caixa@xnutri.com.br",
+      passwordHash: await bcrypt.hash("Caixa@12345", 12),
+      role: UserRole.ADMIN,
+      phone: "(17) 99500-0000",
+      adminProfile: {
+        create: {
+          active: true,
+          role: "CASHIER",
+          permissions: {
+            modules: ["pos"],
+          },
         },
       },
     },
@@ -891,6 +916,12 @@ async function main() {
       name: "default",
       mercadoPagoRate: 4.99,
       fixedTransactionFee: 0,
+      posCashRate: 0,
+      posPixRate: 0,
+      posDebitRate: 1.99,
+      posCreditRate: 3.99,
+      posMercadoPagoRate: 4.99,
+      allowNegativeStock: false,
       estimatedTaxRate: 0,
       defaultPackagingCost: 2.5,
       minimumMargin: 25,
@@ -899,18 +930,24 @@ async function main() {
     },
   });
 
-  for (const product of products) {
+  let variantBarcodeCounter = 1;
+
+  for (const [productIndex, product] of products.entries()) {
     const categoryId = categories.get(product.category);
     if (!categoryId) {
       throw new Error(`Categoria não encontrada: ${product.category}`);
     }
 
+    const productBarcode = `7891000${String(productIndex + 1).padStart(6, "0")}`;
     const created = await prisma.product.create({
       data: {
         categoryId,
         name: product.name,
         slug: slug(product.name),
         sku: product.sku,
+        barcode: productBarcode,
+        ean: productBarcode,
+        internalCode: `PDV-${product.sku}`,
         shortDescription: product.shortDescription,
         description: product.description,
         price: product.price,
@@ -938,11 +975,16 @@ async function main() {
     });
 
     for (const variant of product.variants) {
+      const variantBarcode = `7892000${String(variantBarcodeCounter).padStart(6, "0")}`;
+      variantBarcodeCounter += 1;
       const createdVariant = await prisma.productVariant.create({
         data: {
           productId: created.id,
           name: variant.name,
           sku: variant.sku,
+          barcode: variantBarcode,
+          ean: variantBarcode,
+          internalCode: `PDV-${variant.sku}`,
           attributes: variant.attributes,
           priceAdjustment: variant.priceAdjustment ?? 0,
           costPrice: variant.costPrice ?? Number(((product.price + (variant.priceAdjustment ?? 0)) * 0.58).toFixed(2)),
@@ -993,8 +1035,9 @@ async function main() {
     });
   }
 
-  console.log("Seed concluido: admin, cliente, categorias, fretes, cupons, banners e 25 produtos criados.");
+  console.log("Seed concluido: admin, caixa, cliente, categorias, fretes, cupons, banners e 25 produtos criados.");
   console.log("Admin: admin@xnutri.com.br / Admin@12345");
+  console.log(`Caixa: ${cashier.email} / Caixa@12345`);
   console.log("Cliente: cliente@xnutri.com.br / Cliente@12345");
 }
 

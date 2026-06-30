@@ -1,7 +1,7 @@
 import Image from "next/image";
+import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton, ConfirmSubmitButton } from "@/components/admin/admin-submit";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
-import { deactivateBanner, updateHomeContent, upsertBanner } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { formatDate } from "@/lib/utils";
@@ -25,7 +25,7 @@ function dateInput(value?: Date | null) {
 
 function BannerForm({ banner }: { banner?: Awaited<ReturnType<typeof getBanners>>[number] }) {
   return (
-    <form action={upsertBanner} className="grid gap-3">
+    <AdminActionForm actionName="upsertBanner" className="grid gap-3">
       {banner && <input type="hidden" name="id" value={banner.id} />}
       <input className="field" name="title" placeholder="Titulo" defaultValue={banner?.title} required />
       <input className="field" name="subtitle" placeholder="Subtitulo" defaultValue={banner?.subtitle ?? ""} />
@@ -52,7 +52,7 @@ function BannerForm({ banner }: { banner?: Awaited<ReturnType<typeof getBanners>
       </div>
       <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="active" type="checkbox" defaultChecked={banner?.active ?? true} /> Ativo</label>
       <AdminSubmitButton>{banner ? "Salvar banner" : "Criar banner"}</AdminSubmitButton>
-    </form>
+    </AdminActionForm>
   );
 }
 
@@ -78,7 +78,7 @@ export default async function AdminBannersPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1fr_430px]">
         <section className="grid gap-4">
-          <form action={updateHomeContent} className="surface grid gap-3 p-5">
+          <AdminActionForm actionName="updateHomeContent" className="surface grid gap-3 p-5">
             <h2 className="text-xl font-black">Conteudo da home</h2>
             <input className="field" name="heroTitle" placeholder="Titulo da hero" defaultValue={home.heroTitle ?? "Performance, saude e estilo em um so lugar."} required />
             <textarea className="field min-h-24" name="heroSubtitle" placeholder="Subtitulo da hero" defaultValue={home.heroSubtitle ?? ""} required />
@@ -91,7 +91,7 @@ export default async function AdminBannersPage() {
             <textarea className="field min-h-24" name="institutionalText" placeholder="Texto institucional" defaultValue={home.institutionalText ?? ""} />
             <textarea className="field min-h-20" name="footerText" placeholder="Texto do rodape/chamada" defaultValue={home.footerText ?? ""} />
             <AdminSubmitButton>Salvar conteudo da home</AdminSubmitButton>
-          </form>
+          </AdminActionForm>
 
           {banners.map((banner) => (
             <article key={banner.id} className="surface overflow-hidden">
@@ -110,10 +110,10 @@ export default async function AdminBannersPage() {
                     Ordem {banner.sortOrder} · {banner.startsAt ? formatDate(banner.startsAt) : "sem início"} até {banner.endsAt ? formatDate(banner.endsAt) : "sem fim"}
                   </p>
                 </div>
-                <form action={deactivateBanner}>
+                <AdminActionForm actionName="deactivateBanner">
                   <input type="hidden" name="id" value={banner.id} />
                   <ConfirmSubmitButton message="Desativar este banner?">Desativar</ConfirmSubmitButton>
-                </form>
+                </AdminActionForm>
               </div>
               <details className="border-t border-[var(--line)]">
                 <summary className="cursor-pointer p-4 font-black text-[var(--brand)]">Editar banner</summary>

@@ -18,17 +18,20 @@ export type AdminModule =
   | "content"
   | "shipping"
   | "settings"
-  | "audit";
+  | "audit"
+  | "pos";
 
 const readAccess: Record<AdminRole, AdminModule[]> = {
-  ADMIN: ["dashboard", "products", "categories", "inventory", "coupons", "orders", "customers", "reports", "finance", "content", "shipping", "settings", "audit"],
-  MANAGER: ["dashboard", "products", "categories", "inventory", "orders", "customers", "reports", "finance"],
+  ADMIN: ["dashboard", "products", "categories", "inventory", "coupons", "orders", "customers", "reports", "finance", "content", "shipping", "settings", "audit", "pos"],
+  MANAGER: ["dashboard", "products", "categories", "inventory", "orders", "customers", "reports", "finance", "pos"],
+  CASHIER: ["pos"],
   VIEWER: ["dashboard", "orders", "reports", "finance"],
 };
 
 const writeAccess: Record<AdminRole, AdminModule[]> = {
   ADMIN: readAccess.ADMIN,
-  MANAGER: ["products", "categories", "inventory", "orders", "finance"],
+  MANAGER: ["products", "categories", "inventory", "orders", "finance", "pos"],
+  CASHIER: ["pos"],
   VIEWER: [],
 };
 
@@ -80,7 +83,7 @@ export function canAccessAdminModule(role: AdminRole, module: AdminModule, write
 export async function requireAdmin(module: AdminModule = "dashboard", write = false) {
   const demoAdmin = await getDemoAdminSession();
   if (demoAdmin) {
-    if (!canAccessAdminModule(demoAdmin.adminRole, module, write)) {
+    if (module !== "dashboard" || write || !canAccessAdminModule(demoAdmin.adminRole, module, write)) {
       redirect("/admin?demo=1");
     }
     return demoAdmin;
@@ -107,6 +110,40 @@ export async function requireAdmin(module: AdminModule = "dashboard", write = fa
 
   if (!admin?.active || !canAccessAdminModule(admin.role, module, write)) {
     redirect("/admin/login?error=unauthorized");
+  }
+
+  return {
+    ...user,
+    admin,
+    adminRole: admin.role,
+  };
+}
+
+export async function requirePOS(write = false) {
+  const demoAdmin = await getDemoAdminSession();
+  if (demoAdmin) return demoAdmin;
+
+  const user = await requireUser("/pdv/login");
+
+  if (user.role !== "ADMIN") {
+    redirect("/pdv/login?error=unauthorized");
+  }
+
+  let admin;
+  try {
+    admin = await prisma.adminUser.findUnique({
+      where: { userId: user.id },
+      include: { user: true },
+    });
+  } catch (error) {
+    if (isDatabaseUnavailable(error)) {
+      redirect("/pdv/login?error=database");
+    }
+    throw error;
+  }
+
+  if (!admin?.active || !canAccessAdminModule(admin.role, "pos", write)) {
+    redirect("/pdv/login?error=unauthorized");
   }
 
   return {

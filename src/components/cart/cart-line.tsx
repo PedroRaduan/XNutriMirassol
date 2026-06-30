@@ -44,25 +44,28 @@ export function CartLine({ cartId, item }: CartLineProps) {
             <input type="hidden" name="cartId" value={cartId} />
             <input type="hidden" name="itemId" value={item.id} />
             <input type="hidden" name="quantity" value={item.quantity - 1} />
-            <button className="grid size-10 place-items-center" aria-label="Diminuir">
+            <button className="grid size-11 place-items-center sm:size-10" aria-label="Diminuir">
               <Minus size={16} />
             </button>
           </form>
-          <span className="grid h-10 min-w-10 place-items-center text-sm font-black">{item.quantity}</span>
+          <span className="grid h-11 min-w-11 place-items-center text-sm font-black sm:h-10 sm:min-w-10">{item.quantity}</span>
           <form action={updateCartItem}>
             <input type="hidden" name="cartId" value={cartId} />
             <input type="hidden" name="itemId" value={item.id} />
             <input type="hidden" name="quantity" value={item.quantity + 1} />
-            <button className="grid size-10 place-items-center disabled:cursor-not-allowed disabled:opacity-40" aria-label="Aumentar" disabled={!canIncrease}>
+            <button className="grid size-11 place-items-center disabled:cursor-not-allowed disabled:opacity-40 sm:size-10" aria-label="Aumentar" disabled={!canIncrease}>
               <Plus size={16} />
             </button>
           </form>
         </div>
-        <strong className="ml-auto sm:ml-0">{formatCurrency(item.total)}</strong>
+        <div className="ml-auto text-right sm:ml-0">
+          <strong>{formatCurrency(item.total)}</strong>
+          {!canIncrease && <span className="mt-1 block text-[11px] font-bold text-[var(--brand-dark)]">Limite do estoque</span>}
+        </div>
         <form action={removeCartItem}>
           <input type="hidden" name="cartId" value={cartId} />
           <input type="hidden" name="itemId" value={item.id} />
-          <button className="btn btn-secondary px-3 py-2 text-red-700" aria-label="Remover">
+          <button className="btn btn-secondary min-h-11 px-3 py-2 text-red-700" aria-label="Remover">
             <Trash2 size={16} />
           </button>
         </form>

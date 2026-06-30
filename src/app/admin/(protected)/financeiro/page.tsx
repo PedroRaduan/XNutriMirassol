@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowUpRight, CircleDollarSign, Percent, ReceiptText, TrendingUp } from "lucide-react";
+import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton } from "@/components/admin/admin-submit";
-import { updateFinancialSettings } from "@/lib/actions/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { calculateUnitFinance, marginPercent, roundMoney } from "@/lib/finance/calculations";
@@ -308,20 +308,34 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
           </div>
         </div>
 
-        <form action={updateFinancialSettings} className="surface grid gap-3 p-5">
+        <AdminActionForm actionName="updateFinancialSettings" className="surface grid gap-3 p-5">
           <div className="flex items-center gap-2">
             <CircleDollarSign size={20} className="text-[var(--brand)]" />
             <h2 className="text-xl font-black">Configuracoes financeiras</h2>
           </div>
           <label className="text-sm font-black">Taxa Mercado Pago %<input className="field mt-2" name="mercadoPagoRate" type="number" step="0.01" min={0} defaultValue={settings.mercadoPagoRate} /></label>
           <label className="text-sm font-black">Taxa fixa por pedido<input className="field mt-2" name="fixedTransactionFee" type="number" step="0.01" min={0} defaultValue={settings.fixedTransactionFee} /></label>
+          <div className="rounded-lg border border-[#ffd8d1] bg-[#fff8f7] p-3">
+            <h3 className="text-sm font-black text-[var(--brand-dark)]">Taxas do PDV por forma de pagamento</h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="text-sm font-black">Dinheiro %<input className="field mt-2" name="posCashRate" type="number" step="0.01" min={0} defaultValue={settings.posCashRate} /></label>
+              <label className="text-sm font-black">Pix %<input className="field mt-2" name="posPixRate" type="number" step="0.01" min={0} defaultValue={settings.posPixRate} /></label>
+              <label className="text-sm font-black">Debito %<input className="field mt-2" name="posDebitRate" type="number" step="0.01" min={0} defaultValue={settings.posDebitRate} /></label>
+              <label className="text-sm font-black">Credito %<input className="field mt-2" name="posCreditRate" type="number" step="0.01" min={0} defaultValue={settings.posCreditRate} /></label>
+              <label className="text-sm font-black sm:col-span-2">Mercado Pago PDV %<input className="field mt-2" name="posMercadoPagoRate" type="number" step="0.01" min={0} defaultValue={settings.posMercadoPagoRate} /></label>
+            </div>
+            <label className="mt-3 flex items-center gap-2 text-sm font-bold">
+              <input className="accent-[var(--brand)]" name="allowNegativeStock" type="checkbox" defaultChecked={settings.allowNegativeStock} />
+              Permitir venda com estoque negativo no PDV
+            </label>
+          </div>
           <label className="text-sm font-black">Imposto estimado %<input className="field mt-2" name="estimatedTaxRate" type="number" step="0.01" min={0} defaultValue={settings.estimatedTaxRate} /></label>
           <label className="text-sm font-black">Embalagem padrao<input className="field mt-2" name="defaultPackagingCost" type="number" step="0.01" min={0} defaultValue={settings.defaultPackagingCost} /></label>
           <label className="text-sm font-black">Margem minima desejada %<input className="field mt-2" name="minimumMargin" type="number" step="0.01" min={0} defaultValue={settings.minimumMargin} /></label>
           <label className="text-sm font-black">Alerta de margem baixa %<input className="field mt-2" name="lowMarginAlert" type="number" step="0.01" min={0} defaultValue={settings.lowMarginAlert} /></label>
           <label className="text-sm font-black">Frete pago pela loja<input className="field mt-2" name="defaultShippingCostPaidByStore" type="number" step="0.01" min={0} defaultValue={settings.defaultShippingCostPaidByStore} /></label>
           <AdminSubmitButton pendingText="Salvando financeiro...">Salvar financeiro</AdminSubmitButton>
-        </form>
+        </AdminActionForm>
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-4">
