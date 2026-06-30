@@ -53,6 +53,7 @@ export default async function CheckoutPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px] lg:gap-8">
         <CheckoutForm
           shippingMethodId={cart.shippingMethod?.id}
+          shippingZipCode={cart.shippingZipCode}
           pickupLocationId={cart.pickupLocation?.id}
           pickupOptions={pickupOptions.map((pickup) => ({ id: pickup.id, name: pickup.name, instructions: pickup.instructions }))}
           total={cart.total}

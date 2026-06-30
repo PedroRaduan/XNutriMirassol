@@ -39,6 +39,7 @@ Outros guias úteis:
 - `docs/deploy.md`
 - `docs/banners.md`
 - `docs/produtos.md`
+- `docs/CLOUDINARY.md`
 
 ## 1. Abrir a pasta certa no terminal
 
@@ -793,7 +794,7 @@ Lembre: Mercado Pago não chama `localhost`.
 Confira:
 
 ```env
-CLOUDINARY_CLOUD_NAME=\w
+CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 CLOUDINARY_FOLDER=xnutri

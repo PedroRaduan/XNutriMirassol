@@ -72,6 +72,8 @@ const methodLabels: Record<PaymentMethod, string> = {
   MERCADO_PAGO: "Mercado Pago",
 };
 
+const paymentMethodList = Object.keys(methodLabels) as PaymentMethod[];
+
 const methodIcons: Record<PaymentMethod, typeof Banknote> = {
   CASH: Banknote,
   PIX: QrCode,
@@ -152,6 +154,7 @@ export function POSTerminal({
   const router = useRouter();
   const searchRef = useRef<HTMLInputElement | null>(null);
   const discountRef = useRef<HTMLInputElement | null>(null);
+  const submittingRef = useRef(false);
 
   const subtotal = useMemo(() => round(cart.reduce((sum, item) => sum + item.price * item.quantity, 0)), [cart]);
   const itemDiscount = useMemo(() => round(cart.reduce((sum, item) => sum + item.discount, 0)), [cart]);
@@ -159,6 +162,9 @@ export function POSTerminal({
   const total = round(Math.max(subtotal - itemDiscount - safeGeneralDiscount, 0));
   const cashLine = payments.find((payment) => payment.method === "CASH");
   const cashChange = cashLine ? round(Math.max((cashLine.amountReceived ?? cashLine.amount) - cashLine.amount, 0)) : 0;
+  const paymentTotal = useMemo(() => round(payments.reduce((sum, payment) => sum + payment.amount, 0)), [payments]);
+  const remainingPayment = round(Math.max(total - paymentTotal, 0));
+  const canAddPaymentLine = total > 0 && !isPending && payments.length < paymentMethodList.length && (remainingPayment > 0.01 || payments.length === 1);
   const visibleProducts = useMemo(() => {
     if (!isDemo) return products;
     const normalized = query.trim().toLowerCase();
@@ -317,11 +323,79 @@ export function POSTerminal({
   }
 
   function addPaymentLine() {
-    const paid = payments.reduce((sum, payment) => sum + payment.amount, 0);
-    setPayments((current) => [...current, { id: paymentId(), method: "CASH", amount: Math.max(round(total - paid), 0) }]);
+    if (total <= 0) {
+      setMessage({ type: "error", text: "Adicione produtos antes de dividir o pagamento." });
+      return;
+    }
+
+    if (payments.length >= paymentMethodList.length) {
+      setMessage({ type: "error", text: "Limite de formas de pagamento atingido para esta venda." });
+      return;
+    }
+
+    const paid = round(payments.reduce((sum, payment) => sum + payment.amount, 0));
+
+    if (paid > total + 0.01) {
+      setMessage({ type: "error", text: "A soma dos pagamentos ja passou do total. Ajuste os valores antes de adicionar outra forma." });
+      return;
+    }
+
+    if (paid >= total - 0.01 && payments.length > 1) {
+      setMessage({ type: "info", text: "O total ja esta dividido. Ajuste os valores existentes se quiser mudar o pagamento misto." });
+      return;
+    }
+
+    if (paid >= total - 0.01 && payments.length === 1) {
+      const firstPayment = payments[0];
+      const firstAmount = round(total / 2);
+      const secondAmount = round(total - firstAmount);
+      const secondMethod: PaymentMethod = firstPayment.method === "CASH" ? "PIX" : "CASH";
+
+      setPayments([
+        {
+          ...firstPayment,
+          amount: firstAmount,
+          amountReceived: firstPayment.method === "CASH" ? Math.max(firstPayment.amountReceived ?? firstAmount, firstAmount) : undefined,
+        },
+        {
+          id: paymentId(),
+          method: secondMethod,
+          amount: secondAmount,
+          amountReceived: secondMethod === "CASH" ? secondAmount : undefined,
+        },
+      ]);
+      setMessage({ type: "info", text: "Pagamento misto criado. Ajuste os valores se precisar." });
+      return;
+    }
+
+    const usedMethods = new Set(payments.map((payment) => payment.method));
+    const nextMethod = paymentMethodList.find((method) => !usedMethods.has(method)) ?? "CASH";
+    const remaining = round(total - paid);
+
+    setPayments((current) => [
+      ...current,
+      {
+        id: paymentId(),
+        method: nextMethod,
+        amount: remaining,
+        amountReceived: nextMethod === "CASH" ? remaining : undefined,
+      },
+    ]);
+    setMessage({ type: "info", text: "Forma de pagamento adicionada ao valor restante." });
+  }
+
+  function removePaymentLine(id: string) {
+    setPayments((current) => {
+      const next = current.filter((entry) => entry.id !== id);
+      return next.length > 0 ? next : [{ id: paymentId(), method: "PIX", amount: total }];
+    });
   }
 
   async function submitSale() {
+    if (submittingRef.current) {
+      return;
+    }
+
     if (isDemo) {
       setMessage({ type: "info", text: "Modo demo sem banco: a tela simula a venda, mas nao grava estoque nem relatorios." });
       return;
@@ -339,41 +413,48 @@ export function POSTerminal({
 
     const soldItems = cart.map((item) => ({ id: item.id, quantity: item.quantity }));
 
+    submittingRef.current = true;
     startTransition(async () => {
-      const response = await finalizePOSSale({
-        sessionId,
-        customerId: selectedCustomer?.id,
-        customer: selectedCustomer ? undefined : quickCustomer,
-        generalDiscount: safeGeneralDiscount,
-        items: cart.map((item) => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          discount: item.discount,
-        })),
-        payments: validPayments.map((payment) => ({
-          method: payment.method,
-          amount: payment.amount,
-          amountReceived: payment.method === "CASH" ? payment.amountReceived ?? payment.amount : undefined,
-        })),
-      });
+      try {
+        const response = await finalizePOSSale({
+          sessionId,
+          customerId: selectedCustomer?.id,
+          customer: selectedCustomer ? undefined : quickCustomer,
+          generalDiscount: safeGeneralDiscount,
+          items: cart.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            discount: item.discount,
+          })),
+          payments: validPayments.map((payment) => ({
+            method: payment.method,
+            amount: payment.amount,
+            amountReceived: payment.method === "CASH" ? payment.amountReceived ?? payment.amount : undefined,
+          })),
+        });
 
-      setMessage({ type: response.ok ? "ok" : "error", text: response.message });
-      if (response.ok) {
-        setCart([]);
-        setGeneralDiscount(0);
-        setPayments([{ id: paymentId(), method: "PIX", amount: 0 }]);
-        setProducts((current) =>
-          current.map((product) => {
-            const sold = soldItems.find((item) => item.id === product.id);
-            return sold ? { ...product, stock: Math.max(product.stock - sold.quantity, 0), lowStock: product.stock - sold.quantity <= 5 } : product;
-          }),
-        );
-        setSelectedCustomer(null);
-        setCustomerQuery("");
-        setQuickCustomer({ name: "", phone: "", document: "", email: "" });
-        setReceiptUrl(response.receiptUrl ?? null);
-        router.refresh();
+        setMessage({ type: response.ok ? "ok" : "error", text: response.message });
+        if (response.ok) {
+          setCart([]);
+          setGeneralDiscount(0);
+          setPayments([{ id: paymentId(), method: "PIX", amount: 0 }]);
+          setProducts((current) =>
+            current.map((product) => {
+              const sold = soldItems.find((item) => item.id === product.id);
+              return sold ? { ...product, stock: Math.max(product.stock - sold.quantity, 0), lowStock: product.stock - sold.quantity <= 5 } : product;
+            }),
+          );
+          setSelectedCustomer(null);
+          setCustomerQuery("");
+          setQuickCustomer({ name: "", phone: "", document: "", email: "" });
+          setReceiptUrl(response.receiptUrl ?? null);
+          router.refresh();
+        }
+      } catch {
+        setMessage({ type: "error", text: "Nao foi possivel finalizar a venda agora. Tente novamente." });
+      } finally {
+        submittingRef.current = false;
       }
     });
   }
@@ -567,10 +648,10 @@ export function POSTerminal({
         <section className="surface p-4">
           <h2 className="text-lg font-black">Pagamento</h2>
           <div className="mt-3 grid grid-cols-2 gap-2">
-            {(Object.keys(methodLabels) as PaymentMethod[]).map((method) => {
+            {paymentMethodList.map((method) => {
               const Icon = methodIcons[method];
               return (
-                <button key={method} type="button" onClick={() => setSinglePayment(method)} className="btn btn-secondary min-h-12 justify-start px-3">
+                <button key={method} type="button" onClick={() => setSinglePayment(method)} className="btn btn-secondary min-h-12 justify-start px-3" disabled={isPending}>
                   <Icon size={17} />
                   {methodLabels[method]}
                 </button>
@@ -585,13 +666,14 @@ export function POSTerminal({
                   <select
                     className="field"
                     value={payment.method}
+                    disabled={isPending}
                     onChange={(event) =>
                       setPayments((current) =>
                         current.map((entry) => (entry.id === payment.id ? { ...entry, method: event.target.value as PaymentMethod, amountReceived: undefined } : entry)),
                       )
                     }
                   >
-                    {(Object.keys(methodLabels) as PaymentMethod[]).map((method) => <option key={method} value={method}>{methodLabels[method]}</option>)}
+                    {paymentMethodList.map((method) => <option key={method} value={method}>{methodLabels[method]}</option>)}
                   </select>
                   <input
                     className="field"
@@ -599,9 +681,15 @@ export function POSTerminal({
                     min={0}
                     step="0.01"
                     value={payment.amount}
+                    disabled={isPending}
                     onChange={(event) => setPayments((current) => current.map((entry) => (entry.id === payment.id ? { ...entry, amount: Number(event.target.value) || 0 } : entry)))}
                   />
-                  <button type="button" className="grid size-11 place-items-center rounded-md text-red-700 hover:bg-red-50" onClick={() => setPayments((current) => current.filter((entry) => entry.id !== payment.id))}>
+                  <button
+                    type="button"
+                    className="grid size-11 place-items-center rounded-md text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                    onClick={() => removePaymentLine(payment.id)}
+                    disabled={isPending || payments.length <= 1}
+                  >
                     <Trash2 size={17} />
                   </button>
                 </div>
@@ -614,16 +702,22 @@ export function POSTerminal({
                       min={0}
                       step="0.01"
                       value={payment.amountReceived ?? payment.amount}
+                      disabled={isPending}
                       onChange={(event) => setPayments((current) => current.map((entry) => (entry.id === payment.id ? { ...entry, amountReceived: Number(event.target.value) || 0 } : entry)))}
                     />
                   </label>
                 )}
               </div>
             ))}
-            <button type="button" className="btn btn-secondary min-h-11" onClick={addPaymentLine}>
+            <button type="button" className="btn btn-secondary min-h-11" onClick={addPaymentLine} disabled={!canAddPaymentLine}>
               <Plus size={16} />
               Pagamento misto
             </button>
+            {payments.length > 1 && (
+              <p className="rounded-md bg-[#f6f7f9] p-2 text-xs font-bold text-[var(--muted)]">
+                Total informado: {money(paymentTotal)} · Restante: {money(remainingPayment)}
+              </p>
+            )}
           </div>
         </section>
 

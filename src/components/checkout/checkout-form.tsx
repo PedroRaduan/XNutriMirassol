@@ -1,24 +1,39 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { CreditCard, MapPin, QrCode, ShieldCheck, Store, Truck, UserRound, type LucideIcon } from "lucide-react";
 import { submitCheckout, type CheckoutActionState } from "@/lib/actions/checkout";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, onlyDigits } from "@/lib/utils";
 import { checkoutSchema } from "@/lib/validations";
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 type CheckoutFormProps = {
   shippingMethodId?: string | null;
+  shippingZipCode?: string | null;
   pickupLocationId?: string | null;
   pickupOptions: Array<{ id: string; name: string; instructions: string }>;
   total: number;
 };
 
 const initialCheckoutState: CheckoutActionState = { ok: false, message: "" };
+
+type CepLookupState = {
+  status: "idle" | "loading" | "ok" | "error";
+  message: string;
+  digits: string;
+};
+
+type CepApiResponse = {
+  zipCode: string;
+  street: string;
+  district: string;
+  city: string;
+  state: string;
+};
 
 function StepTitle({ number, title, text, icon: Icon }: { number: string; title: string; text: string; icon: LucideIcon }) {
   return (
@@ -35,10 +50,12 @@ function StepTitle({ number, title, text, icon: Icon }: { number: string; title:
   );
 }
 
-export function CheckoutForm({ shippingMethodId, pickupLocationId, pickupOptions, total }: CheckoutFormProps) {
+export function CheckoutForm({ shippingMethodId, shippingZipCode, pickupLocationId, pickupOptions, total }: CheckoutFormProps) {
   const [state, action, pending] = useActionState(submitCheckout, initialCheckoutState);
   const [showStickySubmit, setShowStickySubmit] = useState(false);
+  const [cepLookup, setCepLookup] = useState<CepLookupState>({ status: "idle", message: "", digits: "" });
   const submitAreaRef = useRef<HTMLDivElement>(null);
+  const lastCepLookupRef = useRef("");
   const [shippingType, setShippingType] = useState<CheckoutFormValues["shippingType"]>(
     pickupLocationId ? "PICKUP" : "DELIVERY",
   );
@@ -49,6 +66,7 @@ export function CheckoutForm({ shippingMethodId, pickupLocationId, pickupOptions
       shippingType: pickupLocationId ? "PICKUP" : "DELIVERY",
       paymentMethod: "PIX",
       shippingMethodId: shippingMethodId ?? undefined,
+      zipCode: shippingZipCode ?? undefined,
       pickupLocationId: pickupLocationId ?? pickupOptions[0]?.id,
     },
   });
@@ -58,6 +76,9 @@ export function CheckoutForm({ shippingMethodId, pickupLocationId, pickupOptions
   const paymentMethodRegister = form.register("paymentMethod", {
     onChange: (event) => setPaymentMethod(event.target.value),
   });
+  const watchedZipCode = useWatch({ control: form.control, name: "zipCode" });
+  const currentCepDigits = onlyDigits(watchedZipCode ?? "");
+  const shouldShowCepLookup = shippingType === "DELIVERY" && cepLookup.message && cepLookup.digits === currentCepDigits;
 
   useEffect(() => {
     function updateStickySubmit() {
@@ -77,6 +98,66 @@ export function CheckoutForm({ shippingMethodId, pickupLocationId, pickupOptions
       window.removeEventListener("resize", updateStickySubmit);
     };
   }, []);
+
+  useEffect(() => {
+    if (shippingType !== "DELIVERY") {
+      return;
+    }
+
+    const digits = onlyDigits(watchedZipCode ?? "");
+
+    if (digits.length !== 8) {
+      lastCepLookupRef.current = "";
+      return;
+    }
+
+    if (lastCepLookupRef.current === digits) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const handle = window.setTimeout(async () => {
+      lastCepLookupRef.current = digits;
+      setCepLookup({ status: "loading", message: "Buscando endereco pelo CEP...", digits });
+
+      try {
+        const response = await fetch(`/api/cep/${digits}`, { signal: controller.signal });
+        const payload = (await response.json()) as CepApiResponse | { error?: string };
+
+        if (!response.ok || "error" in payload) {
+          const errorPayload = payload as { error?: string };
+          throw new Error(errorPayload.error ?? "CEP nao encontrado.");
+        }
+
+        const address = payload as CepApiResponse;
+        form.setValue("zipCode", address.zipCode, { shouldDirty: true, shouldValidate: true });
+        if (address.street) form.setValue("street", address.street, { shouldDirty: true, shouldValidate: true });
+        if (address.district) form.setValue("district", address.district, { shouldDirty: true, shouldValidate: true });
+        form.setValue("city", address.city, { shouldDirty: true, shouldValidate: true });
+        form.setValue("state", address.state, { shouldDirty: true, shouldValidate: true });
+        form.clearErrors(["zipCode", "street", "district", "city", "state"]);
+
+        setCepLookup({
+          status: "ok",
+          message: address.street ? "Endereco preenchido pelo CEP. Confira o numero antes de finalizar." : "CEP encontrado. Complete rua, bairro e numero.",
+          digits,
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        lastCepLookupRef.current = "";
+        setCepLookup({
+          status: "error",
+          message: error instanceof Error ? error.message : "Nao foi possivel buscar este CEP agora.",
+          digits,
+        });
+      }
+    }, 350);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(handle);
+    };
+  }, [form, shippingType, watchedZipCode]);
 
   return (
     <form
@@ -120,13 +201,37 @@ export function CheckoutForm({ shippingMethodId, pickupLocationId, pickupOptions
         {shippingType === "DELIVERY" ? (
           <div className="grid gap-4 md:grid-cols-2">
             <input type="hidden" name="shippingMethodId" value={shippingMethodId ?? ""} />
-            <label className="text-sm font-black">CEP<input className="field mt-2" inputMode="numeric" autoComplete="postal-code" {...form.register("zipCode")} name="zipCode" /></label>
+            {!shippingMethodId && (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900 md:col-span-2">
+                Para entrega, calcule e selecione um frete no carrinho antes de finalizar. Se preferir, escolha retirada na loja.
+              </p>
+            )}
+            <label className="text-sm font-black">
+              CEP
+              <input className="field mt-2" inputMode="numeric" autoComplete="postal-code" maxLength={9} {...form.register("zipCode")} name="zipCode" />
+              {form.formState.errors.zipCode?.message && <span className="mt-1 block text-xs font-bold text-red-700">{form.formState.errors.zipCode.message}</span>}
+            </label>
             <label className="text-sm font-black">Rua<input className="field mt-2" autoComplete="address-line1" {...form.register("street")} name="street" /></label>
             <label className="text-sm font-black">Numero<input className="field mt-2" inputMode="numeric" autoComplete="address-line2" {...form.register("number")} name="number" /></label>
             <label className="text-sm font-black">Complemento<input className="field mt-2" autoComplete="address-line3" {...form.register("complement")} name="complement" /></label>
             <label className="text-sm font-black">Bairro<input className="field mt-2" autoComplete="address-level3" {...form.register("district")} name="district" /></label>
             <label className="text-sm font-black">Cidade<input className="field mt-2" autoComplete="address-level2" {...form.register("city")} name="city" /></label>
             <label className="text-sm font-black">UF<input className="field mt-2 uppercase" autoComplete="address-level1" maxLength={2} {...form.register("state")} name="state" /></label>
+            {shouldShowCepLookup && (
+              <p
+                className={`rounded-lg p-3 text-sm font-semibold md:col-span-2 ${
+                  cepLookup.status === "ok"
+                    ? "bg-green-50 text-green-800"
+                    : cepLookup.status === "loading"
+                      ? "bg-blue-50 text-blue-800"
+                      : "bg-red-50 text-red-800"
+                }`}
+                role={cepLookup.status === "error" ? "alert" : undefined}
+                aria-live="polite"
+              >
+                {cepLookup.message}
+              </p>
+            )}
           </div>
         ) : (
           <div className="grid gap-3">

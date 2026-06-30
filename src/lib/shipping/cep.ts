@@ -85,12 +85,22 @@ function addressPartMatches(expected: string, received?: string | null) {
 }
 
 export async function validateAddressAgainstCep(input: CheckoutAddressInput): Promise<AddressValidationResult> {
-  const address = await lookupCep(input.zipCode ?? "");
+  const cep = validateCep(input.zipCode ?? "");
+
+  if (!cep) {
+    return {
+      ok: false,
+      message: "CEP invalido. Informe os 8 numeros do CEP.",
+      address: null,
+    };
+  }
+
+  const address = await lookupCep(cep);
 
   if (!address) {
     return {
       ok: false,
-      message: "CEP nao encontrado. Confira o numero informado.",
+      message: "CEP nao encontrado ou consulta indisponivel. Confira o numero e tente novamente.",
       address,
     };
   }
@@ -101,14 +111,6 @@ export async function validateAddressAgainstCep(input: CheckoutAddressInput): Pr
 
   if (!addressPartMatches(address.city, input.city)) {
     return { ok: false, message: "CEP nao confere com a cidade informada.", address };
-  }
-
-  if (!addressPartMatches(address.district, input.district)) {
-    return { ok: false, message: "CEP nao confere com o bairro informado.", address };
-  }
-
-  if (!addressPartMatches(address.street, input.street)) {
-    return { ok: false, message: "CEP nao confere com a rua/logradouro informado.", address };
   }
 
   return { ok: true, address };

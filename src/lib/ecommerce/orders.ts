@@ -12,7 +12,7 @@ import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
 import { createMercadoPagoPreference } from "@/lib/payments/mercado-pago";
 import { marginPercent, roundMoney } from "@/lib/finance/calculations";
 import { getFinancialSettings } from "@/lib/finance/settings";
-import { validateAddressAgainstCep } from "@/lib/shipping/cep";
+import { validateAddressAgainstCep, validateCep } from "@/lib/shipping/cep";
 
 function formString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -25,6 +25,16 @@ function optionalFormValue(formData: FormData, key: string) {
   const trimmed = value.trim();
   return trimmed ? trimmed : undefined;
 }
+
+type DeliveryAddress = {
+  zipCode: string;
+  street: string;
+  number: string;
+  complement?: string;
+  district: string;
+  city: string;
+  state: string;
+};
 
 export async function createOrderFromCheckout(formData: FormData) {
   const user = await getCurrentUser();
@@ -59,7 +69,28 @@ export async function createOrderFromCheckout(formData: FormData) {
   }
 
   const data = parsed.data;
+  let deliveryAddress: DeliveryAddress | null = null;
+
   if (data.shippingType === "DELIVERY") {
+    const submittedCep = validateCep(data.zipCode ?? "");
+    const quotedCep = validateCep(cart.shippingZipCode ?? "");
+
+    if (!submittedCep) {
+      throw new Error("CEP invalido. Informe os 8 numeros do CEP.");
+    }
+
+    if (!data.shippingMethodId || !cart.shippingMethod?.id) {
+      throw new Error("Calcule e selecione um frete no carrinho antes de finalizar com entrega.");
+    }
+
+    if (data.shippingMethodId !== cart.shippingMethod.id) {
+      throw new Error("O frete selecionado mudou. Volte ao carrinho, selecione o frete novamente e tente finalizar.");
+    }
+
+    if (quotedCep && submittedCep !== quotedCep) {
+      throw new Error("O CEP do checkout precisa ser o mesmo usado para calcular o frete. Volte ao carrinho, recalcule o frete para este CEP e tente novamente.");
+    }
+
     const addressValidation = await validateAddressAgainstCep({
       zipCode: data.zipCode,
       street: data.street,
@@ -71,6 +102,16 @@ export async function createOrderFromCheckout(formData: FormData) {
     if (!addressValidation.ok) {
       throw new Error(addressValidation.message);
     }
+
+    deliveryAddress = {
+      zipCode: addressValidation.address.zipCode || data.zipCode || "",
+      street: addressValidation.address.street || data.street || "",
+      number: data.number || "",
+      complement: data.complement,
+      district: addressValidation.address.district || data.district || "",
+      city: addressValidation.address.city || data.city || "",
+      state: addressValidation.address.state || data.state || "",
+    };
   }
 
   if (cart.id === "demo-cart") {
@@ -187,19 +228,19 @@ export async function createOrderFromCheckout(formData: FormData) {
 
     let addressId: string | undefined;
 
-    if (data.shippingType === "DELIVERY" && user?.id) {
+    if (deliveryAddress && user?.id) {
       const address = await tx.address.create({
         data: {
           userId: user.id,
           label: "Checkout",
           recipient: sanitizeText(data.customerName),
-          zipCode: sanitizeText(data.zipCode ?? ""),
-          street: sanitizeText(data.street ?? ""),
-          number: sanitizeText(data.number ?? ""),
-          complement: sanitizeOptionalText(data.complement),
-          district: sanitizeText(data.district ?? ""),
-          city: sanitizeText(data.city ?? ""),
-          state: sanitizeText(data.state ?? "").toUpperCase(),
+          zipCode: sanitizeText(deliveryAddress.zipCode),
+          street: sanitizeText(deliveryAddress.street),
+          number: sanitizeText(deliveryAddress.number),
+          complement: sanitizeOptionalText(deliveryAddress.complement),
+          district: sanitizeText(deliveryAddress.district),
+          city: sanitizeText(deliveryAddress.city),
+          state: sanitizeText(deliveryAddress.state).toUpperCase(),
         },
       });
       addressId = address.id;
@@ -236,15 +277,15 @@ export async function createOrderFromCheckout(formData: FormData) {
         profitMargin: marginPercent(netProfit, Math.max(subtotal - discount, 0)),
         notes: sanitizeOptionalText(data.notes),
         shippingSnapshot:
-          data.shippingType === "DELIVERY"
+          deliveryAddress
             ? {
-                zipCode: data.zipCode,
-                street: data.street,
-                number: data.number,
-                complement: data.complement,
-                district: data.district,
-                city: data.city,
-                state: data.state,
+                zipCode: deliveryAddress.zipCode,
+                street: deliveryAddress.street,
+                number: deliveryAddress.number,
+                complement: deliveryAddress.complement,
+                district: deliveryAddress.district,
+                city: deliveryAddress.city,
+                state: deliveryAddress.state,
               }
             : undefined,
       },
