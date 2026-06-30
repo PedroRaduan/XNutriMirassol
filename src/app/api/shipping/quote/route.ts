@@ -12,11 +12,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Rate limit excedido." }, { status: 429 });
   }
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
   const parsed = shippingQuoteSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Dados inválidos." }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Informe um CEP válido para calcular o frete." }, { status: 400 });
   }
 
   try {

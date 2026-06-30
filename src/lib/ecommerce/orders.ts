@@ -65,7 +65,7 @@ export async function createOrderFromCheckout(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Dados de checkout invalidos.");
+    throw new Error(parsed.error.issues[0]?.message ?? "Dados de checkout inválidos.");
   }
 
   const data = parsed.data;
@@ -76,19 +76,19 @@ export async function createOrderFromCheckout(formData: FormData) {
     const quotedCep = validateCep(cart.shippingZipCode ?? "");
 
     if (!submittedCep) {
-      throw new Error("CEP invalido. Informe os 8 numeros do CEP.");
+      throw new Error("CEP inválido. Informe os 8 números do CEP.");
     }
 
     if (!data.shippingMethodId || !cart.shippingMethod?.id) {
-      throw new Error("Calcule e selecione um frete no carrinho antes de finalizar com entrega.");
+      throw new Error("Calcule e selecione uma opção de frete no checkout antes de finalizar com entrega.");
     }
 
     if (data.shippingMethodId !== cart.shippingMethod.id) {
-      throw new Error("O frete selecionado mudou. Volte ao carrinho, selecione o frete novamente e tente finalizar.");
+      throw new Error("O frete selecionado mudou. Selecione a opção novamente no checkout e tente finalizar.");
     }
 
     if (quotedCep && submittedCep !== quotedCep) {
-      throw new Error("O CEP do checkout precisa ser o mesmo usado para calcular o frete. Volte ao carrinho, recalcule o frete para este CEP e tente novamente.");
+      throw new Error("O CEP mudou depois do cálculo. Recalcule e selecione o frete novamente para este endereço.");
     }
 
     const addressValidation = await validateAddressAgainstCep({
