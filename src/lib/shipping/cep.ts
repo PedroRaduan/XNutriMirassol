@@ -25,38 +25,64 @@ export function validateCep(value: string) {
   return digits.length === 8 ? digits : null;
 }
 
+async function fetchCepProvider<T>(url: string): Promise<T | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4_500);
+
+  try {
+    const response = await fetch(url, {
+      next: { revalidate: 60 * 60 * 24 * 30 },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) return null;
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function lookupCep(value: string): Promise<CepAddress | null> {
   const cep = validateCep(value);
   if (!cep) return null;
 
-  let response: Response;
-
-  try {
-    response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
-      next: { revalidate: 60 * 60 * 24 * 30 },
-    });
-  } catch {
-    return null;
-  }
-
-  if (!response.ok) return null;
-  const data = (await response.json()) as {
+  const viaCep = await fetchCepProvider<{
     erro?: boolean;
     cep: string;
     logradouro: string;
     bairro: string;
     localidade: string;
     uf: string;
-  };
+  }>(`https://viacep.com.br/ws/${cep}/json/`);
 
-  if (data.erro) return null;
+  if (viaCep && !viaCep.erro) {
+    return {
+      zipCode: viaCep.cep,
+      street: viaCep.logradouro,
+      district: viaCep.bairro,
+      city: viaCep.localidade,
+      state: viaCep.uf,
+    };
+  }
+
+  const brasilApi = await fetchCepProvider<{
+    cep: string;
+    state: string;
+    city: string;
+    neighborhood?: string;
+    street?: string;
+  }>(`https://brasilapi.com.br/api/cep/v1/${cep}`);
+
+  if (!brasilApi) return null;
 
   return {
-    zipCode: data.cep,
-    street: data.logradouro,
-    district: data.bairro,
-    city: data.localidade,
-    state: data.uf,
+    zipCode: brasilApi.cep.replace(/^(\d{5})(\d{3})$/, "$1-$2"),
+    street: brasilApi.street ?? "",
+    district: brasilApi.neighborhood ?? "",
+    city: brasilApi.city,
+    state: brasilApi.state,
   };
 }
 

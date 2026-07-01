@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Pencil, Plus, Search } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Search } from "lucide-react";
 import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton, ConfirmSubmitButton } from "@/components/admin/admin-submit";
 import { requireAdmin } from "@/lib/auth/session";
@@ -15,6 +15,26 @@ type ProductSearchParams = Promise<{ q?: string; status?: string }>;
 function attributesToText(value: unknown) {
   if (!value || typeof value !== "object") return "tipo=Padrão";
   return Object.entries(value as Record<string, string>).map(([key, item]) => `${key}=${item}`).join("\n");
+}
+
+function AdminFormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="admin-form-section">
+      <div>
+        <h3 className="font-black text-[var(--ink)]">{title}</h3>
+        {description && <p className="mt-1 text-xs font-semibold leading-5 text-[var(--muted)]">{description}</p>}
+      </div>
+      <div className="mt-4 grid gap-3">{children}</div>
+    </section>
+  );
 }
 
 function ProductForm({
@@ -36,42 +56,55 @@ function ProductForm({
   const unitFinance = calculateUnitFinance({ price: salePrice, costPrice, packagingCost, taxRate: estimatedTaxRate });
 
   return (
-    <AdminActionForm actionName="upsertProduct" className="grid gap-3">
+    <AdminActionForm
+      actionName="upsertProduct"
+      closeDetailsOnSuccess={Boolean(product)}
+      className="grid gap-4"
+    >
       {product && <input type="hidden" name="id" value={product.id} />}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm font-black">Categoria
-          <select className="field mt-2" name="categoryId" defaultValue={product?.categoryId ?? ""} required>
-            <option value="">Selecione</option>
-            {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-          </select>
-        </label>
-        <label className="text-sm font-black">Status
-          <select className="field mt-2" name="status" defaultValue={product?.status ?? "ACTIVE"}>
-            <option value="ACTIVE">Ativo</option>
-            <option value="DRAFT">Rascunho</option>
-            <option value="ARCHIVED">Arquivado</option>
-          </select>
-        </label>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm font-black">Nome<input className="field mt-2" name="name" defaultValue={product?.name} required /></label>
-        <label className="text-sm font-black">URL do produto<input className="field mt-2" name="slug" defaultValue={product?.slug} placeholder="gerado automaticamente" /></label>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="text-sm font-black">Código/SKU<input className="field mt-2" name="sku" defaultValue={product?.sku} required /></label>
-        <label className="text-sm font-black">Preço<input className="field mt-2" name="price" type="number" step="0.01" min={0} defaultValue={product ? Number(product.price) : ""} required /></label>
-        <label className="text-sm font-black">Preço anterior<input className="field mt-2" name="compareAtPrice" type="number" step="0.01" min={0} defaultValue={product?.compareAtPrice ? Number(product.compareAtPrice) : ""} /></label>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="text-sm font-black">Codigo de barras<input className="field mt-2" name="barcode" inputMode="numeric" defaultValue={product?.barcode ?? ""} placeholder="Leitor ou digitacao" /></label>
-        <label className="text-sm font-black">EAN<input className="field mt-2" name="ean" inputMode="numeric" defaultValue={product?.ean ?? ""} placeholder="789..." /></label>
-        <label className="text-sm font-black">Codigo interno<input className="field mt-2" name="internalCode" defaultValue={product?.internalCode ?? ""} placeholder="XN-CAIXA-001" /></label>
-      </div>
-      <section className="rounded-lg border border-[#ffd8d1] bg-[#fff8f7] p-4">
+
+      <AdminFormSection title="Informações principais" description="Nome, categoria e textos exibidos na loja.">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-sm font-black">Categoria
+            <select className="field mt-2" name="categoryId" defaultValue={product?.categoryId ?? ""} required>
+              <option value="">Selecione</option>
+              {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+            </select>
+          </label>
+          <label className="text-sm font-black">Status
+            <select className="field mt-2" name="status" defaultValue={product?.status ?? "ACTIVE"}>
+              <option value="ACTIVE">Ativo</option>
+              <option value="DRAFT">Rascunho</option>
+              <option value="ARCHIVED">Arquivado</option>
+            </select>
+          </label>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-sm font-black">Nome<input className="field mt-2" name="name" defaultValue={product?.name} required /></label>
+          <label className="text-sm font-black">URL do produto<input className="field mt-2" name="slug" defaultValue={product?.slug} placeholder="gerada automaticamente" /></label>
+        </div>
+        <label className="text-sm font-black">Descrição curta<input className="field mt-2" name="shortDescription" defaultValue={product?.shortDescription} required /></label>
+        <label className="text-sm font-black">Descrição completa<textarea className="field mt-2 min-h-28" name="description" defaultValue={product?.description} required /></label>
+      </AdminFormSection>
+
+      <AdminFormSection title="Preço e identificação" description="Dados comerciais e códigos usados no estoque e no PDV.">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <label className="text-sm font-black">Código/SKU<input className="field mt-2" name="sku" defaultValue={product?.sku} required /></label>
+          <label className="text-sm font-black">Preço<input className="field mt-2" name="price" type="number" step="0.01" min={0} defaultValue={product ? Number(product.price) : ""} required /></label>
+          <label className="text-sm font-black">Preço anterior<input className="field mt-2" name="compareAtPrice" type="number" step="0.01" min={0} defaultValue={product?.compareAtPrice ? Number(product.compareAtPrice) : ""} /></label>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <label className="text-sm font-black">Código de barras<input className="field mt-2" name="barcode" inputMode="numeric" defaultValue={product?.barcode ?? ""} placeholder="Leitor ou digitação" /></label>
+          <label className="text-sm font-black">EAN<input className="field mt-2" name="ean" inputMode="numeric" defaultValue={product?.ean ?? ""} placeholder="789..." /></label>
+          <label className="text-sm font-black">Código interno<input className="field mt-2" name="internalCode" defaultValue={product?.internalCode ?? ""} placeholder="XN-CAIXA-001" /></label>
+        </div>
+      </AdminFormSection>
+
+      <section className="admin-form-section">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h3 className="text-base font-black">Análise financeira do produto</h3>
-            <p className="text-xs font-semibold text-[var(--muted)]">Use valores gerenciais. Isso ajuda o painel a estimar lucro e margem.</p>
+            <p className="mt-1 text-xs font-semibold leading-5 text-[var(--muted)]">Valores internos para estimar lucro e margem. Eles não aparecem para o cliente.</p>
           </div>
           {product && (
             <span className={unitFinance.margin < 10 ? "status-badge status-canceled" : "status-badge status-paid"}>
@@ -87,49 +120,58 @@ function ProductForm({
         </div>
         {product && (
           <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-            <div className="rounded-md bg-white p-3">
+            <div className="rounded-md bg-[#f7f8fa] p-3">
               <span className="block text-xs font-bold text-[var(--muted)]">Preço sugerido</span>
               <strong>{suggestedPrice > 0 ? formatCurrency(suggestedPrice) : "Cadastre o custo"}</strong>
             </div>
-            <div className="rounded-md bg-white p-3">
+            <div className="rounded-md bg-[#f7f8fa] p-3">
               <span className="block text-xs font-bold text-[var(--muted)]">Lucro estimado por unidade</span>
               <strong>{formatCurrency(unitFinance.netProfit)}</strong>
             </div>
-            <div className="rounded-md bg-white p-3">
+            <div className="rounded-md bg-[#f7f8fa] p-3">
               <span className="block text-xs font-bold text-[var(--muted)]">Margem estimada</span>
               <strong>{unitFinance.margin.toFixed(2)}%</strong>
             </div>
           </div>
         )}
       </section>
-      <label className="text-sm font-black">Descrição curta<input className="field mt-2" name="shortDescription" defaultValue={product?.shortDescription} required /></label>
-      <label className="text-sm font-black">Descrição completa<textarea className="field mt-2 min-h-28" name="description" defaultValue={product?.description} required /></label>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm font-black">Estoque principal<input className="field mt-2" name="stock" type="number" min={0} defaultValue={stock} required /></label>
-        <label className="text-sm font-black">Alerta mínimo<input className="field mt-2" name="lowStockThreshold" type="number" min={0} defaultValue={lowStockThreshold} /></label>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-4">
-        <label className="text-sm font-black">Peso (g)<input className="field mt-2" name="weightGrams" type="number" min={0} defaultValue={product?.weightGrams ?? 300} /></label>
-        <label className="text-sm font-black">Altura (cm)<input className="field mt-2" name="heightCm" type="number" min={0} defaultValue={product?.heightCm ?? 22} /></label>
-        <label className="text-sm font-black">Largura (cm)<input className="field mt-2" name="widthCm" type="number" min={0} defaultValue={product?.widthCm ?? 16} /></label>
-        <label className="text-sm font-black">Comprimento (cm)<input className="field mt-2" name="lengthCm" type="number" min={0} defaultValue={product?.lengthCm ?? 16} /></label>
-      </div>
-      <label className="text-sm font-black">Imagens
-        <textarea className="field mt-2 min-h-24" name="imageUrls" defaultValue={imageUrls} placeholder="Uma URL por linha" required />
-      </label>
-      <div className="grid gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] p-3 sm:grid-cols-3">
-        <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="featured" type="checkbox" defaultChecked={product?.featured} /> Destaque</label>
-        <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="bestSeller" type="checkbox" defaultChecked={product?.bestSeller} /> Mais vendido</label>
-        <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="promotion" type="checkbox" defaultChecked={product?.promotion} /> Promoção</label>
-      </div>
-      <AdminSubmitButton>{product ? "Salvar alterações" : "Cadastrar produto"}</AdminSubmitButton>
+
+      <AdminFormSection title="Estoque e envio" description="Quantidade disponível e medidas usadas no cálculo do frete.">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-sm font-black">Estoque principal<input className="field mt-2" name="stock" type="number" min={0} defaultValue={stock} required /></label>
+          <label className="text-sm font-black">Alerta mínimo<input className="field mt-2" name="lowStockThreshold" type="number" min={0} defaultValue={lowStockThreshold} /></label>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-4">
+          <label className="text-sm font-black">Peso (g)<input className="field mt-2" name="weightGrams" type="number" min={0} defaultValue={product?.weightGrams ?? 300} /></label>
+          <label className="text-sm font-black">Altura (cm)<input className="field mt-2" name="heightCm" type="number" min={0} defaultValue={product?.heightCm ?? 22} /></label>
+          <label className="text-sm font-black">Largura (cm)<input className="field mt-2" name="widthCm" type="number" min={0} defaultValue={product?.widthCm ?? 16} /></label>
+          <label className="text-sm font-black">Comprimento (cm)<input className="field mt-2" name="lengthCm" type="number" min={0} defaultValue={product?.lengthCm ?? 16} /></label>
+        </div>
+      </AdminFormSection>
+
+      <AdminFormSection title="Imagens e destaques" description="Use uma URL de imagem por linha e escolha onde o produto será destacado.">
+        <label className="text-sm font-black">Imagens
+          <textarea className="field mt-2 min-h-24" name="imageUrls" defaultValue={imageUrls} placeholder="Uma URL por linha" required />
+        </label>
+        <div className="grid gap-2 rounded-lg bg-[#f7f8fa] p-3 sm:grid-cols-3">
+          <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="featured" type="checkbox" defaultChecked={product?.featured} /> Destaque</label>
+          <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="bestSeller" type="checkbox" defaultChecked={product?.bestSeller} /> Mais vendido</label>
+          <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="promotion" type="checkbox" defaultChecked={product?.promotion} /> Promoção</label>
+        </div>
+      </AdminFormSection>
+
+      <AdminSubmitButton>{product ? "Salvar e fechar" : "Cadastrar produto"}</AdminSubmitButton>
     </AdminActionForm>
   );
 }
 
 function VariantForm({ productId, variant }: { productId: string; variant?: Awaited<ReturnType<typeof getProducts>>[number]["variants"][number] }) {
   return (
-    <AdminActionForm actionName="upsertProductVariant" className="grid gap-3 rounded-lg border border-[var(--line)] bg-[#fafafa] p-3">
+    <AdminActionForm
+      actionName="upsertProductVariant"
+      closeDetailsOnSuccess
+      className="grid gap-3 rounded-lg border border-[var(--line)] bg-white p-4"
+    >
       <input type="hidden" name="productId" value={productId} />
       {variant && <input type="hidden" name="id" value={variant.id} />}
       <div className="grid gap-3 sm:grid-cols-3">
@@ -152,7 +194,7 @@ function VariantForm({ productId, variant }: { productId: string; variant?: Awai
         <input className="field" name="lowStockThreshold" type="number" min={0} placeholder="Mínimo" defaultValue={variant?.inventory?.lowStockThreshold ?? 5} />
         <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="active" type="checkbox" defaultChecked={variant?.active ?? true} /> Ativa</label>
       </div>
-      <AdminSubmitButton pendingText="Salvando variação...">{variant ? "Salvar variação" : "Criar variação"}</AdminSubmitButton>
+      <AdminSubmitButton pendingText="Salvando variação...">{variant ? "Salvar e fechar" : "Criar e fechar"}</AdminSubmitButton>
     </AdminActionForm>
   );
 }
@@ -232,10 +274,10 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               taxRate: toNumber(product.estimatedTaxRate ?? 0),
             });
             return (
-              <article key={product.id} className="surface overflow-hidden">
-                <div className="grid gap-4 border-b border-[var(--line)] p-4 md:grid-cols-[86px_1fr_auto]">
+              <article key={product.id} className="admin-product-card surface overflow-hidden">
+                <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-[76px_1fr_auto] md:items-center">
                   <div className="relative aspect-square overflow-hidden rounded-lg bg-[#eceef1]">
-                    {product.images[0] && <Image src={product.images[0].url} alt={product.name} fill sizes="86px" className="object-cover" />}
+                    {product.images[0] && <Image src={product.images[0].url} alt={product.name} fill sizes="76px" className="object-cover" />}
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -262,22 +304,24 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                   </div>
                 </div>
 
-                <details className="border-b border-[var(--line)]">
-                  <summary className="flex cursor-pointer items-center gap-2 p-4 font-black text-[var(--brand)]">
+                <details className="admin-disclosure border-t border-[var(--line)]">
+                  <summary className="flex cursor-pointer items-center gap-2 px-4 py-3.5 font-black text-[var(--graphite)] sm:px-5">
                     <Pencil size={16} />
                     Editar produto
+                    <ChevronDown className="admin-disclosure-chevron ml-auto text-[var(--muted)]" size={17} />
                   </summary>
-                  <div className="border-t border-[var(--line)] p-4">
+                  <div className="admin-edit-panel border-t border-[var(--line)] p-4 sm:p-5">
                     <ProductForm categories={categories} product={product} />
                   </div>
                 </details>
 
-                <details>
-                  <summary className="flex cursor-pointer items-center gap-2 p-4 font-black text-[var(--brand)]">
+                <details className="admin-disclosure border-t border-[var(--line)]">
+                  <summary className="flex cursor-pointer items-center gap-2 px-4 py-3.5 font-black text-[var(--graphite)] sm:px-5">
                     <Plus size={16} />
                     Sabores, cores e variações ({product.variants.length})
+                    <ChevronDown className="admin-disclosure-chevron ml-auto text-[var(--muted)]" size={17} />
                   </summary>
-                  <div className="grid gap-3 border-t border-[var(--line)] p-4">
+                  <div className="admin-edit-panel grid gap-3 border-t border-[var(--line)] p-4 sm:p-5">
                     {product.variants.map((variant) => (
                       <div key={variant.id} className="grid gap-2">
                         <VariantForm productId={product.id} variant={variant} />

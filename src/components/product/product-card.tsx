@@ -107,8 +107,6 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
             Ver produto <ArrowRight size={15} />
           </Link>
         </div>
-
-        <span className="hidden text-xs font-semibold text-[var(--muted)] sm:block">SKU {product.sku}</span>
       </div>
     </article>
   );

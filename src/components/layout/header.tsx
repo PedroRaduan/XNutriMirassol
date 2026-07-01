@@ -42,31 +42,22 @@ export async function Header() {
         </div>
       </div>
 
-      <div className="container-x flex min-h-16 min-w-0 items-center gap-1.5 sm:min-h-20 sm:gap-4">
+      <div className="container-x flex min-h-16 min-w-0 items-center gap-2 sm:min-h-20 sm:gap-3">
         <Link href="/" aria-label="XNutri home" className="min-w-0 shrink">
           <XNutriLogo className="site-header-logo" />
         </Link>
 
-        <nav className="ml-4 hidden items-center gap-4 text-sm font-semibold text-[var(--muted)] xl:gap-5 lg:flex">
-          {nav.map((item) => (
-            <Link key={item.href} href={item.href} className="group relative whitespace-nowrap py-2 transition-colors hover:text-[var(--brand)]">
-              {item.label}
-              <span className="absolute inset-x-0 -bottom-1 h-0.5 origin-left scale-x-0 bg-[var(--brand)] transition-transform duration-200 group-hover:scale-x-100" />
-            </Link>
-          ))}
-        </nav>
-
-        <form action="/catalogo" className="ml-auto hidden w-full max-w-xs items-center gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] px-3 py-2.5 shadow-inner xl:max-w-sm md:flex">
+        <form action="/catalogo" className="ml-auto hidden min-w-0 max-w-xl flex-1 items-center gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] px-3 py-2.5 shadow-inner md:flex xl:ml-8">
           <Search size={18} className="text-[var(--muted)]" />
-          <input name="q" placeholder="Buscar suplementos ou moda fitness..." className="w-full bg-transparent text-sm outline-none" />
+          <input name="q" placeholder="Buscar suplementos, roupas e acessórios..." className="min-w-0 w-full bg-transparent text-sm outline-none" />
         </form>
 
-        <a href={whatsappHref} target="_blank" rel="noreferrer" className="btn btn-secondary hidden px-3 xl:inline-flex" aria-label="Falar no WhatsApp">
+        <a href={whatsappHref} target="_blank" rel="noreferrer" className="btn btn-secondary hidden shrink-0 px-3 lg:inline-flex" aria-label="Falar no WhatsApp">
           <MessageCircle size={18} />
           WhatsApp
         </a>
 
-        <Link href={user ? "/cliente" : "/login"} className="btn btn-secondary hidden px-3 md:inline-flex" aria-label="Minha conta">
+        <Link href={user ? "/cliente" : "/login"} className="btn btn-secondary hidden size-11 shrink-0 p-0 sm:inline-flex" aria-label="Minha conta">
           <UserRound size={18} />
         </Link>
 
@@ -79,11 +70,11 @@ export async function Header() {
           )}
         </Link>
 
-        <details className="mobile-menu relative shrink-0 lg:hidden">
-          <summary className="btn btn-secondary size-11 cursor-pointer p-0" aria-label="Abrir menu">
+        <details className="mobile-menu relative shrink-0 xl:hidden">
+          <summary className="btn btn-secondary size-11 cursor-pointer p-0" aria-label="Abrir menu de navegação">
             <Menu size={18} />
           </summary>
-          <div className="mobile-menu-panel absolute right-0 top-full mt-3 w-[min(90vw,360px)] rounded-lg border border-[var(--line)] bg-white p-3 shadow-2xl">
+          <div className="mobile-menu-panel absolute right-0 top-full z-50 mt-3 max-h-[min(70vh,520px)] w-[min(90vw,360px)] overflow-y-auto rounded-lg border border-[var(--line)] bg-white p-3 shadow-2xl">
             <form action="/catalogo" className="mb-3 flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] px-3 py-2.5">
               <Search size={17} className="text-[var(--muted)]" />
               <input name="q" placeholder="Buscar produtos" className="min-w-0 w-full bg-transparent text-sm outline-none" />
@@ -105,10 +96,27 @@ export async function Header() {
         </details>
       </div>
 
+      <div className="hidden border-t border-[var(--line)] bg-white/90 xl:block">
+        <div className="container-x flex min-h-11 items-center justify-between gap-6">
+          <nav className="flex items-center gap-7 text-sm font-bold text-[var(--muted)]" aria-label="Navegação principal">
+            {nav.map((item) => (
+              <Link key={item.href} href={item.href} className="group relative whitespace-nowrap py-3 transition-colors hover:text-[var(--brand)]">
+                {item.label}
+                <span className="absolute inset-x-0 bottom-0 h-0.5 origin-left scale-x-0 bg-[var(--brand)] transition-transform duration-200 group-hover:scale-x-100" />
+              </Link>
+            ))}
+          </nav>
+          <span className="inline-flex items-center gap-2 text-xs font-bold text-[var(--muted)]">
+            <Store size={14} className="text-[var(--brand)]" />
+            Compre online e retire em Mirassol
+          </span>
+        </div>
+      </div>
+
       <form action="/catalogo" className="container-x flex pb-3 md:hidden">
         <div className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-[var(--line)] bg-[#f8f9fb] px-3 shadow-inner">
           <Search size={17} className="text-[var(--brand)]" />
-          <input name="q" placeholder="Buscar produtos na XNutri..." className="min-w-0 w-full bg-transparent text-[16px] outline-none" />
+          <input name="q" placeholder="Buscar na XNutri..." className="min-w-0 w-full bg-transparent text-[16px] outline-none" />
         </div>
       </form>
     </header>

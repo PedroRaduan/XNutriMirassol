@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { Truck } from "lucide-react";
 import { selectShipping } from "@/lib/actions/cart";
-import { formatCurrency } from "@/lib/utils";
+import { fetchWithTimeout } from "@/lib/http/fetch-with-timeout";
+import { formatCurrency, onlyDigits } from "@/lib/utils";
 
 type Quote = {
   methodId: string;
@@ -23,22 +24,42 @@ export function ShippingEstimator({ subtotal }: { subtotal: number }) {
   const [selecting, startSelecting] = useTransition();
 
   function quote() {
+    const digits = onlyDigits(zipCode);
+
+    if (digits.length !== 8) {
+      setQuotes([]);
+      setMessage("Informe um CEP válido com 8 números.");
+      return;
+    }
+
     setMessage("");
     startLoading(async () => {
-      const response = await fetch("/api/shipping/quote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ zipCode, subtotal }),
-      });
-      const data = await response.json();
+      try {
+        const response = await fetchWithTimeout(
+          "/api/shipping/quote",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ zipCode: digits, subtotal }),
+          },
+          { timeoutMessage: "O cálculo do frete demorou mais que o esperado. Tente novamente." },
+        );
+        const data = (await response.json().catch(() => null)) as { quotes?: Quote[]; error?: string } | null;
 
-      if (!response.ok) {
+        if (!response.ok) {
+          throw new Error(data?.error ?? "Não foi possível calcular o frete.");
+        }
+
+        const nextQuotes = data?.quotes ?? [];
+        setQuotes(nextQuotes);
+
+        if (nextQuotes.length === 0) {
+          setMessage("Nenhuma entrega está disponível para este CEP. Você ainda pode retirar na loja.");
+        }
+      } catch (error) {
         setQuotes([]);
-        setMessage(data.error ?? "Não foi possível calcular o frete.");
-        return;
+        setMessage(error instanceof Error ? error.message : "Não foi possível calcular o frete agora.");
       }
-
-      setQuotes(data.quotes);
     });
   }
 
@@ -63,7 +84,7 @@ export function ShippingEstimator({ subtotal }: { subtotal: number }) {
           aria-label="CEP para calcular frete"
         />
         <button className="btn btn-secondary min-w-24 px-3" type="button" onClick={quote} disabled={loading}>
-          {loading ? "..." : "Calcular"}
+          {loading ? "Calculando..." : "Calcular"}
         </button>
       </div>
       {message && <p className="mt-3 rounded-md bg-red-50 p-3 text-sm font-semibold text-red-800">{message}</p>}

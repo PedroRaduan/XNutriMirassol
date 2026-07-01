@@ -13,7 +13,7 @@ function stringifySettings(value: unknown) {
 
 function ShippingMethodForm({ method }: { method?: Awaited<ReturnType<typeof getShippingMethods>>[number] }) {
   return (
-    <AdminActionForm actionName="upsertShippingMethod" className="grid gap-3">
+    <AdminActionForm actionName="upsertShippingMethod" closeDetailsOnSuccess={Boolean(method)} className="grid gap-3">
       {method && <input type="hidden" name="id" value={method.id} />}
       <div className="grid gap-3 sm:grid-cols-2">
         <input className="field" name="name" placeholder="Nome do frete" defaultValue={method?.name} required />
@@ -49,7 +49,7 @@ function ShippingMethodForm({ method }: { method?: Awaited<ReturnType<typeof get
 
 function PickupForm({ pickup }: { pickup?: Awaited<ReturnType<typeof getPickupLocations>>[number] }) {
   return (
-    <AdminActionForm actionName="upsertPickupLocation" className="grid gap-3">
+    <AdminActionForm actionName="upsertPickupLocation" closeDetailsOnSuccess={Boolean(pickup)} className="grid gap-3">
       {pickup && <input type="hidden" name="id" value={pickup.id} />}
       <input className="field" name="name" placeholder="Nome do ponto de retirada" defaultValue={pickup?.name ?? "XNutri Mirassol"} required />
       <div className="grid gap-3 sm:grid-cols-2">
@@ -116,9 +116,15 @@ export default async function AdminShippingPage() {
                     Frete gratis acima de {method.freeAbove ? formatCurrency(method.freeAbove) : "não configurado"}.
                   </p>
                 </div>
-                <AdminActionForm actionName="deactivateShippingMethod">
+                <AdminActionForm actionName="setShippingMethodActive">
                   <input type="hidden" name="id" value={method.id} />
-                  <ConfirmSubmitButton message="Desativar este metodo de frete?">Desativar</ConfirmSubmitButton>
+                  <input type="hidden" name="active" value={String(!method.active)} />
+                  <ConfirmSubmitButton
+                    message={method.active ? "Desativar este método de frete?" : "Ativar este método de frete?"}
+                    className={method.active ? undefined : "btn btn-primary px-3"}
+                  >
+                    {method.active ? "Desativar" : "Ativar"}
+                  </ConfirmSubmitButton>
                 </AdminActionForm>
               </div>
               <details className="border-t border-[var(--line)]">

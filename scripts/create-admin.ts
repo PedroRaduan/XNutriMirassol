@@ -20,28 +20,40 @@ if (!databaseUrl) {
   throw new Error("Defina DATABASE_URL antes de criar o administrador.");
 }
 
-const email = process.env.ADMIN_EMAIL ?? process.argv[2];
-const password = process.env.ADMIN_PASSWORD ?? process.argv[3];
-const name = process.env.ADMIN_NAME ?? process.argv[4] ?? "Administrador XNutri";
-
-if (!email || !password) {
-  throw new Error("Use: npm run admin:create -- admin@xnutri.com.br SenhaForte123");
+function firstNonEmpty(...values: Array<string | undefined>) {
+  return values.find((value) => value?.trim())?.trim();
 }
 
-if (password.length < 8) {
+const email = firstNonEmpty(process.env.ADMIN_EMAIL, process.argv[2]);
+const password = firstNonEmpty(process.env.ADMIN_PASSWORD, process.argv[3]);
+const name = firstNonEmpty(process.env.ADMIN_NAME, process.argv[4]) ?? "Administrador XNutri";
+
+function exitWithUsage(): never {
+  console.error("Informe o e-mail e a senha do administrador.");
+  console.error('Use: npm run admin:create -- "seu-email@dominio.com" "sua-senha-forte"');
+  console.error("Ou defina ADMIN_EMAIL e ADMIN_PASSWORD antes de executar o comando.");
+  process.exit(1);
+}
+
+if (!email || !password) exitWithUsage();
+
+const adminEmail = email;
+const adminPassword = password;
+
+if (adminPassword.length < 8) {
   throw new Error("A senha precisa ter pelo menos 8 caracteres.");
 }
 
 const prisma = new PrismaClient({ adapter: new PrismaPg(databaseUrl) });
 
 async function main() {
-  const passwordHash = await bcrypt.hash(password, 12);
+  const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   const user = await prisma.user.upsert({
-    where: { email: email.toLowerCase() },
+    where: { email: adminEmail.toLowerCase() },
     create: {
       name,
-      email: email.toLowerCase(),
+      email: adminEmail.toLowerCase(),
       passwordHash,
       role: "ADMIN",
     },
@@ -73,7 +85,7 @@ async function main() {
     },
   });
 
-  console.log(`Administrador pronto: ${email.toLowerCase()}`);
+  console.log(`Administrador pronto: ${adminEmail.toLowerCase()}`);
 }
 
 main()

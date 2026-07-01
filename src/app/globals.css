@@ -356,26 +356,23 @@ a {
 .status-refunded { border-color: #d7dbe2; background: #f7f7f8; color: #3f434a; }
 
 .admin-shell {
-  background:
-    radial-gradient(circle at top left, rgb(242 56 47 / 12%), transparent 34rem),
-    linear-gradient(180deg, #ffffff 0, #f7f7f8 18rem, var(--background) 100%);
+  background: #f5f6f8;
 }
 
 .admin-topbar {
-  border: 1px solid rgb(225 227 231 / 90%);
-  background: rgb(255 255 255 / 92%);
-  box-shadow: 0 10px 28px rgb(17 17 17 / 5%);
+  border: 1px solid var(--line);
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 4px 18px rgb(17 17 17 / 4%);
   backdrop-filter: blur(14px);
 }
 
 .admin-page-heading {
-  border: 1px solid rgb(225 227 231 / 90%);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--brand);
   border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgb(255 255 255 / 96%), rgb(255 241 239 / 82%)),
-    white;
-  padding: 1.1rem;
-  box-shadow: 0 12px 30px rgb(17 17 17 / 5%);
+  background: white;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 4px 18px rgb(17 17 17 / 4%);
 }
 
 .admin-eyebrow {
@@ -394,6 +391,45 @@ a {
 
 .admin-page-copy {
   color: var(--muted);
+}
+
+.admin-product-card {
+  box-shadow: 0 4px 18px rgb(17 17 17 / 4%);
+}
+
+.admin-disclosure > summary {
+  list-style: none;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.admin-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-disclosure > summary:hover,
+.admin-disclosure[open] > summary {
+  background: #fff7f6;
+  color: var(--brand-dark);
+}
+
+.admin-disclosure-chevron {
+  transition: transform 180ms ease;
+}
+
+.admin-disclosure[open] .admin-disclosure-chevron {
+  transform: rotate(180deg);
+}
+
+.admin-edit-panel {
+  background: #f7f8fa;
+}
+
+.admin-form-section {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  padding: 1rem;
+  box-shadow: 0 2px 10px rgb(17 17 17 / 3%);
 }
 
 .admin-help-card {
@@ -548,6 +584,10 @@ a {
   .site-header-logo .xnutri-logo-subtitle {
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .site-header-logo .xnutri-logo-subtitle {
+    display: none;
   }
 
   .hero-xnutri .container-x {

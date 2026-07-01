@@ -82,18 +82,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }));
   const storefrontCategory = getStorefrontCategory(product.category);
   const stockLabel = stock > 0 ? (stock <= 5 ? "Poucas unidades" : "Em estoque") : "Indisponível";
-  const isSupplement = storefrontCategory.slug === "suplementos";
-  const productGuides = isSupplement
-    ? [
-        { title: "Benefícios", body: "Produto selecionado para apoiar rotina de treino, recuperação e consistência alimentar conforme seus objetivos." },
-        { title: "Sugestão de uso", body: "Siga sempre a orientação do rótulo. Em caso de dúvidas, fale com a equipe da XNutri pelo WhatsApp antes de comprar." },
-        { title: "Cuidados", body: "Mantenha o produto fechado, em local seco e arejado. Suplementos não substituem alimentação equilibrada." },
-      ]
-    : [
-        { title: "Conforto no treino", body: "Peça pensada para mobilidade, rotina de academia e uso esportivo no dia a dia." },
-        { title: "Cuidados de conservação", body: "Lave conforme a etiqueta do produto e evite secagem em alta temperatura para preservar tecido e acabamento." },
-        { title: "Trocas", body: "Se precisar de ajuda após a compra, fale com a equipe pelo WhatsApp informando o número do pedido." },
-      ];
   const whatsappHref = getWhatsAppHref(
     undefined,
     `Olá! Vim pelo site da XNutri e tenho interesse no produto: ${product.name}.`,
@@ -175,15 +163,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <div><dt className="font-black">Marca</dt><dd className="text-[var(--muted)]">{product.brand}</dd></div>
             </dl>
           </div>
-
-          <div className="grid gap-3">
-            {productGuides.map((guide) => (
-              <div key={guide.title} className="surface p-4">
-                <h2 className="font-black">{guide.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{guide.body}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -192,7 +171,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           {product.reviews.map((review) => (
             <article key={review.id} className="surface p-5">
-              <div className="text-[var(--accent)]">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</div>
+              <div className="text-lg tracking-wider text-[var(--brand)]" aria-label={`${review.rating} de 5 estrelas`}>
+                {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+              </div>
               <h3 className="mt-3 font-black">{review.title}</h3>
               <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{review.comment}</p>
             </article>

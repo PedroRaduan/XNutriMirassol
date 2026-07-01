@@ -810,17 +810,47 @@ export async function upsertShippingMethod(formData: FormData) {
     before: before ? JSON.parse(JSON.stringify(before)) : null,
     after: { id: method.id, active: method.active },
   });
+
+  if (!method.active) {
+    await prisma.cart.updateMany({
+      where: { shippingMethodId: method.id },
+      data: { shippingMethodId: null, shippingZipCode: null, shippingCost: 0 },
+    });
+  }
+
   revalidatePath("/admin/entregas");
   revalidatePath("/carrinho");
   revalidatePath("/checkout");
 }
 
-export async function deactivateShippingMethod(formData: FormData) {
+export async function setShippingMethodActive(formData: FormData) {
   const admin = await withAdmin("shipping");
   const id = String(formData.get("id") ?? "");
-  await prisma.shippingMethod.update({ where: { id }, data: { active: false } });
-  await audit(admin.admin.id, "shipping.deactivate", "shipping_methods", id, { after: { active: false } });
+  const active = String(formData.get("active") ?? "") === "true";
+
+  if (!id) throw new Error("Método de entrega inválido.");
+
+  const before = await prisma.shippingMethod.findUnique({ where: { id } });
+  if (!before) throw new Error("Método de entrega não encontrado.");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.shippingMethod.update({ where: { id }, data: { active } });
+
+    if (!active) {
+      await tx.cart.updateMany({
+        where: { shippingMethodId: id },
+        data: { shippingMethodId: null, shippingZipCode: null, shippingCost: 0 },
+      });
+    }
+  });
+
+  await audit(admin.admin.id, active ? "shipping.activate" : "shipping.deactivate", "shipping_methods", id, {
+    before: { active: before.active },
+    after: { active },
+  });
   revalidatePath("/admin/entregas");
+  revalidatePath("/carrinho");
+  revalidatePath("/checkout");
 }
 
 export async function upsertPickupLocation(formData: FormData) {
@@ -1069,7 +1099,7 @@ export type AdminActionName =
   | "deactivateBanner"
   | "updateOrderStatus"
   | "upsertShippingMethod"
-  | "deactivateShippingMethod"
+  | "setShippingMethodActive"
   | "upsertPickupLocation"
   | "updateStoreSettings"
   | "updateFinancialSettings"
@@ -1094,7 +1124,7 @@ const adminActionHandlers: Record<AdminActionName, (formData: FormData) => Promi
   deactivateBanner,
   updateOrderStatus,
   upsertShippingMethod,
-  deactivateShippingMethod,
+  setShippingMethodActive,
   upsertPickupLocation,
   updateStoreSettings,
   updateFinancialSettings,
@@ -1115,7 +1145,7 @@ const adminSuccessMessages: Record<AdminActionName, string> = {
   deactivateBanner: "Banner desativado com sucesso.",
   updateOrderStatus: "Status do pedido atualizado.",
   upsertShippingMethod: "Método de entrega salvo com sucesso.",
-  deactivateShippingMethod: "Método de entrega desativado.",
+  setShippingMethodActive: "Status do método de entrega atualizado.",
   upsertPickupLocation: "Ponto de retirada salvo com sucesso.",
   updateStoreSettings: "Configurações da loja salvas.",
   updateFinancialSettings: "Configurações financeiras salvas.",

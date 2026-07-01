@@ -8,6 +8,7 @@ import type { z } from "zod";
 import { CheckCircle2, CreditCard, LoaderCircle, MapPin, QrCode, Save, ShieldCheck, Store, Truck, UserRound, type LucideIcon } from "lucide-react";
 import { submitCheckout, type CheckoutActionState } from "@/lib/actions/checkout";
 import { selectPickup, selectShipping } from "@/lib/actions/cart";
+import { fetchWithTimeout } from "@/lib/http/fetch-with-timeout";
 import { formatCurrency, onlyDigits } from "@/lib/utils";
 import { checkoutSchema } from "@/lib/validations";
 
@@ -455,7 +456,11 @@ export function CheckoutForm({
       setCepLookup({ status: "loading", message: "Buscando endereço pelo CEP...", digits });
 
       try {
-        const response = await fetch(`/api/cep/${digits}`, { signal: controller.signal });
+        const response = await fetchWithTimeout(
+          `/api/cep/${digits}`,
+          { signal: controller.signal },
+          { timeoutMessage: "A busca do CEP demorou mais que o esperado. Tente novamente." },
+        );
         const payload = (await response.json()) as CepApiResponse | { error?: string };
 
         if (!response.ok || "error" in payload) {
@@ -511,12 +516,16 @@ export function CheckoutForm({
       setShippingQuoteState({ status: "loading", message: "Calculando as melhores opções de frete...", digits });
 
       try {
-        const response = await fetch("/api/shipping/quote", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ zipCode: digits, subtotal }),
-          signal: controller.signal,
-        });
+        const response = await fetchWithTimeout(
+          "/api/shipping/quote",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ zipCode: digits, subtotal }),
+            signal: controller.signal,
+          },
+          { timeoutMessage: "O cálculo do frete demorou mais que o esperado. Tente novamente." },
+        );
         const payload = (await response.json().catch(() => null)) as { quotes?: ShippingQuote[]; error?: string } | null;
 
         if (!response.ok) {
