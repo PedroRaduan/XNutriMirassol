@@ -1,3 +1,7 @@
+export function firstEnvironmentValue(...values: Array<string | undefined>) {
+  return values.find((value) => value?.trim())?.trim();
+}
+
 export function isHostedProduction() {
   return (
     process.env.NODE_ENV === "production" &&
@@ -7,4 +11,3 @@ export function isHostedProduction() {
       process.env.XNUTRI_DEPLOYMENT === "production")
   );
 }
-

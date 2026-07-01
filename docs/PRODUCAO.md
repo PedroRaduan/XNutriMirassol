@@ -153,6 +153,10 @@ Configure no painel da hospedagem, nunca no código:
 | `ADMIN_EMAIL` | E-mail usado pelo script de admin | Somente ao criar admin |
 | `ADMIN_PASSWORD` | Senha usada pelo script de admin | Somente ao criar admin |
 
+O projeto também reconhece os nomes criados por integrações da Vercel/Neon: `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `DATABASE_URL_POOLED`, `DATABASE_URL_UNPOOLED`, `NEON_DATABASE_URL` e `NEON_DATABASE_URL_UNPOOLED`. Valores vazios são ignorados para não esconder outra conexão válida.
+
+Na Vercel, a URL pública pode vir automaticamente de `VERCEL_PROJECT_PRODUCTION_URL` ou `VERCEL_URL`. Para domínio próprio, continue configurando `NEXT_PUBLIC_APP_URL`, `AUTH_URL` e `NEXTAUTH_URL` explicitamente.
+
 Exemplo de URLs públicas:
 
 ```env
@@ -172,10 +176,11 @@ AUTH_TRUST_HOST=true
    - Install Command: `npm ci`;
    - Build Command: `npm run vercel-build`.
 6. Em **Settings > Environment Variables**, cadastre as variáveis da seção anterior.
-7. Marque as credenciais reais para **Production**.
-8. Use outro projeto/branch do Neon para **Preview**, para uma PR não migrar o banco real.
-9. Faça o primeiro deploy.
-10. Abra **Deployments > seu deploy > Build Logs** e confirme:
+7. Em **Automatically expose System Environment Variables**, mantenha a opção ativada.
+8. Marque as credenciais reais para **Production**.
+9. Use outro projeto/branch do Neon para **Preview**, para uma PR não migrar o banco real.
+10. Faça o primeiro deploy.
+11. Abra **Deployments > seu deploy > Build Logs** e confirme:
     - validação do ambiente concluída;
     - Prisma Client gerado;
     - migrations aplicadas;
@@ -407,4 +412,3 @@ Revise `DATABASE_URL`, `DIRECT_URL`, `NEXT_PUBLIC_APP_URL`, `AUTH_URL` e `NEXTAU
 - [ ] `NEXT_PUBLIC_APP_URL`, `AUTH_URL` e `NEXTAUTH_URL` usam HTTPS.
 - [ ] `npm run production:check -- --strict` passa.
 - [ ] `npm run lint`, `npm run typecheck` e `npm run build` passam.
-

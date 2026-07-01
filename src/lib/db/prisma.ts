@@ -1,13 +1,19 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { isHostedProduction } from "@/lib/env";
+import { firstEnvironmentValue, isHostedProduction } from "@/lib/env";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
 function createPrismaClient() {
-  const databaseUrl = process.env.DATABASE_URL ?? process.env.POSTGRES_PRISMA_URL;
+  const databaseUrl = firstEnvironmentValue(
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_PRISMA_URL,
+    process.env.POSTGRES_URL,
+    process.env.DATABASE_URL_POOLED,
+    process.env.NEON_DATABASE_URL,
+  );
 
   if (!databaseUrl) {
     throw new Error(
@@ -22,7 +28,7 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL inválida. Copie novamente a connection string PostgreSQL do provedor.");
   }
 
-  if (!['postgres:', 'postgresql:'].includes(parsedUrl.protocol)) {
+  if (!["postgres:", "postgresql:"].includes(parsedUrl.protocol)) {
     throw new Error("DATABASE_URL precisa usar o protocolo postgresql://.");
   }
 

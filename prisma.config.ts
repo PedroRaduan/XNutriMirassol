@@ -5,11 +5,17 @@ import { defineConfig } from "prisma/config";
 loadEnv({ path: ".env.local", quiet: true });
 loadEnv({ path: ".env", quiet: true });
 
-const migrationDatabaseUrl =
-  process.env.DIRECT_URL ??
-  process.env.POSTGRES_URL_NON_POOLING ??
-  process.env.DATABASE_URL ??
-  process.env.POSTGRES_PRISMA_URL;
+const migrationDatabaseUrl = [
+  process.env.DIRECT_URL,
+  process.env.POSTGRES_URL_NON_POOLING,
+  process.env.DATABASE_URL_UNPOOLED,
+  process.env.NEON_DATABASE_URL_UNPOOLED,
+  process.env.DATABASE_URL,
+  process.env.POSTGRES_PRISMA_URL,
+  process.env.POSTGRES_URL,
+  process.env.DATABASE_URL_POOLED,
+  process.env.NEON_DATABASE_URL,
+].find((value) => value?.trim())?.trim();
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

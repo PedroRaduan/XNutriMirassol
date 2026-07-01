@@ -7,10 +7,31 @@ const strict = process.argv.includes("--strict");
 const errors: string[] = [];
 const warnings: string[] = [];
 
-const databaseUrl = process.env.DATABASE_URL ?? process.env.POSTGRES_PRISMA_URL;
-const directUrl = process.env.DIRECT_URL ?? process.env.POSTGRES_URL_NON_POOLING;
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.AUTH_URL ?? process.env.NEXTAUTH_URL;
-const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+function firstValue(...values: Array<string | undefined>) {
+  return values.find((value) => value?.trim())?.trim();
+}
+
+const databaseUrl = firstValue(
+  process.env.DATABASE_URL,
+  process.env.POSTGRES_PRISMA_URL,
+  process.env.POSTGRES_URL,
+  process.env.DATABASE_URL_POOLED,
+  process.env.NEON_DATABASE_URL,
+);
+const directUrl = firstValue(
+  process.env.DIRECT_URL,
+  process.env.POSTGRES_URL_NON_POOLING,
+  process.env.DATABASE_URL_UNPOOLED,
+  process.env.NEON_DATABASE_URL_UNPOOLED,
+);
+const vercelHostname = firstValue(process.env.VERCEL_PROJECT_PRODUCTION_URL, process.env.VERCEL_URL);
+const appUrl = firstValue(
+  process.env.NEXT_PUBLIC_APP_URL,
+  process.env.AUTH_URL,
+  process.env.NEXTAUTH_URL,
+  vercelHostname ? `https://${vercelHostname}` : undefined,
+);
+const authSecret = firstValue(process.env.AUTH_SECRET, process.env.NEXTAUTH_SECRET);
 const mercadoPagoEnvironment = process.env.MERCADO_PAGO_ENVIRONMENT ?? "sandbox";
 
 function parseUrl(name: string, value: string | undefined) {
@@ -43,7 +64,7 @@ if (!directUrl) {
 
 const parsedAppUrl = parseUrl("NEXT_PUBLIC_APP_URL", appUrl);
 if (!appUrl) {
-  errors.push("NEXT_PUBLIC_APP_URL não foi configurada.");
+  warnings.push("NEXT_PUBLIC_APP_URL não foi configurada e a URL automática da Vercel não está disponível.");
 } else if (!parsedAppUrl || parsedAppUrl.protocol !== "https:") {
   errors.push("NEXT_PUBLIC_APP_URL precisa usar HTTPS em produção.");
 } else if (["localhost", "127.0.0.1", "::1"].includes(parsedAppUrl.hostname)) {
@@ -51,7 +72,9 @@ if (!appUrl) {
 }
 
 if (!authSecret) {
-  errors.push("AUTH_SECRET não foi configurada.");
+  errors.push(
+    'AUTH_SECRET não foi configurada. Gere no PowerShell com: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64\'))"',
+  );
 } else if (authSecret.length < 32) {
   errors.push("AUTH_SECRET deve ter pelo menos 32 caracteres aleatórios.");
 }

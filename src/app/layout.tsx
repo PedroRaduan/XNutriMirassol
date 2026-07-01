@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { getBaseUrl } from "@/lib/utils";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(getBaseUrl()),
   applicationName: "XNutri",
   category: "ecommerce",
   keywords: ["XNutri", "suplementos", "whey protein", "creatina", "moda fitness", "Mirassol", "SP"],

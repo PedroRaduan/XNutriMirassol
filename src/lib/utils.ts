@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
-import { isHostedProduction } from "@/lib/env";
+import { firstEnvironmentValue, isHostedProduction } from "@/lib/env";
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -34,11 +34,16 @@ export function onlyDigits(value: string) {
 }
 
 export function getBaseUrl() {
-  const configuredUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.AUTH_URL ??
-    process.env.NEXTAUTH_URL ??
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : undefined);
+  const configuredUrl = firstEnvironmentValue(
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.AUTH_URL,
+    process.env.NEXTAUTH_URL,
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : undefined),
+  );
 
   if (!configuredUrl) {
     if (isHostedProduction()) {

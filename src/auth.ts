@@ -4,10 +4,11 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
+import { firstEnvironmentValue } from "@/lib/env";
 import { loginSchema } from "@/lib/validations";
 
 const authSecret =
-  process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ??
+  firstEnvironmentValue(process.env.AUTH_SECRET, process.env.NEXTAUTH_SECRET) ??
   (process.env.NODE_ENV === "production" ? undefined : "xnutri-local-development-auth-secret");
 
 if (process.env.NODE_ENV === "production" && !authSecret) {
