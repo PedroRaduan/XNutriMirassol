@@ -31,28 +31,39 @@ export function ImageUploadField({ name, placeholder = "URL da imagem", required
         <input
           className="sr-only"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          disabled={pending}
           onChange={(event) => {
             const file = event.target.files?.[0];
             if (!file) return;
+
+            if (file.size > 4 * 1024 * 1024) {
+              setMessage("A imagem deve ter no máximo 4 MB.");
+              event.target.value = "";
+              return;
+            }
 
             const formData = new FormData();
             formData.set("file", file);
             setMessage("");
             startTransition(async () => {
-              const response = await fetch("/api/admin/uploads/cloudinary", {
-                method: "POST",
-                body: formData,
-              });
-              const data = await response.json();
+              try {
+                const response = await fetch("/api/admin/uploads/cloudinary", {
+                  method: "POST",
+                  body: formData,
+                });
+                const data = await response.json().catch(() => ({}));
 
-              if (!response.ok) {
-                setMessage(data.error ?? "Falha no upload.");
-                return;
+                if (!response.ok) {
+                  setMessage(data.error ?? "Falha no upload.");
+                  return;
+                }
+
+                setUrl(data.url);
+                setMessage("Imagem enviada.");
+              } catch {
+                setMessage("Não foi possível enviar a imagem. Confira sua conexão e tente novamente.");
               }
-
-              setUrl(data.url);
-              setMessage("Imagem enviada.");
             });
           }}
         />

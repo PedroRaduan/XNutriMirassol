@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createOrderFromCheckout } from "@/lib/ecommerce/orders";
-import { assertSameOrigin } from "@/lib/security/request";
+import { rateLimit } from "@/lib/security/rate-limit";
+import { assertSameOrigin, getClientIp } from "@/lib/security/request";
 
 export type CheckoutActionState = {
   ok: boolean;
@@ -18,9 +19,25 @@ function isRedirectError(error: unknown) {
   );
 }
 
+function safeCheckoutError(error: unknown) {
+  const message = error instanceof Error ? error.message : "";
+  const knownMessages = [
+    "carrinho", "estoque", "produto", "cupom", "cep", "frete", "endereço", "retirada",
+    "campo", "cpf", "cnpj", "privacidade", "pagamento", "pedido", "indisponível", "inválido",
+  ];
+  return knownMessages.some((term) => message.toLocaleLowerCase("pt-BR").includes(term))
+    ? message
+    : "Não foi possível finalizar o pedido agora. Seus dados continuam salvos; tente novamente em instantes.";
+}
+
 export async function submitCheckout(_: CheckoutActionState, formData: FormData): Promise<CheckoutActionState> {
   try {
     await assertSameOrigin();
+    const ip = await getClientIp();
+    const limited = rateLimit(`checkout:${ip}`, 8, 10 * 60_000);
+    if (!limited.ok) {
+      return { ok: false, message: "Muitas tentativas de finalização. Aguarde alguns minutos e tente novamente." };
+    }
     await createOrderFromCheckout(formData);
     revalidatePath("/carrinho");
     revalidatePath("/checkout");
@@ -31,7 +48,7 @@ export async function submitCheckout(_: CheckoutActionState, formData: FormData)
 
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Não foi possível finalizar o pedido.",
+      message: safeCheckoutError(error),
     };
   }
 

@@ -3,6 +3,7 @@ import { getClientIp } from "@/lib/security/request";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { quoteShipping } from "@/lib/shipping/quote";
 import { shippingQuoteSchema } from "@/lib/validations";
+import { getCartForDisplay } from "@/lib/ecommerce/cart";
 
 export async function POST(request: Request) {
   const ip = await getClientIp();
@@ -20,11 +21,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    const quotes = await quoteShipping(parsed.data.zipCode, parsed.data.subtotal);
+    const cart = await getCartForDisplay();
+    const quotes = await quoteShipping(parsed.data.zipCode, cart.subtotal);
     return NextResponse.json({ quotes });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const safeMessage = /cep|entrega|frete/i.test(message)
+      ? message
+      : "Não foi possível calcular o frete agora. Tente novamente em instantes.";
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Não foi possível calcular o frete." },
+      { error: safeMessage },
       { status: 400 },
     );
   }

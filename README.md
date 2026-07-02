@@ -4,7 +4,7 @@ Guia completo para instalar, rodar, administrar e publicar o e-commerce da **XNu
 
 Este README foi escrito para quem está começando. Siga a ordem dos passos e, se algum comando der erro, veja a seção **Erros comuns** no final.
 
-> Para publicar de verdade, use o [guia de produção com Neon, Vercel, migrations, Mercado Pago e Cloudinary](docs/PRODUCAO.md). Para instalação local, use o [tutorial completo com comandos prontos](docs/TUTORIAL-COMPLETO-XNUTRI.md) ou o [tutorial de integração passo a passo](docs/TUTORIAL-INTEGRACAO.md).
+> Para publicar de verdade, use o [guia de produção com Neon, Vercel, migrations, Mercado Pago e Cloudinary](docs/PRODUCAO.md) e o [guia de segurança e checklist de produção](docs/SEGURANCA.md). Para instalação local, use o [tutorial completo com comandos prontos](docs/TUTORIAL-COMPLETO-XNUTRI.md) ou o [tutorial de integração passo a passo](docs/TUTORIAL-INTEGRACAO.md).
 
 ## Sumário
 
@@ -28,6 +28,7 @@ Este README foi escrito para quem está começando. Siga a ordem dos passos e, s
 - [Cloudinary](#cloudinary)
 - [SEO](#seo)
 - [Deploy](#deploy)
+- [Segurança](docs/SEGURANCA.md)
 - [Erros Comuns](#erros-comuns)
 - [Comandos Úteis](#comandos-úteis)
 - [Checklist Antes De Produção](#checklist-antes-de-produção)
@@ -1001,9 +1002,23 @@ Isso evita sitemap e Open Graph apontando para `localhost`.
 
 ## Deploy
 
+### Hostinger - Aplicação Web Node.js gerenciada
+
+O projeto está preparado para rodar como servidor Next.js gerenciado na Hostinger, mantendo o PostgreSQL no Neon. No hPanel, use:
+
+```text
+Node.js: 22.x
+Install command: npm ci
+Build command: npm run hostinger-build
+Start command: npm run start
+Output directory: .next (somente se o painel solicitar)
+```
+
+O build valida as variáveis, aplica `prisma migrate deploy`, gera o Prisma Client e compila o Next.js. O tutorial completo, incluindo banco, domínio, admin, Mercado Pago, Cloudinary, logs e checklist, está em [docs/HOSTINGER.md](docs/HOSTINGER.md).
+
 ### Opção Recomendada
 
-- Vercel para Next.js.
+- Hostinger com Aplicação Web Node.js gerenciada para o servidor Next.js.
 - Neon para PostgreSQL gerenciado, com URL pooler para a aplicação e URL direta para migrations.
 - Cloudinary para imagens.
 - Mercado Pago para pagamentos.

@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
+/.env.test.local
 
 # next.js
 /.next/
@@ -39,6 +42,7 @@ pglite*.log
 .env*
 !.env.example
 !.env.production.example
+!.env.test.example
 
 # vercel
 .vercel

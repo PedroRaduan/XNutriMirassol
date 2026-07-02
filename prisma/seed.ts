@@ -21,6 +21,17 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL precisa estar definida para executar o seed.");
 }
 
+const parsedDatabaseUrl = new URL(databaseUrl);
+const databaseName = parsedDatabaseUrl.pathname.replace(/^\//, "").toLowerCase();
+const isTestDatabase = /(^|[-_])test($|[-_])/.test(databaseName);
+
+if (!isTestDatabase && process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
+  throw new Error(
+    `Seed bloqueado para o banco "${databaseName || "desconhecido"}". ` +
+      "O seed apaga os dados existentes. Use um banco com nome de teste ou defina ALLOW_DESTRUCTIVE_SEED=true conscientemente.",
+  );
+}
+
 const adapter = new PrismaPg(databaseUrl);
 const prisma = new PrismaClient({ adapter });
 
@@ -720,6 +731,25 @@ async function main() {
     },
   });
 
+  await prisma.user.create({
+    data: {
+      name: "Gerente XNutri",
+      email: "gerente@xnutri.com.br",
+      passwordHash: await bcrypt.hash("Gerente@12345", 12),
+      role: UserRole.ADMIN,
+      phone: "(17) 99400-0000",
+      adminProfile: {
+        create: {
+          active: true,
+          role: "MANAGER",
+          permissions: {
+            modules: ["dashboard", "products", "inventory", "orders", "reports"],
+          },
+        },
+      },
+    },
+  });
+
   const categories = new Map<string, string>();
   for (const category of categorySeeds) {
     const created = await prisma.category.create({
@@ -1043,8 +1073,9 @@ async function main() {
     });
   }
 
-  console.log("Seed concluido: admin, caixa, cliente, categorias, fretes, cupons, banners e 25 produtos criados.");
+  console.log("Seed concluido: admin, gerente, caixa, cliente, categorias, fretes, cupons, banners e 25 produtos criados.");
   console.log("Admin: admin@xnutri.com.br / Admin@12345");
+  console.log("Gerente: gerente@xnutri.com.br / Gerente@12345");
   console.log(`Caixa: ${cashier.email} / Caixa@12345`);
   console.log("Cliente: cliente@xnutri.com.br / Cliente@12345");
 }

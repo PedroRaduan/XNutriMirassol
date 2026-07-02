@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { assertSameOrigin } from "@/lib/security/request";
 import { getMutableCart, getCartForDisplay, assertCartOwnership } from "@/lib/ecommerce/cart";
 import { calculateDiscount, isCouponActive } from "@/lib/ecommerce/coupons";
@@ -37,6 +38,26 @@ function stockError(available: number) {
   return `Estoque insuficiente. Disponível: ${available} unidade(s).`;
 }
 
+function safeCartError(error: unknown) {
+  const message = error instanceof Error ? error.message : "";
+  return /produto|variação|estoque|carrinho|item|quantidade|origem/i.test(message)
+    ? message
+    : "Não foi possível atualizar o carrinho agora. Tente novamente em instantes.";
+}
+
+const cartQuantitySchema = z.coerce.number().int().min(0).max(99);
+
+async function invalidateCartDelivery(cartId: string) {
+  await prisma.cart.update({
+    where: { id: cartId },
+    data: {
+      shippingMethodId: null,
+      shippingZipCode: null,
+      shippingCost: 0,
+    },
+  });
+}
+
 export async function addToCart(formData: FormData): Promise<CartActionState> {
   try {
     await performAddToCart(formData);
@@ -44,7 +65,7 @@ export async function addToCart(formData: FormData): Promise<CartActionState> {
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Não foi possível adicionar este produto.",
+      message: safeCartError(error),
     };
   }
 }
@@ -72,6 +93,14 @@ async function performAddToCart(formData: FormData) {
   let productInventory = null;
 
   try {
+    const product = await prisma.product.findFirst({
+      where: { id: parsed.data.productId, status: "ACTIVE" },
+      select: { id: true },
+    });
+    if (!product) {
+      throw new Error("Produto indisponível.");
+    }
+
     if (parsed.data.variantId) {
       variant = await prisma.productVariant.findFirst({
           where: {
@@ -150,6 +179,8 @@ async function performAddToCart(formData: FormData) {
     });
   }
 
+  await invalidateCartDelivery(cart.id);
+
   revalidatePath("/carrinho");
   revalidatePath("/checkout");
 }
@@ -158,7 +189,12 @@ export async function updateCartItem(formData: FormData) {
   await assertSameOrigin();
   const cartId = String(formData.get("cartId") ?? "");
   const itemId = String(formData.get("itemId") ?? "");
-  const quantity = Number(formData.get("quantity") ?? 1);
+  const parsedQuantity = cartQuantitySchema.safeParse(formData.get("quantity") ?? 1);
+
+  if (!cartId || !itemId || !parsedQuantity.success) {
+    throw new Error("Item do carrinho inválido.");
+  }
+  const quantity = parsedQuantity.data;
 
   if (cartId === "demo-cart") {
     await updateDemoCartItem(itemId, quantity);
@@ -170,7 +206,7 @@ export async function updateCartItem(formData: FormData) {
   await assertCartOwnership(cartId);
 
   if (quantity <= 0) {
-    await prisma.cartItem.delete({ where: { id: itemId } });
+    await prisma.cartItem.deleteMany({ where: { id: itemId, cartId } });
   } else {
     const item = await prisma.cartItem.findFirst({
       where: { id: itemId, cartId },
@@ -198,6 +234,8 @@ export async function updateCartItem(formData: FormData) {
     });
   }
 
+  await invalidateCartDelivery(cartId);
+
   revalidatePath("/carrinho");
   revalidatePath("/checkout");
 }
@@ -207,6 +245,10 @@ export async function removeCartItem(formData: FormData) {
   const cartId = String(formData.get("cartId") ?? "");
   const itemId = String(formData.get("itemId") ?? "");
 
+  if (!cartId || !itemId) {
+    throw new Error("Item do carrinho inválido.");
+  }
+
   if (cartId === "demo-cart") {
     await removeDemoCartItem(itemId);
     revalidatePath("/carrinho");
@@ -215,7 +257,11 @@ export async function removeCartItem(formData: FormData) {
   }
 
   await assertCartOwnership(cartId);
-  await prisma.cartItem.delete({ where: { id: itemId } });
+  const deleted = await prisma.cartItem.deleteMany({ where: { id: itemId, cartId } });
+  if (deleted.count === 0) {
+    throw new Error("Item do carrinho não encontrado.");
+  }
+  await invalidateCartDelivery(cartId);
 
   revalidatePath("/carrinho");
   revalidatePath("/checkout");

@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const paymentId = String(url.searchParams.get("data.id") ?? body?.data?.id ?? url.searchParams.get("id") ?? "");
   const topic = String(body?.type ?? url.searchParams.get("topic") ?? "");
 
-  if (!paymentId || (topic && !topic.includes("payment"))) {
+  if (!/^\d{1,30}$/.test(paymentId) || (topic && topic !== "payment")) {
     return NextResponse.json({ received: true });
   }
 
@@ -43,8 +43,16 @@ export async function POST(request: Request) {
     }
   }
 
-  await syncMercadoPagoPayment(paymentId);
-  return NextResponse.json({ received: true });
+  try {
+    await syncMercadoPagoPayment(paymentId);
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error("Falha ao sincronizar pagamento do Mercado Pago", {
+      paymentId,
+      message: error instanceof Error ? error.message : "erro desconhecido",
+    });
+    return NextResponse.json({ error: "Não foi possível processar a notificação." }, { status: 500 });
+  }
 }
 
 export async function GET() {

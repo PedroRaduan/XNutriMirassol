@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requirePOS } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { toNumber } from "@/lib/utils";
+import { rateLimit } from "@/lib/security/rate-limit";
+import { getClientIp } from "@/lib/security/request";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +32,11 @@ function sameCode(a: string | null | undefined, b: string) {
 
 export async function GET(request: NextRequest) {
   await requirePOS();
-  const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
+  const ip = await getClientIp();
+  if (!rateLimit(`pdv-products:${ip}`, 120, 60_000).ok) {
+    return NextResponse.json({ error: "Muitas buscas. Aguarde alguns instantes." }, { status: 429 });
+  }
+  const q = (request.nextUrl.searchParams.get("q")?.trim() ?? "").slice(0, 100);
   const take = q.length >= 2 ? 18 : 12;
 
   const products = await prisma.product.findMany({

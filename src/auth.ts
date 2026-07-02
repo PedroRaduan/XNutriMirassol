@@ -5,7 +5,15 @@ import type { UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
 import { firstEnvironmentValue } from "@/lib/env";
+import { rateLimit } from "@/lib/security/rate-limit";
+import { getClientIp } from "@/lib/security/request";
 import { loginSchema } from "@/lib/validations";
+
+const dummyPasswordHash = "$2b$12$grj3cjj2YFUb0EuKhKTmAOgjgyZZUyrr9DnXJt/TLHEepZDVyedbq";
+const configuredSessionMaxAge = Number(process.env.AUTH_SESSION_MAX_AGE_SECONDS ?? 28_800);
+const sessionMaxAge = Number.isFinite(configuredSessionMaxAge)
+  ? Math.min(Math.max(Math.trunc(configuredSessionMaxAge), 900), 86_400)
+  : 28_800;
 
 const authSecret =
   firstEnvironmentValue(process.env.AUTH_SECRET, process.env.NEXTAUTH_SECRET) ??
@@ -20,10 +28,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: authSecret,
   session: {
     strategy: "jwt",
+    maxAge: sessionMaxAge,
   },
   pages: {
     signIn: "/login",
   },
+  useSecureCookies: process.env.NODE_ENV === "production",
   trustHost: process.env.AUTH_TRUST_HOST !== "false",
   providers: [
     Credentials({
@@ -33,6 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Senha", type: "password" },
       },
       async authorize(credentials) {
+        const ip = await getClientIp();
         const parsed = loginSchema.safeParse({
           email: String(credentials?.email ?? ""),
           password: String(credentials?.password ?? ""),
@@ -40,11 +51,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!parsed.success) return null;
 
+        const attemptLimit = rateLimit(`credentials:${ip}:${parsed.data.email}`, 8, 5 * 60_000);
+        if (!attemptLimit.ok) return null;
+
         const user = await prisma.user.findUnique({
           where: { email: parsed.data.email },
         });
 
-        if (!user?.passwordHash) return null;
+        if (!user?.passwordHash) {
+          await bcrypt.compare(parsed.data.password, dummyPasswordHash);
+          return null;
+        }
 
         const passwordMatches = await bcrypt.compare(parsed.data.password, user.passwordHash);
         if (!passwordMatches) return null;

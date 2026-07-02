@@ -16,11 +16,13 @@ export function AdminActionForm({
   className,
   children,
   closeDetailsOnSuccess = false,
+  resetOnSuccess = false,
 }: {
   actionName: AdminActionName;
   className?: string;
   children: React.ReactNode;
   closeDetailsOnSuccess?: boolean;
+  resetOnSuccess?: boolean;
 }) {
   const actionWithName = runAdminAction.bind(null, actionName);
   const [state, action, pending] = useActionState(actionWithName, initialState);
@@ -29,7 +31,10 @@ export function AdminActionForm({
   const Icon = state.ok ? CheckCircle2 : CircleAlert;
 
   useEffect(() => {
-    if (!closeDetailsOnSuccess || !state.ok || !state.message) return;
+    if (!state.ok || !state.message) return;
+
+    if (resetOnSuccess) formRef.current?.reset();
+    if (!closeDetailsOnSuccess) return;
 
     const details = formRef.current?.closest("details");
     if (!details) return;
@@ -40,7 +45,7 @@ export function AdminActionForm({
 
     const timeout = window.setTimeout(() => setShowSuccessToast(false), 3500);
     return () => window.clearTimeout(timeout);
-  }, [closeDetailsOnSuccess, state]);
+  }, [closeDetailsOnSuccess, resetOnSuccess, state]);
 
   return (
     <>

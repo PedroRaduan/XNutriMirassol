@@ -1,39 +1,12 @@
-import type { AdminRole } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDemoAdminSession } from "@/lib/auth/demo-admin";
 import { prisma } from "@/lib/db/prisma";
 import { isDatabaseUnavailable } from "@/lib/db/errors";
+import { getClientIp } from "@/lib/security/request";
+import { canAccessAdminModule, type AdminModule } from "@/lib/auth/permissions";
 
-export type AdminModule =
-  | "dashboard"
-  | "products"
-  | "categories"
-  | "inventory"
-  | "coupons"
-  | "orders"
-  | "customers"
-  | "reports"
-  | "finance"
-  | "content"
-  | "shipping"
-  | "settings"
-  | "audit"
-  | "pos";
-
-const readAccess: Record<AdminRole, AdminModule[]> = {
-  ADMIN: ["dashboard", "products", "categories", "inventory", "coupons", "orders", "customers", "reports", "finance", "content", "shipping", "settings", "audit", "pos"],
-  MANAGER: ["dashboard", "products", "categories", "inventory", "orders", "customers", "reports", "finance", "pos"],
-  CASHIER: ["pos"],
-  VIEWER: ["dashboard", "orders", "reports", "finance"],
-};
-
-const writeAccess: Record<AdminRole, AdminModule[]> = {
-  ADMIN: readAccess.ADMIN,
-  MANAGER: ["products", "categories", "inventory", "orders", "finance", "pos"],
-  CASHIER: ["pos"],
-  VIEWER: [],
-};
+export { canAccessAdminModule, type AdminModule } from "@/lib/auth/permissions";
 
 export async function getCurrentUser() {
   const session = await auth();
@@ -76,8 +49,23 @@ export async function getCurrentAdmin() {
   };
 }
 
-export function canAccessAdminModule(role: AdminRole, module: AdminModule, write = false) {
-  return (write ? writeAccess : readAccess)[role].includes(module);
+async function recordAccessDenied(input: {
+  userId: string;
+  adminUserId?: string;
+  target: string;
+  role?: string;
+}) {
+  const ipAddress = await getClientIp().catch(() => undefined);
+  await prisma.auditLog.create({
+    data: {
+      adminUserId: input.adminUserId,
+      action: "auth.access.denied",
+      entity: "security",
+      entityId: input.userId,
+      ipAddress,
+      metadata: { target: input.target, role: input.role ?? "unknown" },
+    },
+  }).catch(() => undefined);
 }
 
 export async function requireAdmin(module: AdminModule = "dashboard", write = false) {
@@ -92,6 +80,7 @@ export async function requireAdmin(module: AdminModule = "dashboard", write = fa
   const user = await requireUser("/admin/login");
 
   if (user.role !== "ADMIN") {
+    await recordAccessDenied({ userId: user.id, target: `admin:${module}`, role: user.role });
     redirect("/admin/login?error=unauthorized");
   }
 
@@ -109,6 +98,7 @@ export async function requireAdmin(module: AdminModule = "dashboard", write = fa
   }
 
   if (!admin?.active || !canAccessAdminModule(admin.role, module, write)) {
+    await recordAccessDenied({ userId: user.id, adminUserId: admin?.id, target: `admin:${module}`, role: admin?.role });
     redirect("/admin/login?error=unauthorized");
   }
 
@@ -126,6 +116,7 @@ export async function requirePOS(write = false) {
   const user = await requireUser("/pdv/login");
 
   if (user.role !== "ADMIN") {
+    await recordAccessDenied({ userId: user.id, target: "pdv", role: user.role });
     redirect("/pdv/login?error=unauthorized");
   }
 
@@ -143,6 +134,7 @@ export async function requirePOS(write = false) {
   }
 
   if (!admin?.active || !canAccessAdminModule(admin.role, "pos", write)) {
+    await recordAccessDenied({ userId: user.id, adminUserId: admin?.id, target: "pdv", role: admin?.role });
     redirect("/pdv/login?error=unauthorized");
   }
 

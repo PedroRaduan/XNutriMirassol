@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Menu, MessageCircle, Search, ShoppingCart, Store, Truck, UserRound } from "lucide-react";
+import { Menu, MessageCircle, Search, ShoppingCart, Store, UserRound } from "lucide-react";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
@@ -32,18 +32,8 @@ export async function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/70 bg-white/95 shadow-[0_10px_30px_rgb(17_17_17_/_6%)] backdrop-blur-xl">
-      <div className="hidden border-b border-[#ffd2ca] bg-[#fff7f6] text-[var(--brand-dark)] sm:block">
-        <div className="container-x flex items-center justify-between gap-4 py-2 text-xs font-black">
-          <span className="inline-flex items-center gap-2"><Store size={14} /> XNutri Mirassol/SP</span>
-          <span className="hidden items-center gap-2 text-[var(--graphite)] lg:inline-flex">
-            <Truck size={14} className="text-[var(--brand)]" />
-            Entrega regional, retirada na loja e atendimento pelo WhatsApp
-          </span>
-        </div>
-      </div>
-
       <div className="container-x flex min-h-16 min-w-0 items-center gap-2 sm:min-h-20 sm:gap-3">
-        <Link href="/" aria-label="XNutri home" className="min-w-0 shrink">
+        <Link href="/" aria-label="XNutri home" className="site-header-logo-link shrink-0">
           <XNutriLogo className="site-header-logo" />
         </Link>
 
@@ -52,12 +42,12 @@ export async function Header() {
           <input name="q" placeholder="Buscar suplementos, roupas e acessórios..." className="min-w-0 w-full bg-transparent text-sm outline-none" />
         </form>
 
-        <a href={whatsappHref} target="_blank" rel="noreferrer" className="btn btn-secondary hidden shrink-0 px-3 lg:inline-flex" aria-label="Falar no WhatsApp">
+        <a href={whatsappHref} target="_blank" rel="noreferrer" className="btn btn-secondary hidden shrink-0 px-3 xl:inline-flex" aria-label="Falar no WhatsApp">
           <MessageCircle size={18} />
           WhatsApp
         </a>
 
-        <Link href={user ? "/cliente" : "/login"} className="btn btn-secondary hidden size-11 shrink-0 p-0 sm:inline-flex" aria-label="Minha conta">
+        <Link href={user ? "/cliente" : "/login"} className="btn btn-secondary hidden size-11 shrink-0 p-0 md:inline-flex" aria-label="Minha conta">
           <UserRound size={18} />
         </Link>
 

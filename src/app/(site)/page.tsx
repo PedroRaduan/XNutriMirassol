@@ -12,7 +12,6 @@ import {
   Star,
 } from "lucide-react";
 import { ProductCard } from "@/components/product/product-card";
-import { XNutriLogo } from "@/components/layout/xnutri-logo";
 import { prisma } from "@/lib/db/prisma";
 import { demoFallbackOrThrow } from "@/lib/db/errors";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
@@ -129,6 +128,8 @@ export default async function Home() {
   ];
   const homeContent = (homeSetting?.value ?? {}) as HomeContent;
   const currentHeroTitle = homeContent.heroTitle ?? homeHero?.title ?? heroTitle;
+  const normalizedHeroTitle = currentHeroTitle.trim().toLocaleLowerCase("pt-BR");
+  const displayedHeroTitle = normalizedHeroTitle === "xnutri suplementos nutricionais" ? heroTitle : currentHeroTitle;
   const currentHeroSubtitle = homeContent.heroSubtitle ?? homeHero?.subtitle ?? heroSubtitle;
   const heroPrimaryLabel = homeContent.heroPrimaryLabel ?? homeHero?.ctaLabel ?? "Ver produtos";
   const heroPrimaryHref = homeContent.heroPrimaryHref ?? homeHero?.ctaHref ?? "/catalogo";
@@ -144,12 +145,11 @@ export default async function Home() {
         <div className="container-x relative z-10 py-10 md:py-20">
           <div className="grid items-center gap-10 lg:grid-cols-[1fr_430px]">
             <div className="animate-hero max-w-3xl">
-              <XNutriLogo tone="light" />
-              <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-black uppercase text-white/80 sm:mt-8 sm:text-xs">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-black uppercase text-white/80 sm:text-xs">
                 <Sparkles size={14} className="text-[#ffd2cc]" />
                 Mirassol-SP · treino e estilo
               </span>
-              <h1 className="mt-4 max-w-3xl text-[2.55rem] font-black leading-[0.98] sm:text-5xl md:text-7xl">{currentHeroTitle}</h1>
+              <h1 className="mt-4 max-w-3xl text-[2.55rem] font-black leading-[0.98] sm:text-5xl md:text-7xl">{displayedHeroTitle}</h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-white/80 md:text-xl">{currentHeroSubtitle}</p>
               <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
                 <Link href={heroPrimaryHref} className="btn bg-white text-[var(--ink)] hover:bg-[#f3f4f6]">

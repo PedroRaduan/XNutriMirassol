@@ -14,7 +14,13 @@ export async function assertSameOrigin() {
   const headerStore = await headers();
   const origin = headerStore.get("origin");
 
-  if (!origin) return;
+  if (!origin) {
+    const fetchSite = headerStore.get("sec-fetch-site");
+    if (process.env.NODE_ENV === "production" && (!fetchSite || !["same-origin", "same-site", "none"].includes(fetchSite))) {
+      throw new Error("Origem inválida para esta operação.");
+    }
+    return;
+  }
 
   const normalizeOrigin = (value: string) => {
     try {

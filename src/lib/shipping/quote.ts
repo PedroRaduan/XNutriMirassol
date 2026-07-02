@@ -22,7 +22,7 @@ function normalizeLocation(value: string) {
     .toLowerCase();
 }
 
-function supportsDeliveryAddress(
+export function supportsDeliveryAddress(
   method: { provider: "CORREIOS" | "MANUAL" | "PICKUP"; settings: unknown },
   address: { city: string },
 ) {
@@ -34,6 +34,15 @@ function supportsDeliveryAddress(
 
   const destination = normalizeLocation(address.city);
   return cities.some((city) => typeof city === "string" && normalizeLocation(city) === destination);
+}
+
+export function calculateShippingMethodPrice(
+  method: { basePrice: unknown; freeAbove: unknown },
+  subtotal: number,
+) {
+  const base = toNumber(method.basePrice);
+  const freeAbove = method.freeAbove ? toNumber(method.freeAbove) : null;
+  return freeAbove && subtotal >= freeAbove ? 0 : base;
 }
 
 export async function quoteShipping(zipCode: string, subtotal: number): Promise<ShippingQuote[]> {
@@ -84,9 +93,7 @@ export async function quoteShipping(zipCode: string, subtotal: number): Promise<
   return methods
     .filter((method) => method.provider !== "PICKUP" && supportsDeliveryAddress(method, address))
     .map((method) => {
-      const base = toNumber(method.basePrice);
-      const freeAbove = method.freeAbove ? toNumber(method.freeAbove) : null;
-      const price = freeAbove && subtotal >= freeAbove ? 0 : base;
+      const price = calculateShippingMethodPrice(method, subtotal);
       const isRegional = method.provider === "MANUAL";
 
       return {

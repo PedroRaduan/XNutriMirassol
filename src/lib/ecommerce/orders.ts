@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CART_COOKIE, getCartForDisplay } from "@/lib/ecommerce/cart";
-import { calculateDiscount } from "@/lib/ecommerce/coupons";
+import { calculateDiscount, isCouponActive } from "@/lib/ecommerce/coupons";
 import { createDemoOrder } from "@/lib/ecommerce/demo-cart";
 import { prisma } from "@/lib/db/prisma";
 import { isDatabaseUnavailable, isDemoModeAllowed } from "@/lib/db/errors";
@@ -13,6 +13,7 @@ import { createMercadoPagoPreference, getMercadoPagoCheckoutUrl } from "@/lib/pa
 import { marginPercent, roundMoney } from "@/lib/finance/calculations";
 import { getFinancialSettings } from "@/lib/finance/settings";
 import { validateAddressAgainstCep, validateCep } from "@/lib/shipping/cep";
+import { calculateShippingMethodPrice, supportsDeliveryAddress } from "@/lib/shipping/quote";
 
 function formString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -62,6 +63,7 @@ export async function createOrderFromCheckout(formData: FormData) {
     shippingMethodId: optionalFormValue(formData, "shippingMethodId"),
     pickupLocationId: optionalFormValue(formData, "pickupLocationId"),
     notes: optionalFormValue(formData, "notes"),
+    privacyConsent: formData.get("privacyConsent") === "on",
   });
 
   if (!parsed.success) {
@@ -136,6 +138,8 @@ export async function createOrderFromCheckout(formData: FormData) {
       where: { id: cart.id },
       include: {
         coupon: true,
+        shippingMethod: true,
+        pickupLocation: true,
         items: {
           include: {
             product: { include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, inventory: true } },
@@ -150,6 +154,10 @@ export async function createOrderFromCheckout(formData: FormData) {
     }
 
     for (const item of dbCart.items) {
+      if (item.product.status !== "ACTIVE" || (item.variant && !item.variant.active)) {
+        throw new Error(`${item.product.name} não está mais disponível para venda.`);
+      }
+
       const inventory = item.variant?.inventory ?? item.product.inventory.find((entry) => entry.variantId === null) ?? null;
       const available = inventory ? inventory.quantity - inventory.reserved : 0;
 
@@ -161,7 +169,47 @@ export async function createOrderFromCheckout(formData: FormData) {
     const subtotal = dbCart.items.reduce((sum, item) => {
       return sum + (toNumber(item.product.price) + toNumber(item.variant?.priceAdjustment ?? 0)) * item.quantity;
     }, 0);
-    const shippingCost = data.shippingType === "PICKUP" ? 0 : cart.shippingCost;
+
+    let shippingCost = 0;
+    let pickupSnapshot: Record<string, string> | undefined;
+
+    if (data.shippingType === "DELIVERY") {
+      const submittedCep = validateCep(data.zipCode ?? "");
+      const cartCep = validateCep(dbCart.shippingZipCode ?? "");
+      const method = dbCart.shippingMethod;
+
+      if (!deliveryAddress || !submittedCep || submittedCep !== cartCep) {
+        throw new Error("O CEP mudou. Recalcule e selecione o frete novamente.");
+      }
+      if (!method || !method.active || method.id !== data.shippingMethodId) {
+        throw new Error("A opção de frete não está mais disponível. Calcule o frete novamente.");
+      }
+      if (method.provider === "PICKUP" || !supportsDeliveryAddress(method, { city: deliveryAddress.city })) {
+        throw new Error("A opção de frete escolhida não atende este endereço.");
+      }
+
+      shippingCost = calculateShippingMethodPrice(method, subtotal);
+    } else {
+      const pickup = dbCart.pickupLocation;
+      if (!pickup || !pickup.active || pickup.id !== data.pickupLocationId) {
+        throw new Error("O ponto de retirada não está mais disponível. Selecione a retirada novamente.");
+      }
+      pickupSnapshot = {
+        name: pickup.name,
+        zipCode: pickup.zipCode,
+        street: pickup.street,
+        number: pickup.number,
+        ...(pickup.complement ? { complement: pickup.complement } : {}),
+        district: pickup.district,
+        city: pickup.city,
+        state: pickup.state,
+        instructions: pickup.instructions,
+      };
+    }
+
+    if (dbCart.coupon && !isCouponActive(dbCart.coupon)) {
+      throw new Error("O cupom aplicado expirou ou atingiu o limite de uso. Remova-o e tente novamente.");
+    }
     const discount = calculateDiscount(
       dbCart.coupon,
       subtotal,
@@ -256,8 +304,8 @@ export async function createOrderFromCheckout(formData: FormData) {
         customerPhone: sanitizeText(data.customerPhone),
         document: sanitizeOptionalText(data.document),
         shippingType: data.shippingType,
-        shippingMethodId: data.shippingType === "DELIVERY" ? data.shippingMethodId : undefined,
-        pickupLocationId: data.shippingType === "PICKUP" ? data.pickupLocationId : undefined,
+        shippingMethodId: data.shippingType === "DELIVERY" ? dbCart.shippingMethod?.id : undefined,
+        pickupLocationId: data.shippingType === "PICKUP" ? dbCart.pickupLocation?.id : undefined,
         shippingAddressId: addressId,
         pickupProtocol,
         subtotal,
@@ -288,6 +336,7 @@ export async function createOrderFromCheckout(formData: FormData) {
                 state: deliveryAddress.state,
               }
             : undefined,
+        pickupSnapshot,
       },
     });
 
@@ -332,10 +381,20 @@ export async function createOrderFromCheckout(formData: FormData) {
     });
 
     if (dbCart.couponId) {
-      await tx.coupon.update({
-        where: { id: dbCart.couponId },
-        data: { usageCount: { increment: 1 } },
-      });
+      if (dbCart.coupon?.usageLimit) {
+        const updated = await tx.coupon.updateMany({
+          where: { id: dbCart.couponId, usageCount: { lt: dbCart.coupon.usageLimit } },
+          data: { usageCount: { increment: 1 } },
+        });
+        if (updated.count !== 1) {
+          throw new Error("O cupom atingiu o limite de uso. Remova-o e tente novamente.");
+        }
+      } else {
+        await tx.coupon.update({
+          where: { id: dbCart.couponId },
+          data: { usageCount: { increment: 1 } },
+        });
+      }
     }
 
     await tx.cartItem.deleteMany({ where: { cartId: dbCart.id } });
@@ -374,9 +433,17 @@ export async function createOrderFromCheckout(formData: FormData) {
       },
     });
   } catch (error) {
-    if (process.env.NODE_ENV === "production") {
-      throw error;
-    }
+    console.error("Falha ao criar preferência do Mercado Pago", {
+      orderId: createdOrder.id,
+      message: error instanceof Error ? error.message : "erro desconhecido",
+    });
+    await prisma.auditLog.create({
+      data: {
+        action: "payment.preference.failed",
+        entity: "orders",
+        entityId: createdOrder.id,
+      },
+    }).catch(() => undefined);
   }
 
   const cookieStore = await cookies();

@@ -1,8 +1,11 @@
 import { MercadoPagoConfig, Payment as MercadoPayment, Preference } from "mercadopago";
 import type { Order, OrderItem, Payment, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import { decrementInventoryForOrder } from "@/lib/ecommerce/inventory";
+import { decrementInventoryForOrder, restoreInventoryForOrder } from "@/lib/ecommerce/inventory";
 import { getBaseUrl, toNumber } from "@/lib/utils";
+import { getMercadoPagoCheckoutUrl, mapMercadoPagoMethod, mapMercadoPagoStatus } from "@/lib/payments/mercado-pago-mappers";
+
+export { getMercadoPagoCheckoutUrl, mapMercadoPagoMethod, mapMercadoPagoStatus } from "@/lib/payments/mercado-pago-mappers";
 
 function getMercadoPagoClient() {
   const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
@@ -18,22 +21,17 @@ function getMercadoPagoClient() {
   });
 }
 
-export function getMercadoPagoCheckoutUrl(preference: {
-  init_point?: string | null;
-  sandbox_init_point?: string | null;
-}) {
-  const environment = process.env.MERCADO_PAGO_ENVIRONMENT ?? "sandbox";
-  return environment === "production"
-    ? preference.init_point ?? preference.sandbox_init_point ?? null
-    : preference.sandbox_init_point ?? preference.init_point ?? null;
-}
-
 export async function createMercadoPagoPreference(
   order: Order & { items: OrderItem[]; payments: Payment[] },
 ) {
   const client = getMercadoPagoClient();
   const preference = new Preference(client);
   const baseUrl = getBaseUrl();
+  const orderTotal = toNumber(order.total);
+
+  if (orderTotal <= 0) {
+    throw new Error("O total do pedido precisa ser maior que zero para pagamento online.");
+  }
 
   const response = await preference.create({
     body: {
@@ -63,16 +61,16 @@ export async function createMercadoPagoPreference(
         excluded_payment_types: [{ id: "ticket" }, { id: "atm" }],
       },
       shipments: {
-        cost: toNumber(order.shippingCost),
+        cost: 0,
         mode: order.shippingType === "PICKUP" ? "not_specified" : "custom",
       },
-      items: order.items.map((item) => ({
-        id: item.sku,
-        title: item.productName,
-        quantity: item.quantity,
-        unit_price: toNumber(item.unitPrice),
+      items: [{
+        id: order.orderNumber,
+        title: `Pedido XNutri (${order.items.reduce((sum, item) => sum + item.quantity, 0)} item(ns))`,
+        quantity: 1,
+        unit_price: orderTotal,
         currency_id: "BRL",
-      })),
+      }],
     },
   });
 
@@ -83,22 +81,6 @@ export async function getMercadoPagoPayment(paymentId: string) {
   const client = getMercadoPagoClient();
   const payment = new MercadoPayment(client);
   return payment.get({ id: paymentId });
-}
-
-export function mapMercadoPagoStatus(status?: string | null) {
-  if (status === "approved") return "APPROVED";
-  if (status === "rejected") return "REJECTED";
-  if (status === "refunded") return "REFUNDED";
-  if (status === "cancelled" || status === "canceled") return "CANCELED";
-  return "PENDING";
-}
-
-export function mapMercadoPagoMethod(methodId?: string | null, paymentTypeId?: string | null) {
-  if (paymentTypeId === "credit_card") return "CREDIT_CARD";
-  if (paymentTypeId === "debit_card") return "DEBIT_CARD";
-  if (methodId === "pix" || paymentTypeId === "bank_transfer") return "PIX";
-  if (paymentTypeId === "ticket") return "BOLETO";
-  return "UNKNOWN";
 }
 
 export async function syncMercadoPagoPayment(paymentId: string) {
@@ -119,6 +101,21 @@ export async function syncMercadoPagoPayment(paymentId: string) {
       include: { payments: true },
     });
 
+    const paidAmount = Number(mpPayment.transaction_amount);
+    const expectedAmount = toNumber(order.total);
+    const currency = String(mpPayment.currency_id ?? "").toUpperCase();
+    const metadataOrderId = String(mpPayment.metadata?.orderId ?? mpPayment.metadata?.order_id ?? "");
+
+    if (!Number.isFinite(paidAmount) || Math.abs(paidAmount - expectedAmount) > 0.01) {
+      throw new Error("O valor confirmado pelo Mercado Pago não corresponde ao total do pedido.");
+    }
+    if (currency && currency !== "BRL") {
+      throw new Error("A moeda confirmada pelo Mercado Pago não corresponde ao pedido.");
+    }
+    if (metadataOrderId && metadataOrderId !== order.id) {
+      throw new Error("A referência interna do pagamento não corresponde ao pedido.");
+    }
+
     await tx.payment.upsert({
       where: { externalId: String(mpPayment.id) },
       create: {
@@ -126,13 +123,13 @@ export async function syncMercadoPagoPayment(paymentId: string) {
         externalId: String(mpPayment.id),
         method,
         status,
-        amount: Number(mpPayment.transaction_amount ?? order.total),
+        amount: paidAmount,
         payload,
       },
       update: {
         method,
         status,
-        amount: Number(mpPayment.transaction_amount ?? order.total),
+        amount: paidAmount,
         payload,
       },
     });
@@ -148,24 +145,37 @@ export async function syncMercadoPagoPayment(paymentId: string) {
       });
     }
 
-    if (status === "REFUNDED") {
+    if (status === "REFUNDED" || status === "CANCELED") {
+      await restoreInventoryForOrder(
+        tx,
+        order.id,
+        status === "REFUNDED"
+          ? `Estorno automático do pedido ${order.orderNumber}`
+          : `Cancelamento automático do pedido ${order.orderNumber}`,
+      );
       await tx.order.update({
         where: { id: order.id },
         data: {
-          status: "REFUNDED",
+          status: status === "REFUNDED" ? "REFUNDED" : "CANCELED",
+          canceledAt: status === "CANCELED" ? new Date() : undefined,
         },
       });
     }
 
-    if (status === "REJECTED" || status === "CANCELED") {
-      await tx.order.update({
-        where: { id: order.id },
-        data: {
-          status: "CANCELED",
-          canceledAt: new Date(),
+    await tx.auditLog.create({
+      data: {
+        action: "payment.webhook.processed",
+        entity: "orders",
+        entityId: order.id,
+        metadata: {
+          paymentId: String(mpPayment.id),
+          status,
+          method,
+          amount: paidAmount,
+          currency: currency || "BRL",
         },
-      });
-    }
+      },
+    });
 
     return tx.order.findUniqueOrThrow({
       where: { id: order.id },

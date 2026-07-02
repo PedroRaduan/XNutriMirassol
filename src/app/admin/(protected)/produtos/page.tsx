@@ -58,7 +58,8 @@ function ProductForm({
   return (
     <AdminActionForm
       actionName="upsertProduct"
-      closeDetailsOnSuccess={Boolean(product)}
+      closeDetailsOnSuccess
+      resetOnSuccess={!product}
       className="grid gap-4"
     >
       {product && <input type="hidden" name="id" value={product.id} />}
@@ -248,6 +249,21 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         <p className="admin-page-copy mt-2 text-sm">Cadastre e edite produtos com imagens, preços, estoque, status, sabores, cores e opções.</p>
       </div>
 
+      <details className="admin-disclosure surface mb-5 overflow-hidden">
+        <summary className="flex cursor-pointer items-center gap-2 px-4 py-4 font-black text-white bg-[var(--brand)] sm:px-5">
+          <Plus size={18} />
+          Adicionar produto
+          <ChevronDown className="admin-disclosure-chevron ml-auto" size={18} />
+        </summary>
+        <div className="admin-edit-panel border-t border-[var(--line)] p-4 sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-xl font-black">Novo produto</h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">Cadastre as informações principais. Depois, adicione sabores, cores ou outras variações.</p>
+          </div>
+          <ProductForm categories={categories} />
+        </div>
+      </details>
+
       <form className="surface mb-5 grid gap-3 p-4 md:grid-cols-[1fr_220px_auto]">
         <div className="field flex items-center gap-2">
           <Search size={16} className="text-[var(--muted)]" />
@@ -262,8 +278,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
         <button className="btn btn-secondary">Filtrar</button>
       </form>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_430px]">
-        <section className="grid gap-4">
+      <section className="grid gap-4">
           {products.map((product) => {
             const stock = product.inventory.reduce((sum, item) => sum + item.quantity - item.reserved, 0);
             const low = product.inventory.some((item) => item.quantity <= item.lowStockThreshold);
@@ -340,16 +355,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           {products.length === 0 && (
             <div className="surface p-8 text-center text-[var(--muted)]">Nenhum produto encontrado.</div>
           )}
-        </section>
-
-        <aside className="surface self-start p-5 xl:sticky xl:top-8">
-          <h2 className="text-xl font-black">Novo produto</h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">Preencha o básico primeiro. Depois você pode adicionar sabores, cores ou outras opções.</p>
-          <div className="mt-4">
-            <ProductForm categories={categories} />
-          </div>
-        </aside>
-      </div>
+      </section>
     </div>
   );
 }

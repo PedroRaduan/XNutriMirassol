@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { isDatabaseUnavailable } from "@/lib/db/errors";
-import { decrementInventoryForOrder } from "@/lib/ecommerce/inventory";
+import { decrementInventoryForOrder, restoreInventoryForOrder } from "@/lib/ecommerce/inventory";
 import { assertSameOrigin, getClientIp } from "@/lib/security/request";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
 import {
@@ -16,6 +16,7 @@ import {
   couponAdminSchema,
   financialSettingsAdminSchema,
   homeContentAdminSchema,
+  inventoryAdjustmentSchema,
   orderAdminSchema,
   pickupLocationAdminSchema,
   productAdminSchema,
@@ -517,21 +518,25 @@ export async function deactivateCategory(formData: FormData) {
 
 export async function adjustInventory(formData: FormData) {
   const admin = await withAdmin("inventory");
-  const inventoryId = String(formData.get("inventoryId") ?? "");
-  const quantity = Number(formData.get("quantity") ?? 0);
-  const lowStockThresholdRaw = emptyToUndefined(formData.get("lowStockThreshold"));
-  const reason = sanitizeText(String(formData.get("reason") ?? "Ajuste manual"));
-
-  if (!Number.isInteger(quantity) || quantity < 0) {
-    throw new Error("Estoque não pode ser negativo.");
+  const parsed = inventoryAdjustmentSchema.safeParse({
+    inventoryId: formData.get("inventoryId"),
+    quantity: formData.get("quantity"),
+    lowStockThreshold: emptyToUndefined(formData.get("lowStockThreshold")),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Ajuste de estoque inválido.");
   }
+
+  const { inventoryId, quantity, lowStockThreshold } = parsed.data;
+  const reason = sanitizeText(parsed.data.reason);
 
   const inventory = await prisma.inventory.findUniqueOrThrow({ where: { id: inventoryId } });
   const updated = await prisma.inventory.update({
     where: { id: inventoryId },
     data: {
       quantity,
-      lowStockThreshold: lowStockThresholdRaw ? Number(lowStockThresholdRaw) : inventory.lowStockThreshold,
+      lowStockThreshold: lowStockThreshold ?? inventory.lowStockThreshold,
       available: quantity > 0,
     },
   });
@@ -569,8 +574,8 @@ export async function upsertCoupon(formData: FormData) {
     startsAt: emptyToUndefined(formData.get("startsAt")),
     endsAt: emptyToUndefined(formData.get("endsAt")),
     usageLimit: emptyToUndefined(formData.get("usageLimit")),
-    productIds: formData.get("productIds"),
-    categoryIds: formData.get("categoryIds"),
+    productIds: emptyToUndefined(formData.get("productIds")),
+    categoryIds: emptyToUndefined(formData.get("categoryIds")),
     active: formData.get("active") === "on",
   });
 
@@ -731,6 +736,22 @@ export async function updateOrderStatus(formData: FormData) {
     include: { payments: true },
   });
 
+  if (!before) {
+    throw new Error("Pedido não encontrado.");
+  }
+
+  const paidStatuses: OrderStatus[] = ["PAID", "PREPARING", "AWAITING_PICKUP", "SHIPPED", "DELIVERED"];
+  const terminalStatuses: OrderStatus[] = ["CANCELED", "REFUNDED"];
+  const hasApprovedPayment = before.payments.some((payment) => payment.status === "APPROVED");
+
+  if (terminalStatuses.includes(before.status) && parsed.data.status !== before.status) {
+    throw new Error("Pedido cancelado ou reembolsado não pode ser reaberto.");
+  }
+
+  if (paidStatuses.includes(parsed.data.status) && !hasApprovedPayment && admin.adminRole !== "ADMIN") {
+    throw new Error("Somente um administrador pode confirmar manualmente um pedido sem pagamento aprovado.");
+  }
+
   await prisma.$transaction(async (tx) => {
     const order = await tx.order.update({
       where: { id: parsed.data.id },
@@ -744,8 +765,16 @@ export async function updateOrderStatus(formData: FormData) {
       },
     });
 
-    if (["PAID", "PREPARING", "AWAITING_PICKUP", "SHIPPED", "DELIVERED"].includes(parsed.data.status)) {
+    if (paidStatuses.includes(parsed.data.status)) {
       await decrementInventoryForOrder(tx, order.id);
+    }
+
+    if (terminalStatuses.includes(parsed.data.status)) {
+      await restoreInventoryForOrder(
+        tx,
+        order.id,
+        `${parsed.data.status === "REFUNDED" ? "Reembolso" : "Cancelamento"} administrativo do pedido ${before.orderNumber}`,
+      );
     }
   });
 

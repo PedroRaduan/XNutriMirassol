@@ -5,6 +5,7 @@ import { AdminLoginForm } from "@/components/admin/admin-login-form";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
 import { enterDemoPOS } from "@/lib/actions/auth";
 import { canAccessAdminModule, getCurrentAdmin } from "@/lib/auth/session";
+import { isDemoModeAllowed } from "@/lib/db/errors";
 
 export const metadata = {
   title: "Login PDV | XNutri",
@@ -49,11 +50,11 @@ export default async function PDVLoginPage({
               {params.error === "database" && (
                 <div className="mb-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
                   <p>
-                    Banco de dados offline. {process.env.NODE_ENV === "production"
-                      ? "Reestabeleça a conexão com o PostgreSQL antes de usar o caixa."
-                      : "Você pode abrir o PDV em modo de treinamento para visualizar a tela sem gravar vendas reais."}
+                    Banco de dados offline. {isDemoModeAllowed()
+                      ? "Você pode abrir o PDV em modo de treinamento para visualizar a tela sem gravar vendas reais."
+                      : "Reestabeleça a conexão com o PostgreSQL antes de usar o caixa."}
                   </p>
-                  {process.env.NODE_ENV !== "production" && (
+                  {isDemoModeAllowed() && (
                     <form action={enterDemoPOS} className="mt-3">
                       <button className="btn btn-secondary w-full border-red-200 bg-white text-red-700 hover:bg-red-50">
                         Entrar no PDV de treinamento

@@ -31,6 +31,17 @@ body {
   font-family: var(--font-sans-local);
 }
 
+html {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 button,
 input,
 select,
@@ -577,17 +588,28 @@ a {
   }
 
   .site-header-logo {
-    max-width: 100%;
+    min-width: max-content;
+    max-width: none;
+    overflow: visible;
+  }
+
+  .site-header-logo-link {
+    display: inline-flex;
+    min-width: max-content;
+    overflow: visible;
   }
 
   .site-header-logo .xnutri-logo-word,
   .site-header-logo .xnutri-logo-subtitle {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
   }
 
   .site-header-logo .xnutri-logo-subtitle {
-    display: none;
+    display: block;
+    white-space: nowrap;
+    font-size: 0.46rem;
+    letter-spacing: 0.025em;
   }
 
   .hero-xnutri .container-x {
@@ -609,6 +631,18 @@ a {
   }
 }
 
+@media (max-width: 380px) {
+  .site-header-logo {
+    padding-inline: 0.34rem 0.12rem;
+  }
+
+  .site-header-logo .xnutri-logo-mark::after {
+    left: -0.08em;
+    width: 1.08em;
+    height: 0.06em;
+  }
+}
+
 @media (max-width: 360px) {
   .site-header-logo .xnutri-logo-mark {
     font-size: 1.8rem;
@@ -619,7 +653,9 @@ a {
   }
 
   .site-header-logo .xnutri-logo-subtitle {
-    display: none;
+    display: block;
+    font-size: 0.42rem;
+    letter-spacing: 0.02em;
   }
 }
 

@@ -1,12 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requirePOS } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
+import { rateLimit } from "@/lib/security/rate-limit";
+import { getClientIp } from "@/lib/security/request";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   await requirePOS();
-  const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
+  const ip = await getClientIp();
+  if (!rateLimit(`pdv-customers:${ip}`, 120, 60_000).ok) {
+    return NextResponse.json({ error: "Muitas buscas. Aguarde alguns instantes." }, { status: 429 });
+  }
+  const q = (request.nextUrl.searchParams.get("q")?.trim() ?? "").slice(0, 100);
 
   if (q.length < 2) {
     return NextResponse.json({ customers: [] });

@@ -5,6 +5,7 @@ import { AdminLoginForm } from "@/components/admin/admin-login-form";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
 import { enterDemoAdmin } from "@/lib/actions/auth";
 import { getCurrentAdmin } from "@/lib/auth/session";
+import { isDemoModeAllowed } from "@/lib/db/errors";
 
 export const metadata = {
   title: "Login Admin | XNutri",
@@ -19,7 +20,9 @@ export default async function AdminLoginPage({
   const params = await searchParams;
   const admin = await getCurrentAdmin();
 
-  if (admin) {
+  // Keep an authenticated user on the access-denied screen instead of
+  // bouncing between /admin and /admin/login forever (for example, CASHIER).
+  if (admin && params.error !== "unauthorized") {
     redirect(params.callbackUrl?.startsWith("/admin") ? params.callbackUrl : "/admin");
   }
 
@@ -50,11 +53,11 @@ export default async function AdminLoginPage({
             {params.error === "database" && (
               <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
                 <p>
-                  Banco de dados offline. {process.env.NODE_ENV === "production"
-                    ? "Reestabeleça a conexão com o PostgreSQL antes de acessar o painel."
-                    : "Você pode entrar em modo de treinamento para visualizar o painel sem gravar dados reais."}
+                  Banco de dados offline. {isDemoModeAllowed()
+                    ? "Você pode entrar em modo de treinamento para visualizar o painel sem gravar dados reais."
+                    : "Reestabeleça a conexão com o PostgreSQL antes de acessar o painel."}
                 </p>
-                {process.env.NODE_ENV !== "production" && (
+                {isDemoModeAllowed() && (
                   <form action={enterDemoAdmin} className="mt-3">
                     <button className="btn btn-secondary w-full border-red-200 bg-white text-red-700 hover:bg-red-50">
                       Entrar no modo de treinamento

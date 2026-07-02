@@ -11,6 +11,7 @@ import { marginPercent, roundMoney } from "@/lib/finance/calculations";
 import { assertSameOrigin, getClientIp } from "@/lib/security/request";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
 import { toNumber } from "@/lib/utils";
+import { optionalDocumentSchema } from "@/lib/validations";
 
 export type POSActionState = {
   ok: boolean;
@@ -21,41 +22,69 @@ export type POSActionState = {
 
 const initialFailure = { ok: false, message: "Não foi possível concluir a ação." };
 
+function posErrorMessage(error: unknown) {
+  if (error instanceof Error && error.name === "Error" && error.message.length <= 220) {
+    return error.message;
+  }
+  return initialFailure.message;
+}
+
 const paymentMethods = ["CASH", "PIX", "DEBIT_CARD", "CREDIT_CARD", "MERCADO_PAGO"] as const;
+const moneySchema = z.coerce.number().finite().min(0).max(1_000_000_000);
+
+const openSessionSchema = z.object({
+  openingAmount: moneySchema,
+  notes: z.string().max(500).optional(),
+});
+
+const closeSessionSchema = z.object({
+  sessionId: z.string().min(1),
+  closingAmount: moneySchema,
+  notes: z.string().max(500).optional(),
+});
+
+const cashMovementSchema = z.object({
+  sessionId: z.string().min(1),
+  type: z.enum(["CASH_IN", "CASH_OUT"]),
+  amount: moneySchema.refine((value) => value > 0, "Informe um valor maior que zero"),
+  reason: z.string().trim().min(3).max(240),
+});
 
 const posSaleSchema = z.object({
   sessionId: z.string().min(1),
   customerId: z.string().optional(),
   customer: z
     .object({
-      name: z.string().optional(),
-      phone: z.string().optional(),
-      document: z.string().optional(),
-      email: z.string().email().optional().or(z.literal("")),
+      name: z.string().max(120).optional(),
+      phone: z.string().max(20).optional(),
+      document: optionalDocumentSchema,
+      email: z.string().email().max(254).optional().or(z.literal("")),
     })
     .optional(),
-  generalDiscount: z.coerce.number().min(0).default(0),
-  notes: z.string().optional(),
+  generalDiscount: moneySchema.default(0),
+  notes: z.string().max(1000).optional(),
   items: z
     .array(
       z.object({
         productId: z.string().min(1),
         variantId: z.string().optional().nullable(),
-        quantity: z.coerce.number().int().min(1),
-        discount: z.coerce.number().min(0).default(0),
+        quantity: z.coerce.number().int().min(1).max(999),
+        discount: moneySchema.default(0),
       }),
     )
-    .min(1),
+    .min(1)
+    .max(100),
   payments: z
     .array(
       z.object({
         method: z.enum(paymentMethods),
-        amount: z.coerce.number().min(0.01),
-        amountReceived: z.coerce.number().min(0).optional(),
-        externalReference: z.string().optional(),
+        amount: moneySchema.refine((value) => value >= 0.01, "Pagamento precisa ser maior que zero"),
+        amountReceived: moneySchema.optional(),
+        externalReference: z.string().max(120).optional(),
       }),
     )
-    .min(1),
+    .min(1)
+    .max(10),
 });
 
 const cancelSaleSchema = z.object({
@@ -122,8 +151,13 @@ async function assertSessionForUser(tx: Prisma.TransactionClient, sessionId: str
 export async function openPOSSession(_: POSActionState, formData: FormData): Promise<POSActionState> {
   await assertSameOrigin();
   const admin = await requirePOS(true);
-  const openingAmount = Math.max(toNumber(formData.get("openingAmount") ?? 0), 0);
-  const notes = sanitizeOptionalText(String(formData.get("notes") ?? ""));
+  const parsed = openSessionSchema.safeParse({
+    openingAmount: formData.get("openingAmount") ?? 0,
+    notes: formData.get("notes") || undefined,
+  });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Abertura inválida." };
+  const openingAmount = parsed.data.openingAmount;
+  const notes = sanitizeOptionalText(parsed.data.notes);
 
   try {
     const session = await prisma.$transaction(async (tx) => {
@@ -163,16 +197,21 @@ export async function openPOSSession(_: POSActionState, formData: FormData): Pro
     revalidatePath("/pdv");
     return { ok: true, message: "Caixa aberto.", saleNumber: session.id };
   } catch (error) {
-    return { ...initialFailure, message: error instanceof Error ? error.message : initialFailure.message };
+    return { ...initialFailure, message: posErrorMessage(error) };
   }
 }
 
 export async function closePOSSession(_: POSActionState, formData: FormData): Promise<POSActionState> {
   await assertSameOrigin();
   const admin = await requirePOS(true);
-  const sessionId = String(formData.get("sessionId") ?? "");
-  const closingAmount = Math.max(toNumber(formData.get("closingAmount") ?? 0), 0);
-  const notes = sanitizeOptionalText(String(formData.get("notes") ?? ""));
+  const parsed = closeSessionSchema.safeParse({
+    sessionId: formData.get("sessionId"),
+    closingAmount: formData.get("closingAmount") ?? 0,
+    notes: formData.get("notes") || undefined,
+  });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Fechamento inválido." };
+  const { sessionId, closingAmount } = parsed.data;
+  const notes = sanitizeOptionalText(parsed.data.notes);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -218,21 +257,22 @@ export async function closePOSSession(_: POSActionState, formData: FormData): Pr
     revalidatePath("/pdv/relatorios");
     return { ok: true, message: "Caixa fechado." };
   } catch (error) {
-    return { ...initialFailure, message: error instanceof Error ? error.message : initialFailure.message };
+    return { ...initialFailure, message: posErrorMessage(error) };
   }
 }
 
 export async function createCashMovement(_: POSActionState, formData: FormData): Promise<POSActionState> {
   await assertSameOrigin();
   const admin = await requirePOS(true);
-  const sessionId = String(formData.get("sessionId") ?? "");
-  const type = String(formData.get("type") ?? "") === "CASH_OUT" ? "CASH_OUT" : "CASH_IN";
-  const amount = Math.max(toNumber(formData.get("amount") ?? 0), 0);
-  const reason = sanitizeText(String(formData.get("reason") ?? ""));
-
-  if (amount <= 0 || reason.length < 3) {
-    return { ok: false, message: "Informe valor e motivo da movimentacao." };
-  }
+  const parsed = cashMovementSchema.safeParse({
+    sessionId: formData.get("sessionId"),
+    type: formData.get("type"),
+    amount: formData.get("amount"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Movimentação inválida." };
+  const { sessionId, type, amount } = parsed.data;
+  const reason = sanitizeText(parsed.data.reason);
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -259,7 +299,7 @@ export async function createCashMovement(_: POSActionState, formData: FormData):
     revalidatePath("/pdv");
     return { ok: true, message: type === "CASH_OUT" ? "Sangria registrada." : "Reforco registrado." };
   } catch (error) {
-    return { ...initialFailure, message: error instanceof Error ? error.message : initialFailure.message };
+    return { ...initialFailure, message: posErrorMessage(error) };
   }
 }
 
@@ -291,6 +331,15 @@ export async function finalizePOSSale(input: unknown): Promise<POSActionState> {
       const generalDiscount = roundMoney(Math.min(payload.generalDiscount, Math.max(subtotal - itemDiscountTotal, 0)));
       const discountTotal = roundMoney(itemDiscountTotal + generalDiscount);
       const total = roundMoney(subtotal - discountTotal);
+
+      const configuredCashierLimit = Number(process.env.PDV_CASHIER_MAX_DISCOUNT_PERCENT ?? 10);
+      const cashierDiscountLimit = Number.isFinite(configuredCashierLimit)
+        ? Math.min(Math.max(configuredCashierLimit, 0), 100)
+        : 10;
+      const discountPercent = subtotal > 0 ? (discountTotal / subtotal) * 100 : 0;
+      if (admin.adminRole === "CASHIER" && discountPercent > cashierDiscountLimit + 0.001) {
+        throw new Error(`O desconto máximo permitido para caixa é ${cashierDiscountLimit.toLocaleString("pt-BR")}% da venda.`);
+      }
 
       if (total <= 0) throw new Error("Total da venda precisa ser maior que zero.");
 
@@ -395,13 +444,33 @@ export async function finalizePOSSale(input: unknown): Promise<POSActionState> {
       });
 
       for (const item of saleLines) {
-        const updated = await tx.inventory.update({
-          where: { id: item.inventoryId },
-          data: {
-            quantity: item.stockBefore - item.quantity,
-            available: item.stockBefore - item.quantity > 0,
-          },
-        });
+        if (item.allowNegativeStock) {
+          await tx.inventory.update({
+            where: { id: item.inventoryId },
+            data: { quantity: { decrement: item.quantity } },
+          });
+        } else {
+          const decremented = await tx.inventory.updateMany({
+            where: {
+              id: item.inventoryId,
+              quantity: { gte: item.quantity + item.reservedBefore },
+            },
+            data: { quantity: { decrement: item.quantity } },
+          });
+
+          if (decremented.count !== 1) {
+            throw new Error(`Estoque insuficiente para ${item.productName}. Atualize a busca e tente novamente.`);
+          }
+        }
+
+        const updated = await tx.inventory.findUniqueOrThrow({ where: { id: item.inventoryId } });
+        const available = updated.quantity - updated.reserved > 0;
+        if (updated.available !== available) {
+          await tx.inventory.update({
+            where: { id: item.inventoryId },
+            data: { available },
+          });
+        }
 
         await tx.inventoryMovement.create({
           data: {
@@ -462,7 +531,7 @@ export async function finalizePOSSale(input: unknown): Promise<POSActionState> {
       receiptUrl: `/pdv/comprovante/${result.saleNumber}`,
     };
   } catch (error) {
-    return { ...initialFailure, message: error instanceof Error ? error.message : initialFailure.message };
+    return { ...initialFailure, message: posErrorMessage(error) };
   }
 }
 
@@ -550,6 +619,8 @@ async function resolveSaleLine(
   return {
     inventoryId: inventory.id,
     stockBefore: inventory.quantity,
+    reservedBefore: inventory.reserved,
+    allowNegativeStock,
     productId: product.id,
     variantId: variant?.id ?? null,
     productName: variant ? `${product.name} - ${variant.name}` : product.name,
@@ -665,7 +736,7 @@ export async function cancelPOSSale(input: unknown): Promise<POSActionState> {
     revalidatePath("/catalogo");
     return { ok: true, message: "Venda cancelada e estoque estornado." };
   } catch (error) {
-    return { ...initialFailure, message: error instanceof Error ? error.message : initialFailure.message };
+    return { ...initialFailure, message: posErrorMessage(error) };
   }
 }
 

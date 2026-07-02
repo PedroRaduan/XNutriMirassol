@@ -1,5 +1,7 @@
 # Produção da XNutri: banco online, Vercel e integrações
 
+Para publicar pela **Aplicação Web Node.js gerenciada da Hostinger**, use o passo a passo específico em [HOSTINGER.md](HOSTINGER.md).
+
 Este é o guia principal para publicar a XNutri sem depender do PostgreSQL do Docker. Os comandos abaixo devem ser executados na raiz do projeto, onde ficam `package.json`, `prisma.config.ts` e `docker-compose.yml`.
 
 ## Arquitetura recomendada

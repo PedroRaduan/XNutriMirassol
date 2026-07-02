@@ -389,6 +389,7 @@ model InventoryMovement {
   @@index([inventoryId, createdAt])
   @@index([orderId])
   @@index([posSaleId])
+  @@unique([inventoryId, orderId, type])
   @@map("inventory_movements")
 }
 

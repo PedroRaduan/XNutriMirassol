@@ -12,7 +12,7 @@ import { isDatabaseUnavailable, isDemoModeAllowed } from "@/lib/db/errors";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getClientIp, assertSameOrigin } from "@/lib/security/request";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
-import { addressSchema, loginSchema, passwordRecoverySchema, registerSchema } from "@/lib/validations";
+import { addressSchema, loginSchema, passwordRecoverySchema, profileSchema, registerSchema } from "@/lib/validations";
 
 export type ActionState = {
   ok: boolean;
@@ -83,7 +83,7 @@ export async function loginAdminWithCredentials(_: ActionState, formData: FormDa
     });
   } catch (error) {
     if (isDatabaseUnavailable(error)) {
-      if (process.env.NODE_ENV !== "production") {
+      if (isDemoModeAllowed()) {
         await createDemoAdminSession();
         redirect(isSafePOSTarget ? "/pdv?demo=1" : "/admin?demo=1");
       }
@@ -107,8 +107,29 @@ export async function loginAdminWithCredentials(_: ActionState, formData: FormDa
 
   const passwordMatches = await bcrypt.compare(parsed.data.password, admin.user.passwordHash);
   if (!passwordMatches) {
+    await prisma.auditLog.create({
+      data: {
+        adminUserId: admin.id,
+        action: "auth.login.failed",
+        entity: "security",
+        entityId: admin.userId,
+        ipAddress: ip,
+        metadata: { reason: "invalid_credentials" },
+      },
+    }).catch(() => undefined);
     return { ok: false, message: "Acesso administrativo não autorizado." };
   }
+
+  await prisma.auditLog.create({
+    data: {
+      adminUserId: admin.id,
+      action: "auth.login.success",
+      entity: "security",
+      entityId: admin.userId,
+      ipAddress: ip,
+      metadata: { target: redirectTo.startsWith("/pdv") ? "pdv" : "admin" },
+    },
+  }).catch(() => undefined);
 
   try {
     await signIn("credentials", {
@@ -182,13 +203,14 @@ export async function registerCustomer(_: ActionState, formData: FormData): Prom
 }
 
 export async function logout() {
+  await assertSameOrigin();
   await clearDemoAdminSession();
   await signOut({ redirectTo: "/" });
 }
 
 export async function enterDemoAdmin() {
   await assertSameOrigin();
-  if (process.env.NODE_ENV === "production") {
+  if (!isDemoModeAllowed()) {
     redirect("/admin/login?error=database");
   }
   await createDemoAdminSession();
@@ -197,7 +219,7 @@ export async function enterDemoAdmin() {
 
 export async function enterDemoPOS() {
   await assertSameOrigin();
-  if (process.env.NODE_ENV === "production") {
+  if (!isDemoModeAllowed()) {
     redirect("/pdv/login?error=database");
   }
   await createDemoAdminSession();
@@ -221,14 +243,21 @@ export async function requestPasswordRecovery(_: ActionState, formData: FormData
     return { ok: false, message: "Informe um e-mail válido." };
   }
 
-  const token = crypto.randomUUID();
-  await prisma.verificationToken.create({
-    data: {
-      identifier: `password-reset:${parsed.data.email}`,
-      token,
-      expires: new Date(Date.now() + 1000 * 60 * 30),
-    },
-  });
+  const user = await prisma.user.findUnique({ where: { email: parsed.data.email }, select: { id: true } });
+  if (user) {
+    const identifier = `password-reset:${parsed.data.email}`;
+    const token = crypto.randomUUID();
+    await prisma.$transaction([
+      prisma.verificationToken.deleteMany({ where: { identifier } }),
+      prisma.verificationToken.create({
+        data: {
+          identifier,
+          token,
+          expires: new Date(Date.now() + 1000 * 60 * 30),
+        },
+      }),
+    ]);
+  }
 
   return {
     ok: true,
@@ -239,14 +268,23 @@ export async function requestPasswordRecovery(_: ActionState, formData: FormData
 export async function updateProfile(formData: FormData) {
   await assertSameOrigin();
   const user = await requireUser();
+  const parsed = profileSchema.safeParse({
+    name: formData.get("name"),
+    phone: formData.get("phone") || undefined,
+    document: formData.get("document") || undefined,
+  });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Dados de perfil inválidos.");
+  }
 
   try {
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        name: sanitizeText(String(formData.get("name") ?? "")),
-        phone: sanitizeOptionalText(String(formData.get("phone") ?? "")),
-        document: sanitizeOptionalText(String(formData.get("document") ?? "")),
+        name: sanitizeText(parsed.data.name),
+        phone: sanitizeOptionalText(parsed.data.phone),
+        document: sanitizeOptionalText(parsed.data.document),
       },
     });
   } catch (error) {

@@ -45,6 +45,7 @@ const checkoutFieldOrder: CheckoutField[] = [
   "state",
   "pickupLocationId",
   "paymentMethod",
+  "privacyConsent",
 ];
 
 const checkoutFieldLabels: Record<CheckoutField, string> = {
@@ -64,6 +65,7 @@ const checkoutFieldLabels: Record<CheckoutField, string> = {
   shippingMethodId: "Frete",
   pickupLocationId: "Ponto de retirada",
   notes: "Observações",
+  privacyConsent: "Política de privacidade",
 };
 
 function friendlyFieldMessage(field: CheckoutField, message?: string) {
@@ -245,6 +247,7 @@ export function CheckoutForm({
       shippingMethodId: shippingMethodId ?? undefined,
       zipCode: shippingZipCode ?? undefined,
       pickupLocationId: pickupLocationId ?? pickupOptions[0]?.id,
+      privacyConsent: false,
     },
   });
   const shippingType = useWatch({ control: form.control, name: "shippingType" }) ?? initialShippingType;
@@ -403,6 +406,7 @@ export function CheckoutForm({
           ? draft.pickupLocationId
           : currentValues.pickupLocationId ?? pickupOptions[0]?.id,
       shippingMethodId: shippingMethodId ?? undefined,
+      privacyConsent: false,
     };
 
     form.reset(restoredValues);
@@ -837,6 +841,18 @@ export function CheckoutForm({
           />
         </label>
       </section>
+
+      <label className="surface flex cursor-pointer items-start gap-3 p-4 text-sm leading-6">
+        <input
+          className="mt-1 size-4 shrink-0 accent-[var(--brand)]"
+          type="checkbox"
+          {...form.register("privacyConsent")}
+        />
+        <span>
+          Li e concordo com a <a className="font-black text-[var(--brand-dark)] underline underline-offset-2" href="/privacidade" target="_blank" rel="noreferrer">Política de Privacidade</a> para o processamento dos dados necessários ao pedido.
+          <FieldError message={form.formState.errors.privacyConsent?.message ? friendlyFieldMessage("privacyConsent", String(form.formState.errors.privacyConsent.message)) : undefined} />
+        </span>
+      </label>
 
       {fieldErrors.length > 0 && (
         <div ref={errorSummaryRef} className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert" tabIndex={-1}>

@@ -72,10 +72,11 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
 
   return (
     <div className="space-y-3 pb-24 md:pb-0">
-      <div ref={purchaseRef} className="surface space-y-4 p-4 md:space-y-5 md:p-5">
+      <div ref={purchaseRef} data-testid="product-purchase" className="surface space-y-4 p-4 md:space-y-5 md:p-5">
         <div>
-          <label className="text-sm font-black">Opção</label>
+          <label className="text-sm font-black" htmlFor="product-variant">Opção</label>
           <select
+            id="product-variant"
             className="field mt-2"
             value={variantId}
             onChange={(event) => {
@@ -105,6 +106,7 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
                 <Minus size={17} />
               </button>
               <input
+                aria-label="Quantidade do produto"
                 className="w-full border-0 bg-white text-center text-base font-black outline-none"
                 type="number"
                 min={1}
