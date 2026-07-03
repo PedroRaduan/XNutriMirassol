@@ -185,7 +185,19 @@ async function performAddToCart(formData: FormData) {
   revalidatePath("/checkout");
 }
 
-export async function updateCartItem(formData: FormData) {
+export async function updateCartItem(formData: FormData): Promise<CartActionState> {
+  try {
+    await performUpdateCartItem(formData);
+    return { ok: true, message: "Quantidade atualizada." };
+  } catch (error) {
+    return {
+      ok: false,
+      message: safeCartError(error),
+    };
+  }
+}
+
+async function performUpdateCartItem(formData: FormData) {
   await assertSameOrigin();
   const cartId = String(formData.get("cartId") ?? "");
   const itemId = String(formData.get("itemId") ?? "");

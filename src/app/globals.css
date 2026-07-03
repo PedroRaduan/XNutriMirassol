@@ -49,6 +49,16 @@ textarea {
   font: inherit;
 }
 
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 a {
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
@@ -109,7 +119,7 @@ a {
 }
 
 .btn:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.78;
   transform: none;
 }

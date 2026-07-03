@@ -1425,3 +1425,27 @@ Login:
 admin@xnutri.com.br
 Admin@12345
 ```
+
+## Testes Automatizados
+
+O guia completo, os bugs encontrados e os checklists estão em [docs/RELATORIO-QA.md](docs/RELATORIO-QA.md).
+
+Os testes usam exclusivamente o banco local `xnutri_test`. O script recusa nomes de banco que não contenham `test`.
+
+```powershell
+docker desktop start
+docker compose up -d postgres
+npm run test:db:reset
+npm test
+npm run test:coverage
+npm run test:e2e
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Para abrir o relatório visual do Playwright depois dos testes:
+
+```powershell
+npm run test:e2e:report
+```

@@ -29,7 +29,7 @@ test.describe("responsividade sem rolagem lateral", () => {
     expect(logoBox).not.toBeNull();
     expect(logoBox!.x).toBeGreaterThanOrEqual(0);
     expect(logoBox!.x + logoBox!.width).toBeLessThanOrEqual(360);
-    await expect(page.getByRole("button", { name: "Abrir menu de navegação" })).toBeVisible();
+    await expect(page.locator('summary[aria-label="Abrir menu de navegação"]')).toBeVisible();
     await expect(page.getByRole("link", { name: "Carrinho" })).toBeVisible();
     await expectNoDocumentOverflow(page);
   });

@@ -201,7 +201,7 @@ export const fallbackHero = {
 export const fallbackPickup = {
   id: "fallback-pickup",
   name: "XNutri Mirassol",
-  zipCode: "15130-000",
+  zipCode: "15130-067",
   street: "Rua 9 de Julho",
   number: "1250",
   complement: null,

@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, Trash2 } from "lucide-react";
-import { removeCartItem, updateCartItem } from "@/lib/actions/cart";
+import { Trash2 } from "lucide-react";
+import { CartQuantityControl } from "@/components/cart/cart-quantity-control";
+import { removeCartItem } from "@/lib/actions/cart";
 import { formatCurrency } from "@/lib/utils";
 
 type CartLineProps = {
@@ -39,25 +40,12 @@ export function CartLine({ cartId, item }: CartLineProps) {
         <p className="mt-1 text-xs font-semibold text-[var(--muted)]">{item.availableStock} em estoque</p>
       </div>
       <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-1 sm:flex-col sm:items-end">
-        <div className="flex items-center rounded-md border border-[var(--line)] bg-white">
-          <form action={updateCartItem}>
-            <input type="hidden" name="cartId" value={cartId} />
-            <input type="hidden" name="itemId" value={item.id} />
-            <input type="hidden" name="quantity" value={item.quantity - 1} />
-            <button className="grid size-11 place-items-center sm:size-10" aria-label="Diminuir">
-              <Minus size={16} />
-            </button>
-          </form>
-          <span className="grid h-11 min-w-11 place-items-center text-sm font-black sm:h-10 sm:min-w-10">{item.quantity}</span>
-          <form action={updateCartItem}>
-            <input type="hidden" name="cartId" value={cartId} />
-            <input type="hidden" name="itemId" value={item.id} />
-            <input type="hidden" name="quantity" value={item.quantity + 1} />
-            <button className="grid size-11 place-items-center disabled:cursor-not-allowed disabled:opacity-40 sm:size-10" aria-label="Aumentar" disabled={!canIncrease}>
-              <Plus size={16} />
-            </button>
-          </form>
-        </div>
+        <CartQuantityControl
+          cartId={cartId}
+          itemId={item.id}
+          initialQuantity={item.quantity}
+          availableStock={item.availableStock}
+        />
         <div className="ml-auto text-right sm:ml-0">
           <strong>{formatCurrency(item.total)}</strong>
           {!canIncrease && <span className="mt-1 block text-[11px] font-bold text-[var(--brand-dark)]">Limite do estoque</span>}

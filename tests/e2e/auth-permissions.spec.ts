@@ -50,7 +50,7 @@ test.describe("autenticação e permissões", () => {
 
   test("APIs de PDV e upload rejeitam usuário deslogado", async ({ request }) => {
     const products = await request.get("/api/pdv/products?q=creatina", { maxRedirects: 0 });
-    expect([401, 403, 307, 302]).toContain(products.status());
+    expect(products.status()).toBe(401);
 
     const upload = await request.post("/api/admin/uploads/cloudinary", {
       maxRedirects: 0,
@@ -62,6 +62,6 @@ test.describe("autenticação e permissões", () => {
         },
       },
     });
-    expect([401, 403, 307, 303, 302]).toContain(upload.status());
+    expect(upload.status()).toBe(401);
   });
 });

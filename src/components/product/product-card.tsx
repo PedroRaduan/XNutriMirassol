@@ -35,7 +35,7 @@ function isRecent(createdAt?: Date | string) {
   return Date.now() - created < 1000 * 60 * 60 * 24 * 45;
 }
 
-export function ProductCard({ product }: { product: ProductCardProduct }) {
+export function ProductCard({ product, eager = false }: { product: ProductCardProduct; eager?: boolean }) {
   const image = product.images[0];
   const firstVariant = product.variants[0];
   const isFallbackProduct = product.id.startsWith("fallback-");
@@ -59,6 +59,8 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
               src={image.url}
               alt={image.alt}
               fill
+              loading={eager ? "eager" : "lazy"}
+              fetchPriority={eager ? "high" : "auto"}
               sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
               className="object-cover transition-transform duration-500 group-hover:scale-[1.08]"
             />

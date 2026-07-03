@@ -3,7 +3,7 @@ import type { Order, OrderItem, Payment, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { decrementInventoryForOrder, restoreInventoryForOrder } from "@/lib/ecommerce/inventory";
 import { getBaseUrl, toNumber } from "@/lib/utils";
-import { getMercadoPagoCheckoutUrl, mapMercadoPagoMethod, mapMercadoPagoStatus } from "@/lib/payments/mercado-pago-mappers";
+import { mapMercadoPagoMethod, mapMercadoPagoStatus } from "@/lib/payments/mercado-pago-mappers";
 
 export { getMercadoPagoCheckoutUrl, mapMercadoPagoMethod, mapMercadoPagoStatus } from "@/lib/payments/mercado-pago-mappers";
 

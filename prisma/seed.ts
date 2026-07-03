@@ -242,7 +242,7 @@ const products: SeedProduct[] = [
     description:
       "Pacote com 12 sachês de whey para rotina corrida, viagens e controle preciso de porções.",
     imageUrl:
-      "https://images.unsplash.com/photo-1605296866985-34ba3c531d5c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=1200&q=80",
     promotion: true,
     weightGrams: 520,
     variants: ["Mix sabores"].map((flavor) => ({
@@ -700,7 +700,7 @@ async function main() {
         create: {
           label: "Casa",
           recipient: "Cliente Demonstração",
-          zipCode: "15130-000",
+          zipCode: "15130-055",
           street: "Rua Rui Barbosa",
           number: "100",
           district: "Centro",
@@ -811,7 +811,7 @@ async function main() {
   await prisma.pickupLocation.create({
     data: {
       name: "XNutri Mirassol",
-      zipCode: "15130-000",
+      zipCode: "15130-067",
       street: "Rua 9 de Julho",
       number: "1250",
       district: "Centro",

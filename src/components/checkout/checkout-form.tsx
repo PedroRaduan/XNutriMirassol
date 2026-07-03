@@ -234,6 +234,7 @@ export function CheckoutForm({
   const [shippingSelection, setShippingSelection] = useState<ShippingSelectionState>({ status: "idle", message: "" });
   const submitAreaRef = useRef<HTMLDivElement>(null);
   const errorSummaryRef = useRef<HTMLDivElement>(null);
+  const submittingRef = useRef(false);
   const lastCepLookupRef = useRef("");
   const lastShippingQuoteRef = useRef("");
   const draftReadyRef = useRef(false);
@@ -368,6 +369,8 @@ export function CheckoutForm({
   async function handleCheckoutSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (submittingRef.current) return;
+
     const formElement = event.currentTarget;
     const valid = await form.trigger(undefined, { shouldFocus: true });
 
@@ -377,6 +380,7 @@ export function CheckoutForm({
       return;
     }
 
+    submittingRef.current = true;
     const formData = new FormData(formElement);
     startSubmitTransition(() => {
       action(formData);
@@ -574,6 +578,10 @@ export function CheckoutForm({
       window.clearTimeout(handle);
     };
   }, [clearSelectedShipping, selectedShippingMethodId, shippingQuoteAttempt, shippingType, subtotal, watchedZipCode]);
+
+  useEffect(() => {
+    submittingRef.current = false;
+  }, [state]);
 
   useEffect(() => {
     if (!state.message || state.ok) return;

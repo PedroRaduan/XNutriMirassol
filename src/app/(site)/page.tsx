@@ -141,7 +141,7 @@ export default async function Home() {
   return (
     <>
       <section className="hero-xnutri">
-        {homeHero?.imageUrl && <Image src={homeHero.imageUrl} alt={homeHero.title} fill priority sizes="100vw" className="object-cover opacity-20" />}
+        {homeHero?.imageUrl && <Image src={homeHero.imageUrl} alt={homeHero.title} fill loading="eager" fetchPriority="high" sizes="100vw" className="object-cover opacity-20" />}
         <div className="container-x relative z-10 py-10 md:py-20">
           <div className="grid items-center gap-10 lg:grid-cols-[1fr_430px]">
             <div className="animate-hero max-w-3xl">
@@ -230,7 +230,7 @@ export default async function Home() {
           <Link href="/catalogo?sort=featured" className="btn btn-secondary hidden sm:inline-flex">Ver todos</Link>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-          {featured.map((product) => <ProductCard key={product.id} product={product} />)}
+          {featured.map((product, index) => <ProductCard key={product.id} product={product} eager={index < 2} />)}
         </div>
       </section>
 

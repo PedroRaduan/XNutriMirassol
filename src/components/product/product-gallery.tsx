@@ -22,7 +22,7 @@ export function ProductGallery({ images }: { images: ImageItem[] }) {
         onClick={() => setZoom(true)}
         className="relative aspect-square overflow-hidden rounded-lg border border-[var(--line)] bg-white"
       >
-        <Image src={selected.url} alt={selected.alt} fill priority sizes="(min-width: 1024px) 48vw, 100vw" className="object-cover" />
+        <Image src={selected.url} alt={selected.alt} fill loading="eager" fetchPriority="high" sizes="(min-width: 1024px) 48vw, 100vw" className="object-cover" />
       </button>
       {images.length > 1 && (
         <div className="grid grid-cols-5 gap-2">

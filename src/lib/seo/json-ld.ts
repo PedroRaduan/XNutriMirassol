@@ -14,7 +14,7 @@ export function organizationJsonLd() {
       streetAddress: "Rua 9 de Julho, 1250",
       addressLocality: "Mirassol",
       addressRegion: "SP",
-      postalCode: "15130-000",
+      postalCode: "15130-067",
       addressCountry: "BR",
     },
     paymentAccepted: ["PIX", "Credit Card"],

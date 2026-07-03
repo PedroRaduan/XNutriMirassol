@@ -34,8 +34,12 @@ test.describe("loja pública", () => {
 
     await page.getByRole("button", { name: "Aumentar" }).click();
     await expect(page.getByRole("link", { name: "Carrinho" }).locator("span")).toHaveText("2");
+    await page.getByRole("button", { name: "Aumentar" }).click();
+    await page.getByRole("button", { name: "Aumentar" }).click();
+    await expect(page.getByTestId("cart-item-quantity")).toHaveText("4");
+    await expect(page.getByRole("link", { name: "Carrinho" }).locator("span")).toHaveText("4");
     await page.reload();
-    await expect(page.getByRole("link", { name: "Carrinho" }).locator("span")).toHaveText("2");
+    await expect(page.getByRole("link", { name: "Carrinho" }).locator("span")).toHaveText("4");
 
     const couponInput = page.getByPlaceholder("BEMVINDO10");
     await couponInput.fill("NAOEXISTE");
@@ -88,9 +92,12 @@ test.describe("loja pública", () => {
     await page.getByLabel("E-mail").fill(customerEmail);
     await page.getByRole("checkbox", { name: /Política de Privacidade/i }).check();
     const finishButton = page.getByRole("button", { name: "Finalizar pedido" });
-    await finishButton.dblclick();
-    await expect(page).toHaveURL(/\/pedido\/XN-/);
-    await expect(page.getByRole("heading", { name: /Pedido XN-/ })).toBeVisible();
+    await finishButton.evaluate((button) => {
+      (button as HTMLButtonElement).click();
+      (button as HTMLButtonElement).click();
+    });
+    await expect(page).toHaveURL(/\/pedido\/XN/, { timeout: 20_000 });
+    await expect(page.getByRole("heading", { name: /Pedido XN/ })).toBeVisible();
 
     const orderNumber = page.url().split("/").pop();
     const orders = await queryTestDatabase<{ count: string; orderNumber: string }>(

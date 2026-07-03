@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { canAccessAdminModule, getCurrentAdmin } from "@/lib/auth/session";
 import { cloudinary, getCloudinaryFolder } from "@/lib/cloudinary";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { assertSameOrigin, getClientIp } from "@/lib/security/request";
@@ -21,8 +21,12 @@ function matchesImageSignature(buffer: Buffer, mimeType: string) {
 }
 
 export async function POST(request: Request) {
+  const admin = await getCurrentAdmin();
+  if (!admin) return NextResponse.json({ error: "Autenticação necessária." }, { status: 401 });
+  if (!canAccessAdminModule(admin.adminRole, "content", true)) {
+    return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+  }
   await assertSameOrigin();
-  const admin = await requireAdmin("content", true);
   const ip = await getClientIp();
   const limited = rateLimit(`upload:${ip}`, 20, 60_000);
 

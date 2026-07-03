@@ -44,11 +44,12 @@ test.describe("PDV", () => {
     await search.press("Enter");
     await expect(page.getByText("1 item(ns) na venda")).toBeVisible();
 
-    const quantity = page.locator('input[value="1"]').first();
+    const quantity = page.getByRole("textbox", { name: /Quantidade de Whey Protein Isolado.*Baunilha/i });
     await quantity.fill("9999");
-    await expect(quantity).not.toHaveValue("9999");
+    await expect(quantity).toHaveValue("21");
 
     await page.getByLabel("Desconto geral").fill("999999");
-    await expect(page.getByText("R$ 0,00", { exact: true }).last()).toBeVisible();
+    const summary = page.getByRole("heading", { name: "Resumo" }).locator("..");
+    await expect(summary.getByText("R$ 0,00", { exact: true })).toBeVisible();
   });
 });

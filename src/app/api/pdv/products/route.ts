@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requirePOS } from "@/lib/auth/session";
+import { canAccessAdminModule, getCurrentAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { toNumber } from "@/lib/utils";
 import { rateLimit } from "@/lib/security/rate-limit";
@@ -31,7 +31,11 @@ function sameCode(a: string | null | undefined, b: string) {
 }
 
 export async function GET(request: NextRequest) {
-  await requirePOS();
+  const admin = await getCurrentAdmin();
+  if (!admin) return NextResponse.json({ error: "Autenticação necessária." }, { status: 401 });
+  if (!canAccessAdminModule(admin.adminRole, "pos")) {
+    return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
+  }
   const ip = await getClientIp();
   if (!rateLimit(`pdv-products:${ip}`, 120, 60_000).ok) {
     return NextResponse.json({ error: "Muitas buscas. Aguarde alguns instantes." }, { status: 429 });

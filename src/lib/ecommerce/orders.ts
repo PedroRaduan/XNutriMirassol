@@ -134,6 +134,13 @@ export async function createOrderFromCheckout(formData: FormData) {
   let createdOrder;
   try {
     createdOrder = await prisma.$transaction(async (tx) => {
+      const claimedCart = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM "carts" WHERE id = ${cart.id} FOR UPDATE
+      `;
+      if (claimedCart.length !== 1) {
+        throw new Error("Carrinho vazio ou pedido já finalizado.");
+      }
+
     const dbCart = await tx.cart.findUniqueOrThrow({
       where: { id: cart.id },
       include: {

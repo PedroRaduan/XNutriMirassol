@@ -532,8 +532,8 @@ export function POSTerminal({
                   onClick={() => addToCart(product)}
                   className="group grid grid-cols-[64px_1fr] gap-3 rounded-lg border border-[var(--line)] bg-white p-2 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#ffb5aa] hover:shadow-lg"
                 >
-                  <span className="grid aspect-square place-items-center overflow-hidden rounded-md bg-[#f1f2f4] text-[var(--brand)]">
-                    {product.imageUrl ? <Image src={product.imageUrl} alt="" width={64} height={64} className="h-full w-full object-cover" /> : <ShoppingCart size={24} />}
+                  <span className="relative grid aspect-square place-items-center overflow-hidden rounded-md bg-[#f1f2f4] text-[var(--brand)]">
+                    {product.imageUrl ? <Image src={product.imageUrl} alt="" fill sizes="64px" className="object-cover" /> : <ShoppingCart size={24} />}
                   </span>
                   <span className="min-w-0">
                     <strong className="line-clamp-2 text-sm leading-5">{product.displayName}</strong>
@@ -572,15 +572,16 @@ export function POSTerminal({
                   <span className="mt-1 block text-sm font-black text-[var(--brand)]">{money(item.price)}</span>
                 </div>
                 <div className="flex items-center rounded-lg border border-[var(--line)] bg-white">
-                  <button type="button" className="grid size-10 place-items-center" onClick={() => updateCart(item.id, { quantity: item.quantity - 1 })}>
+                  <button type="button" aria-label={`Diminuir quantidade de ${item.displayName}`} className="grid size-10 place-items-center" onClick={() => updateCart(item.id, { quantity: item.quantity - 1 })}>
                     <Minus size={15} />
                   </button>
                   <input
+                    aria-label={`Quantidade de ${item.displayName}`}
                     className="w-12 bg-transparent text-center font-black outline-none"
                     value={item.quantity}
                     onChange={(event) => updateCart(item.id, { quantity: Number(event.target.value) || 1 })}
                   />
-                  <button type="button" className="grid size-10 place-items-center" onClick={() => updateCart(item.id, { quantity: item.quantity + 1 })}>
+                  <button type="button" aria-label={`Aumentar quantidade de ${item.displayName}`} className="grid size-10 place-items-center" onClick={() => updateCart(item.id, { quantity: item.quantity + 1 })}>
                     <Plus size={15} />
                   </button>
                 </div>
@@ -588,7 +589,7 @@ export function POSTerminal({
                   Desconto item
                   <input className="field mt-1" type="number" min={0} step="0.01" value={item.discount} onChange={(event) => updateCart(item.id, { discount: Number(event.target.value) || 0 })} />
                 </label>
-                <button type="button" className="grid size-10 place-items-center rounded-md text-red-700 hover:bg-red-50" onClick={() => setCart((current) => current.filter((entry) => entry.id !== item.id))}>
+                <button type="button" aria-label={`Remover ${item.displayName}`} className="grid size-10 place-items-center rounded-md text-red-700 hover:bg-red-50" onClick={() => setCart((current) => current.filter((entry) => entry.id !== item.id))}>
                   <Trash2 size={18} />
                 </button>
               </div>

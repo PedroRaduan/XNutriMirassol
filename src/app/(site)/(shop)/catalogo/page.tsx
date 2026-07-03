@@ -249,7 +249,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
         <section>
           {products.length > 0 ? (
             <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3">
-              {products.map((product) => <ProductCard key={product.id} product={product} />)}
+              {products.map((product, index) => <ProductCard key={product.id} product={product} eager={index < 3} />)}
             </div>
           ) : (
             <div className="surface p-8 text-center">

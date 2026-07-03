@@ -37,6 +37,7 @@ export default defineConfig({
       AUTH_SECRET: "xnutri-e2e-only-secret-with-at-least-32-characters",
       AUTH_TRUST_HOST: "true",
       XNUTRI_DEPLOYMENT: "local",
+      NEXT_DIST_DIR: ".next-e2e",
       ALLOW_DEMO_DATA: "false",
       RATE_LIMIT_DISABLED: "true",
       MERCADO_PAGO_ACCESS_TOKEN: "",
@@ -59,7 +60,12 @@ export default defineConfig({
     {
       name: "tablet-chromium",
       testMatch: /responsive\.spec\.ts/,
-      use: { ...devices["iPad (gen 7)"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 810, height: 1080 },
+        hasTouch: true,
+        isMobile: true,
+      },
     },
   ],
 });

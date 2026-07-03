@@ -279,7 +279,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
       </form>
 
       <section className="grid gap-4">
-          {products.map((product) => {
+          {products.map((product, index) => {
             const stock = product.inventory.reduce((sum, item) => sum + item.quantity - item.reserved, 0);
             const low = product.inventory.some((item) => item.quantity <= item.lowStockThreshold);
             const productFinance = calculateUnitFinance({
@@ -292,7 +292,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
               <article key={product.id} className="admin-product-card surface overflow-hidden">
                 <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-[76px_1fr_auto] md:items-center">
                   <div className="relative aspect-square overflow-hidden rounded-lg bg-[#eceef1]">
-                    {product.images[0] && <Image src={product.images[0].url} alt={product.name} fill sizes="76px" className="object-cover" />}
+                    {product.images[0] && <Image src={product.images[0].url} alt={product.name} fill loading={index < 4 ? "eager" : "lazy"} sizes="76px" className="object-cover" />}
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
