@@ -4,6 +4,11 @@ import { ProductCard, type ProductCardProduct } from "@/components/product/produ
 import { prisma } from "@/lib/db/prisma";
 import { demoFallbackOrThrow } from "@/lib/db/errors";
 import {
+  availableProductsFirst,
+  getProductAvailableStock,
+  hasProductAvailableStock,
+} from "@/lib/ecommerce/product-stock";
+import {
   fallbackCategories,
   fallbackProducts,
   storefrontCategorySlugs,
@@ -195,11 +200,16 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
       const price = Number(product.price);
       const matchesMinPrice = minPrice !== undefined ? price >= minPrice : true;
       const matchesMaxPrice = maxPrice !== undefined ? price <= maxPrice : true;
-      const stock = Math.max(product.inventory?.reduce((sum, item) => sum + item.quantity - item.reserved, 0) ?? 0, 0);
+      const stock = getProductAvailableStock(product);
       const matchesAvailability = onlyAvailable ? stock > 0 : true;
       return matchesCategory && matchesQuery && matchesDiscount && matchesPromotion && matchesFeatured && matchesMinPrice && matchesMaxPrice && matchesAvailability;
     });
   }
+
+  const showOutOfStockResults = Boolean(q) && !onlyAvailable;
+  products = availableProductsFirst(products).filter(
+    (product) => showOutOfStockResults || hasProductAvailableStock(product),
+  );
 
   const currentCategory = category ? categories.find((item) => item.slug === category) : null;
 

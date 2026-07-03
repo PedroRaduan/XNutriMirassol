@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, PackageCheck, Sparkles } from "lucide-react";
 import { AddToCartButton } from "@/components/product/add-to-cart";
+import { getProductAvailableStock } from "@/lib/ecommerce/product-stock";
 import { formatCurrency, toNumber } from "@/lib/utils";
 
 export type ProductCardProduct = {
@@ -39,11 +40,11 @@ export function ProductCard({ product, eager = false }: { product: ProductCardPr
   const image = product.images[0];
   const firstVariant = product.variants[0];
   const isFallbackProduct = product.id.startsWith("fallback-");
-  const stock = Math.max(product.inventory?.reduce((sum, item) => sum + item.quantity - item.reserved, 0) ?? 0, 0);
+  const stock = getProductAvailableStock(product);
   const price = toNumber(product.price);
   const compareAtPrice = product.compareAtPrice ? toNumber(product.compareAtPrice) : 0;
   const discount = compareAtPrice > price ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100) : 0;
-  const stockLabel = stock > 0 ? (stock <= 5 ? "Poucas unidades" : "Em estoque") : "Indisponível";
+  const stockLabel = stock > 0 ? (stock <= 5 ? "Poucas unidades" : "Em estoque") : "Sem estoque";
   const badges = [
     product.promotion ? (discount > 0 ? `-${discount}%` : "Promoção") : null,
     product.bestSeller ? "Mais vendido" : null,
@@ -95,7 +96,7 @@ export function ProductCard({ product, eager = false }: { product: ProductCardPr
             )}
             <strong className="text-xl text-[var(--ink)] sm:text-2xl">{formatCurrency(price)}</strong>
           </div>
-          <span className={stock > 5 ? "stock-pill" : "stock-pill stock-pill-low"}>
+          <span className={stock === 0 ? "stock-pill stock-pill-out" : stock > 5 ? "stock-pill" : "stock-pill stock-pill-low"}>
             <Sparkles size={12} />
             {stockLabel}
           </span>

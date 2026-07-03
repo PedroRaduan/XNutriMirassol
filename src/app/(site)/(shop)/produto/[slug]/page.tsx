@@ -7,6 +7,7 @@ import { ProductPurchase } from "@/components/product/product-purchase";
 import { ProductCard } from "@/components/product/product-card";
 import { prisma } from "@/lib/db/prisma";
 import { demoFallbackOrThrow } from "@/lib/db/errors";
+import { hasProductAvailableStock } from "@/lib/ecommerce/product-stock";
 import { fallbackProducts, getStorefrontCategory } from "@/lib/fallback/catalog";
 import { formatCurrency, getBaseUrl, toNumber } from "@/lib/utils";
 import { getWhatsAppHref } from "@/lib/whatsapp";
@@ -55,15 +56,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (!product || product.status !== "ACTIVE") notFound();
 
-  const related = await prisma.product.findMany({
+  const relatedProducts = await prisma.product.findMany({
     where: {
       status: "ACTIVE",
       categoryId: product.categoryId,
       id: { not: product.id },
     },
     include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, variants: { take: 1 }, inventory: true },
-    take: 4,
-  }).catch((error) => demoFallbackOrThrow(error, () => fallbackProducts.filter((item) => item.categoryId === product.categoryId && item.id !== product.id).slice(0, 4)));
+    take: 12,
+  }).catch((error) => demoFallbackOrThrow(error, () => fallbackProducts.filter((item) => item.categoryId === product.categoryId && item.id !== product.id)));
+  const related = relatedProducts.filter(hasProductAvailableStock).slice(0, 4);
 
   const stock = product.variants.reduce((sum, variant) => {
     return sum + Math.max((variant.inventory?.quantity ?? 0) - (variant.inventory?.reserved ?? 0), 0);
@@ -81,7 +83,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       : null,
   }));
   const storefrontCategory = getStorefrontCategory(product.category);
-  const stockLabel = stock > 0 ? (stock <= 5 ? "Poucas unidades" : "Em estoque") : "Indisponível";
+  const stockLabel = stock > 0 ? (stock <= 5 ? "Poucas unidades" : "Em estoque") : "Sem estoque";
   const whatsappHref = getWhatsAppHref(
     undefined,
     `Olá! Vim pelo site da XNutri e tenho interesse no produto: ${product.name}.`,
@@ -130,7 +132,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="mt-5 flex flex-wrap items-end gap-3">
               {product.compareAtPrice && <span className="text-lg text-[var(--muted)] line-through">{formatCurrency(product.compareAtPrice)}</span>}
               <strong className="text-3xl md:text-4xl">{formatCurrency(product.price)}</strong>
-              <span className="badge">{stockLabel}</span>
+              <span className={stock > 0 ? "badge" : "badge border-red-300 bg-red-50 text-red-700"}>{stockLabel}</span>
             </div>
           </div>
 

@@ -16,6 +16,7 @@ import { prisma } from "@/lib/db/prisma";
 import { demoFallbackOrThrow } from "@/lib/db/errors";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
 import { fallbackCategories, fallbackProducts, storefrontCategorySlugs } from "@/lib/fallback/catalog";
+import { hasProductAvailableStock } from "@/lib/ecommerce/product-stock";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -80,12 +81,12 @@ export default async function Home() {
     prisma.product.findMany({
       where: { status: "ACTIVE", featured: true },
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, variants: true, inventory: true },
-      take: 4,
+      take: 12,
     }),
     prisma.product.findMany({
       where: { status: "ACTIVE", bestSeller: true },
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, variants: true, inventory: true },
-      take: 4,
+      take: 12,
     }),
     prisma.product.findMany({
       where: {
@@ -94,7 +95,7 @@ export default async function Home() {
       },
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, variants: true, inventory: true },
       orderBy: { updatedAt: "desc" },
-      take: 4,
+      take: 12,
     }),
     prisma.review.findMany({
       where: { approved: true },
@@ -104,7 +105,7 @@ export default async function Home() {
     }),
   ]).catch((error) => demoFallbackOrThrow(error, () => null));
 
-  const [promo, homeHero, homeSetting, storedCategories, featured, bestSellers, discountProducts, reviews] = data ?? [
+  const [promo, homeHero, homeSetting, storedCategories, storedFeatured, storedBestSellers, storedDiscountProducts, reviews] = data ?? [
     {
       title: "Vitrine fitness Xnutri",
       subtitle: "Roupas fitness, suplementos e acessórios para comprar online e retirar na loja.",
@@ -136,7 +137,10 @@ export default async function Home() {
   const heroSecondaryLabel = homeContent.heroSecondaryLabel ?? "Retirar na loja";
   const heroSecondaryHref = homeContent.heroSecondaryHref ?? "/retirada-na-loja";
   const categories = storedCategories.length === 2 ? storedCategories : fallbackCategories;
-  const heroProducts = (featured.length > 0 ? featured : fallbackProducts).slice(0, 3);
+  const featured = storedFeatured.filter(hasProductAvailableStock).slice(0, 4);
+  const bestSellers = storedBestSellers.filter(hasProductAvailableStock).slice(0, 4);
+  const discountProducts = storedDiscountProducts.filter(hasProductAvailableStock).slice(0, 4);
+  const heroProducts = featured.slice(0, 3);
 
   return (
     <>

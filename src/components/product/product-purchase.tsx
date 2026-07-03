@@ -67,7 +67,7 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
         />
       </div>
     ) : (
-      <span className="btn btn-secondary w-full sm:min-w-40 sm:w-auto">Indisponível</span>
+      <span className="btn w-full border border-red-300 bg-red-50 text-red-700 sm:min-w-40 sm:w-auto">Sem estoque</span>
     );
 
   return (
@@ -128,7 +128,9 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
           </label>
           <div className="rounded-md border border-[var(--line)] bg-[#f9faf7] p-3">
             <span className="block text-xs font-bold text-[var(--muted)]">Disponível</span>
-            <strong>{available} unidades</strong>
+            <strong className={available === 0 ? "text-red-700" : undefined}>
+              {available === 0 ? "Sem estoque" : `${available} unidades`}
+            </strong>
             {available <= 5 && available > 0 && <span className="mt-1 block text-xs font-bold text-[var(--brand-dark)]">Últimas unidades</span>}
           </div>
         </div>
@@ -164,7 +166,7 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
             redirectTo="/checkout"
           />
         ) : (
-          <span className="btn btn-secondary min-w-[148px]">Indisponível</span>
+          <span className="btn min-w-[148px] border border-red-300 bg-red-50 text-red-700">Sem estoque</span>
         )}
       </div>
       )}

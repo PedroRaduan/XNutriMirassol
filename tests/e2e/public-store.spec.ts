@@ -24,6 +24,49 @@ test.describe("loja pública", () => {
     expect(runtimeErrors).toEqual([]);
   });
 
+  test("produto sem estoque some das vitrines e aparece somente na busca, por último", async ({ page }) => {
+    const product = await queryTestDatabase<{ id: string; name: string }>(
+      'SELECT id, name FROM "products" WHERE sku = $1',
+      ["XN-WHEY-ISO-900"],
+    );
+    expect(product.rowCount).toBe(1);
+
+    const inventory = await queryTestDatabase<{ id: string; quantity: number; reserved: number }>(
+      'SELECT id, quantity, reserved FROM "inventory" WHERE "productId" = $1 ORDER BY id',
+      [product.rows[0].id],
+    );
+
+    try {
+      await queryTestDatabase(
+        'UPDATE "inventory" SET quantity = 0, reserved = 0 WHERE "productId" = $1',
+        [product.rows[0].id],
+      );
+
+      await page.goto("/");
+      await expect(page.getByRole("link", { name: product.rows[0].name, exact: true })).toHaveCount(0);
+
+      await page.goto("/catalogo");
+      await expect(page.getByRole("link", { name: product.rows[0].name, exact: true })).toHaveCount(0);
+
+      await page.goto("/catalogo?q=Whey");
+      const productCards = page.locator("article.product-card");
+      const count = await productCards.count();
+      expect(count).toBeGreaterThan(1);
+      await expect(productCards.nth(count - 1)).toContainText(product.rows[0].name);
+
+      const outOfStockCard = productCards.filter({ hasText: product.rows[0].name });
+      await expect(outOfStockCard).toHaveCount(1);
+      await expect(outOfStockCard.getByText("Sem estoque", { exact: true })).toHaveClass(/stock-pill-out/);
+    } finally {
+      for (const item of inventory.rows) {
+        await queryTestDatabase(
+          'UPDATE "inventory" SET quantity = $1, reserved = $2 WHERE id = $3',
+          [item.quantity, item.reserved, item.id],
+        );
+      }
+    }
+  });
+
   test("carrinho vazio, adição, quantidade, persistência, cupom e remoção", async ({ page }) => {
     await page.goto("/carrinho");
     await expect(page.getByRole("heading", { name: "Seu carrinho está vazio" })).toBeVisible();
@@ -120,7 +163,7 @@ test.describe("loja pública", () => {
 
     await page.goto(`/produto/${product.rows[0].slug}`);
     const purchase = page.getByTestId("product-purchase");
-    await expect(purchase.getByText("Indisponível", { exact: true })).toBeVisible();
+    await expect(purchase.getByText("Sem estoque", { exact: true }).first()).toBeVisible();
     await expect(purchase.getByRole("button", { name: "Adicionar ao carrinho" })).toHaveCount(0);
   });
 });

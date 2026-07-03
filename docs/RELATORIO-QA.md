@@ -6,8 +6,8 @@ Data da execução: 2 e 3 de julho de 2026.
 
 O projeto foi testado com banco PostgreSQL local isolado (`xnutri_test`). Nenhum teste alterou o banco Neon de produção.
 
-- 27 testes unitários e de componentes: aprovados.
-- 25 testes E2E Playwright: aprovados.
+- 29 testes unitários e de componentes: aprovados.
+- 26 testes E2E Playwright: aprovados.
 - 9 cenários responsivos dentro da suíte E2E: aprovados em desktop, 360 px, celular e tablet.
 - ESLint: aprovado sem avisos.
 - TypeScript: aprovado.
@@ -191,6 +191,15 @@ Essas contas são apenas para ambiente local/teste. Troque todas as credenciais 
 - Resultado esperado: o número muda imediatamente, a última quantidade é salva e permanece após recarregar.
 - Correção: controle otimista com fila sequencial, limite de estoque, estado de carregamento, restauração em erro e mensagem acessível.
 - Arquivos: `src/components/cart/cart-quantity-control.tsx`, `src/components/cart/cart-line.tsx` e `src/lib/actions/cart.ts`.
+
+### QA-014 — Produtos esgotados apareciam nas vitrines
+
+- Gravidade: média.
+- Onde: home, catálogo, relacionados e cards de produto.
+- Resultado anterior: um produto com saldo zero continuava misturado às vitrines e aos resultados normais.
+- Resultado esperado: produtos esgotados ficam fora das páginas principais e só aparecem em uma pesquisa explícita, depois dos disponíveis.
+- Correção: disponibilidade centralizada usando quantidade menos reservas, filtro das vitrines, ordenação da busca e aviso vermelho “Sem estoque”.
+- Arquivos: `src/lib/ecommerce/product-stock.ts`, home, catálogo, página e componentes de produto.
 
 ## Pontos externos que ainda precisam de teste real
 

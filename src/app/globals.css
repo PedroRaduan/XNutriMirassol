@@ -331,6 +331,12 @@ a {
   color: #9f1e16;
 }
 
+.stock-pill-out {
+  border-color: #f3aaa5;
+  background: #fff0ee;
+  color: #c51d17;
+}
+
 .mobile-menu > summary {
   list-style: none;
 }
