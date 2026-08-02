@@ -40,8 +40,20 @@ if (!email || !password) exitWithUsage();
 const adminEmail = email;
 const adminPassword = password;
 
-if (adminPassword.length < 8) {
-  throw new Error("A senha precisa ter pelo menos 8 caracteres.");
+if (!/^\S+@\S+\.\S+$/.test(adminEmail) || adminEmail.length > 254) {
+  throw new Error("Informe um e-mail administrativo válido.");
+}
+
+if (
+  adminPassword.length < 12 ||
+  adminPassword.length > 128 ||
+  !/[a-z]/.test(adminPassword) ||
+  !/[A-Z]/.test(adminPassword) ||
+  !/\d/.test(adminPassword) ||
+  !/[^A-Za-z0-9]/.test(adminPassword) ||
+  ["Admin@12345", "Gerente@12345", "Caixa@12345", "Cliente@12345"].includes(adminPassword)
+) {
+  throw new Error("Use uma senha exclusiva com 12 a 128 caracteres, maiúscula, minúscula, número e símbolo.");
 }
 
 const prisma = new PrismaClient({ adapter: new PrismaPg(databaseUrl) });

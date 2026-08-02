@@ -91,7 +91,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     <span className={statusBadgeClass(payment.status)}>{statusLabel(payment.status)}</span>
                   </div>
                   <p className="mt-2 text-[var(--muted)]">Valor {formatCurrency(payment.amount)} · ID externo {payment.externalId ?? "não informado"}</p>
-                  {payment.checkoutUrl && <a className="mt-2 inline-flex font-black text-[var(--brand)]" href={payment.checkoutUrl}>Abrir checkout Mercado Pago</a>}
+                  {payment.checkoutUrl && <a className="mt-2 inline-flex font-black text-[var(--brand)]" href={payment.checkoutUrl}>Abrir checkout PagBank</a>}
                 </div>
               ))}
             </div>

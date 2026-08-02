@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db/prisma";
 
 export const runtime = "nodejs";
 const maxImageSize = 4 * 1024 * 1024;
+const maxRequestSize = maxImageSize + 512 * 1024;
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 
 function matchesImageSignature(buffer: Buffer, mimeType: string) {
@@ -23,7 +24,9 @@ function matchesImageSignature(buffer: Buffer, mimeType: string) {
 export async function POST(request: Request) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Autenticação necessária." }, { status: 401 });
-  if (!canAccessAdminModule(admin.adminRole, "content", true)) {
+  const canUploadProductImage = canAccessAdminModule(admin.adminRole, "products", true);
+  const canUploadContentImage = canAccessAdminModule(admin.adminRole, "content", true);
+  if (!canUploadProductImage && !canUploadContentImage) {
     return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
   }
   await assertSameOrigin();
@@ -38,7 +41,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cloudinary não configurado." }, { status: 503 });
   }
 
-  const formData = await request.formData();
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > maxRequestSize) {
+    return NextResponse.json({ error: "A requisição de upload é muito grande." }, { status: 413 });
+  }
+
+  const formData = await request.formData().catch(() => null);
+  if (!formData) {
+    return NextResponse.json({ error: "Formulário de upload inválido." }, { status: 400 });
+  }
   const file = formData.get("file");
 
   if (!(file instanceof File)) {

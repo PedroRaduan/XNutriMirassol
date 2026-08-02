@@ -1,3 +1,5 @@
+# OBSOLETO — consulte [o guia único](../GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL.md).
+
 # Tutorial completo para conectar e publicar a XNutri
 
 Este arquivo é um passo a passo prático para ligar o projeto inteiro: banco, Prisma, seed, Cloudinary, Mercado Pago, admin, PDV, checkout e deploy na Vercel.

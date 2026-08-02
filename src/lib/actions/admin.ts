@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { isDatabaseUnavailable } from "@/lib/db/errors";
-import { decrementInventoryForOrder, restoreInventoryForOrder } from "@/lib/ecommerce/inventory";
+import { decrementInventoryForOrder, releaseInventoryReservationForOrder, restoreInventoryForOrder } from "@/lib/ecommerce/inventory";
 import { assertSameOrigin, getClientIp } from "@/lib/security/request";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
 import {
@@ -770,11 +770,12 @@ export async function updateOrderStatus(formData: FormData) {
     }
 
     if (terminalStatuses.includes(parsed.data.status)) {
-      await restoreInventoryForOrder(
-        tx,
-        order.id,
-        `${parsed.data.status === "REFUNDED" ? "Reembolso" : "Cancelamento"} administrativo do pedido ${before.orderNumber}`,
-      );
+      const reason = `${parsed.data.status === "REFUNDED" ? "Reembolso" : "Cancelamento"} administrativo do pedido ${before.orderNumber}`;
+      if (before.status === "PENDING") {
+        await releaseInventoryReservationForOrder(tx, order.id, reason);
+      } else {
+        await restoreInventoryForOrder(tx, order.id, reason);
+      }
     }
   });
 
@@ -1044,13 +1045,13 @@ export async function updateStoreSettings(formData: FormData) {
 export async function updateFinancialSettings(formData: FormData) {
   const admin = await withAdmin("finance");
   const parsed = financialSettingsAdminSchema.safeParse({
-    mercadoPagoRate: formData.get("mercadoPagoRate") || 0,
+    pagBankRate: formData.get("pagBankRate") || 0,
     fixedTransactionFee: formData.get("fixedTransactionFee") || 0,
     posCashRate: formData.get("posCashRate") || 0,
     posPixRate: formData.get("posPixRate") || 0,
     posDebitRate: formData.get("posDebitRate") || 0,
     posCreditRate: formData.get("posCreditRate") || 0,
-    posMercadoPagoRate: formData.get("posMercadoPagoRate") || 0,
+    posPagBankRate: formData.get("posPagBankRate") || 0,
     allowNegativeStock: formData.get("allowNegativeStock") === "on",
     estimatedTaxRate: formData.get("estimatedTaxRate") || 0,
     defaultPackagingCost: formData.get("defaultPackagingCost") || 0,

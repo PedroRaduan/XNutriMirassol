@@ -37,7 +37,22 @@ test.describe("painel administrativo", () => {
     await form.getByLabel("Preço", { exact: true }).fill("99.90");
     await form.getByLabel("Custo do produto").fill("45.00");
     await form.getByLabel("Estoque principal").fill("12");
-    await form.getByLabel("Imagens").fill("https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=900&q=80");
+    await page.route("**/api/admin/uploads/cloudinary", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ url: "https://res.cloudinary.com/demo/image/upload/sample.jpg" }),
+      });
+    });
+    const imageInput = form.locator('input[type="file"]');
+    await expect(imageInput).toHaveAttribute("multiple", "");
+    await imageInput.setInputFiles({
+      name: "produto.png",
+      mimeType: "image/png",
+      buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+    });
+    await expect(form.getByRole("textbox", { name: "Imagens" })).toHaveValue("https://res.cloudinary.com/demo/image/upload/sample.jpg");
+    await expect(form.getByText("Imagem enviada.")).toBeVisible();
     await form.getByRole("button", { name: "Cadastrar produto" }).click();
 
     await expect(page.getByRole("status").filter({ hasText: "Produto salvo com sucesso." })).toBeVisible();
@@ -88,7 +103,7 @@ test.describe("painel administrativo", () => {
     await form.getByLabel("Código/SKU").fill("XN-WHEY-ISO-900");
     await form.getByLabel("Preço", { exact: true }).fill("10");
     await form.getByLabel("Estoque principal").fill("1");
-    await form.getByLabel("Imagens").fill("https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=900&q=80");
+    await form.getByRole("textbox", { name: "Imagens" }).fill("https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=900&q=80");
     await form.getByRole("button", { name: "Cadastrar produto" }).click();
     await expect(form.getByRole("alert")).toBeVisible();
     await expect(form.getByRole("alert")).not.toContainText(/Prisma|Unique constraint|stack/i);

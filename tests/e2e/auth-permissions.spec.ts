@@ -2,6 +2,19 @@ import { expect, test } from "@playwright/test";
 import { loginBackoffice, loginCustomer } from "./helpers";
 
 test.describe("autenticação e permissões", () => {
+  test("login oferece Google sem remover e-mail e senha", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible();
+    await expect(page.getByLabel("E-mail")).toBeVisible();
+    await expect(page.getByLabel("Senha")).toBeVisible();
+
+    const providersResponse = await page.request.get("/api/auth/providers");
+    expect(providersResponse.ok()).toBeTruthy();
+    const providers = await providersResponse.json();
+    expect(providers).toHaveProperty("google");
+    expect(providers).toHaveProperty("credentials");
+  });
+
   test("usuário deslogado é redirecionado nas áreas privadas", async ({ page }) => {
     await page.goto("/admin/produtos");
     await expect(page).toHaveURL(/\/admin\/login\?callbackUrl=/);
@@ -31,6 +44,19 @@ test.describe("autenticação e permissões", () => {
     await loginBackoffice(page, "admin", "gerente@xnutri.com.br", "Gerente@12345");
     await page.goto("/admin/produtos");
     await expect(page.getByRole("heading", { name: "Produtos" })).toBeVisible();
+
+    const upload = await page.request.post("/api/admin/uploads/cloudinary", {
+      headers: { Origin: "http://127.0.0.1:3100" },
+      multipart: {
+        file: {
+          name: "produto.png",
+          mimeType: "image/png",
+          buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+        },
+      },
+    });
+    expect(upload.status()).toBe(503);
+    expect(await upload.json()).toMatchObject({ error: expect.stringMatching(/Cloudinary/i) });
 
     await page.goto("/admin/relatorios");
     await expect(page.getByRole("heading", { name: "Relatórios" })).toBeVisible();

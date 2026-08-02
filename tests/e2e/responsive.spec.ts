@@ -6,6 +6,27 @@ import {
 } from "./helpers";
 
 test.describe("responsividade sem rolagem lateral", () => {
+  test("home mobile mostra atalhos e produtos sem hero excessivo", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+
+    const hero = page.locator('[data-home-section="hero"]');
+    const quickLinks = page.locator('[data-home-section="quick-links"] a');
+    const firstProduct = page.locator('[data-home-section="featured"] .product-card').first();
+
+    await expect(hero).toBeVisible();
+    await expect(quickLinks).toHaveCount(4);
+    await expect(firstProduct).toBeVisible();
+
+    const heroBox = await hero.boundingBox();
+    const productBox = await firstProduct.boundingBox();
+    expect(heroBox).not.toBeNull();
+    expect(productBox).not.toBeNull();
+    expect(heroBox!.height).toBeLessThan(280);
+    expect(productBox!.y).toBeLessThan(760);
+    await expectNoDocumentOverflow(page);
+  });
+
   test("home, catálogo, produto, carrinho, checkout e login", async ({ page }) => {
     for (const path of ["/", "/catalogo", "/produto/whey-protein-isolado-xnutri-900g", "/login", "/cadastro"]) {
       await page.goto(path);

@@ -29,11 +29,13 @@ function BannerForm({ banner }: { banner?: Awaited<ReturnType<typeof getBanners>
       {banner && <input type="hidden" name="id" value={banner.id} />}
       <input className="field" name="title" placeholder="Titulo" defaultValue={banner?.title} required />
       <input className="field" name="subtitle" placeholder="Subtitulo" defaultValue={banner?.subtitle ?? ""} />
-      {banner ? (
-        <input className="field" name="imageUrl" type="url" placeholder="URL da imagem" defaultValue={banner.imageUrl} required />
-      ) : (
-        <ImageUploadField name="imageUrl" placeholder="URL da imagem" required />
-      )}
+      <ImageUploadField
+        name="imageUrl"
+        label="Imagem do banner"
+        placeholder="URL da imagem"
+        defaultValue={banner?.imageUrl ?? ""}
+        required
+      />
       <div className="grid gap-3 sm:grid-cols-2">
         <input className="field" name="ctaLabel" placeholder="Texto do botão" defaultValue={banner?.ctaLabel ?? ""} />
         <input className="field" name="ctaHref" placeholder="/catalogo" defaultValue={banner?.ctaHref ?? ""} />
@@ -80,7 +82,7 @@ export default async function AdminBannersPage() {
         <section className="grid gap-4">
           <AdminActionForm actionName="updateHomeContent" className="surface grid gap-3 p-5">
             <h2 className="text-xl font-black">Conteúdo da home</h2>
-            <input className="field" name="heroTitle" placeholder="Título da hero" defaultValue={home.heroTitle ?? "Performance, saúde e estilo em um só lugar."} required />
+            <input className="field" name="heroTitle" placeholder="Título da hero" defaultValue={home.heroTitle ?? "Suplementos, roupas fitness e retirada rápida em Mirassol"} required />
             <textarea className="field min-h-24" name="heroSubtitle" placeholder="Subtítulo da hero" defaultValue={home.heroSubtitle ?? ""} required />
             <div className="grid gap-3 sm:grid-cols-2">
               <input className="field" name="heroPrimaryLabel" placeholder="Botão principal" defaultValue={home.heroPrimaryLabel ?? "Ver produtos"} required />

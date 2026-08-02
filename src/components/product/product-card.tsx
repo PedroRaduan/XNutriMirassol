@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, PackageCheck, Sparkles } from "lucide-react";
+import { PackageCheck } from "lucide-react";
 import { AddToCartButton } from "@/components/product/add-to-cart";
 import { getProductAvailableStock } from "@/lib/ecommerce/product-stock";
 import { formatCurrency, toNumber } from "@/lib/utils";
@@ -39,7 +39,6 @@ function isRecent(createdAt?: Date | string) {
 export function ProductCard({ product, eager = false }: { product: ProductCardProduct; eager?: boolean }) {
   const image = product.images[0];
   const firstVariant = product.variants[0];
-  const isFallbackProduct = product.id.startsWith("fallback-");
   const stock = getProductAvailableStock(product);
   const price = toNumber(product.price);
   const compareAtPrice = product.compareAtPrice ? toNumber(product.compareAtPrice) : 0;
@@ -52,9 +51,9 @@ export function ProductCard({ product, eager = false }: { product: ProductCardPr
   ].filter(Boolean);
 
   return (
-    <article className="product-card surface reveal-card group flex h-full flex-col">
+    <article className="product-card group flex h-full flex-col overflow-hidden rounded-lg border border-[var(--line)] bg-white">
       <Link href={`/produto/${product.slug}`} className="block" aria-label={product.name}>
-        <div className="product-card-media relative aspect-[4/3] overflow-hidden bg-[#eceef1]">
+        <div className="product-card-media relative aspect-square overflow-hidden bg-[#f5f4f1]">
           {image ? (
             <Image
               src={image.url}
@@ -63,17 +62,17 @@ export function ProductCard({ product, eager = false }: { product: ProductCardPr
               loading={eager ? "eager" : "lazy"}
               fetchPriority={eager ? "high" : "auto"}
               sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-[1.08]"
+              className="object-contain p-3 sm:p-4"
             />
           ) : (
-            <div className="grid h-full place-items-center bg-gradient-to-br from-[#f7f7f8] to-[#dedfe4] text-[var(--muted)]">
+            <div className="grid h-full place-items-center bg-[#efeeeb] text-[var(--muted)]">
               <PackageCheck size={34} />
             </div>
           )}
 
-          <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-            {badges.map((badge) => (
-              <span key={badge} className="badge border-transparent bg-[var(--brand)] text-white shadow-lg">
+          <div className="absolute left-2.5 top-2.5 flex flex-wrap gap-2">
+            {badges.slice(0, 1).map((badge) => (
+              <span key={badge} className="badge bg-[#fff3f1] text-[var(--brand-dark)]">
                 {badge}
               </span>
             ))}
@@ -81,35 +80,48 @@ export function ProductCard({ product, eager = false }: { product: ProductCardPr
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col gap-3 p-3 sm:p-4">
-        <div className="min-h-[112px]">
-          <Link href={`/produto/${product.slug}`} className="line-clamp-2 text-base font-black leading-snug text-[var(--ink)] hover:text-[var(--brand)] sm:text-lg">
+      <div className="flex flex-1 flex-col gap-2.5 p-2.5 sm:gap-3 sm:p-4">
+        <div className="min-h-10 sm:min-h-12">
+          <Link href={`/produto/${product.slug}`} className="line-clamp-2 text-sm font-bold leading-snug text-[var(--ink)] hover:text-[var(--brand)] sm:text-base">
             {product.name}
           </Link>
-          <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-[var(--muted)] sm:mt-2 sm:text-sm">{product.shortDescription}</p>
         </div>
 
-        <div className="mt-auto grid gap-2 sm:flex sm:items-end sm:justify-between sm:gap-3">
+        <div className="mt-auto grid gap-1.5 sm:flex sm:items-end sm:justify-between sm:gap-3">
           <div>
             {compareAtPrice > 0 && (
               <span className="block text-xs font-semibold text-[var(--muted)] line-through">{formatCurrency(compareAtPrice)}</span>
             )}
-            <strong className="text-xl text-[var(--ink)] sm:text-2xl">{formatCurrency(price)}</strong>
+            <strong className="text-xl leading-none tracking-tight text-[var(--ink)] sm:text-2xl">{formatCurrency(price)}</strong>
           </div>
           <span className={stock === 0 ? "stock-pill stock-pill-out" : stock > 5 ? "stock-pill" : "stock-pill stock-pill-low"}>
-            <Sparkles size={12} />
             {stockLabel}
           </span>
         </div>
 
-        <div className="grid gap-2">
-          {stock > 0 && firstVariant && !isFallbackProduct && (
-            <AddToCartButton productId={product.id} variantId={firstVariant.id} className="btn btn-primary w-full py-2.5 sm:py-3" />
-          )}
-          <Link href={`/produto/${product.slug}`} className={`btn w-full py-2.5 text-sm ${stock > 0 && firstVariant && !isFallbackProduct ? "btn-secondary" : "btn-dark"}`}>
-            Ver produto <ArrowRight size={15} />
+        {stock > 0 ? (
+          <div className="grid gap-1.5">
+            <AddToCartButton
+              productId={product.id}
+              variantId={firstVariant?.id}
+              idleLabel="Adicionar ao carrinho"
+              addedLabel="No carrinho"
+              className="btn btn-primary w-full px-2 py-2.5 text-xs"
+            />
+            <AddToCartButton
+              productId={product.id}
+              variantId={firstVariant?.id}
+              idleLabel="Comprar agora"
+              addedLabel="Abrindo checkout..."
+              redirectTo="/checkout"
+              className="btn btn-secondary w-full px-2 py-2.5 text-xs"
+            />
+          </div>
+        ) : (
+          <Link href={`/produto/${product.slug}`} className="btn btn-secondary w-full px-2 py-2.5 text-sm">
+            Ver produto
           </Link>
-        </div>
+        )}
       </div>
     </article>
   );

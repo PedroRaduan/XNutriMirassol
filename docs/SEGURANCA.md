@@ -1,4 +1,8 @@
+# OBSOLETO — consulte [SECURITY.md](../SECURITY.md) e [o guia único](../GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL.md).
+
 # Segurança da XNutri
+
+Relatório mais recente: [Auditoria de segurança de 05/07/2026](./AUDITORIA-SEGURANCA-2026-07-05.md).
 
 Este guia descreve as proteções implementadas, as configurações externas obrigatórias e os testes antes de abrir a loja ao público.
 

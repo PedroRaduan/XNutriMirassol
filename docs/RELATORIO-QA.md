@@ -1,3 +1,5 @@
+# HISTÓRICO — consulte [TESTES.md](TESTES.md) e [o guia único](../GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL.md).
+
 # Relatório de QA da XNutri
 
 Data da execução: 2 e 3 de julho de 2026.

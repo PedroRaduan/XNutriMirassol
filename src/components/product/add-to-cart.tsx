@@ -36,7 +36,7 @@ export function AddToCartButton({
   return (
     <button
       type="button"
-      className={cn(className, feedback === "added" && "bg-[var(--ink)] shadow-[0_14px_30px_rgb(11_11_13_/_22%)]")}
+      className={cn(className, feedback === "added" && "bg-[var(--ink)]")}
       disabled={pending}
       title={feedback === "error" ? errorMessage : undefined}
       onClick={() => {

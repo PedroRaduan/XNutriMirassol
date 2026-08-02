@@ -9,7 +9,9 @@ import { isDatabaseUnavailable, isDemoModeAllowed } from "@/lib/db/errors";
 import { checkoutSchema } from "@/lib/validations";
 import { generateOrderNumber, toNumber } from "@/lib/utils";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
-import { createMercadoPagoPreference, getMercadoPagoCheckoutUrl } from "@/lib/payments/mercado-pago";
+import { createPagBankCheckout } from "@/lib/payments/pagbank";
+import { createOrderAccessToken } from "@/lib/ecommerce/order-access";
+import { reserveInventoryForOrder } from "@/lib/ecommerce/inventory";
 import { marginPercent, roundMoney } from "@/lib/finance/calculations";
 import { getFinancialSettings } from "@/lib/finance/settings";
 import { validateAddressAgainstCep, validateCep } from "@/lib/shipping/cep";
@@ -128,6 +130,7 @@ export async function createOrderFromCheckout(formData: FormData) {
   }
 
   const orderNumber = generateOrderNumber();
+  const orderAccess = createOrderAccessToken();
   const pickupProtocol =
     data.shippingType === "PICKUP" ? `XN-${crypto.randomUUID().slice(0, 8).toUpperCase()}` : null;
 
@@ -228,7 +231,7 @@ export async function createOrderFromCheckout(formData: FormData) {
       })),
     );
     const total = Math.max(subtotal + shippingCost - discount, 0);
-    const paymentFee = roundMoney(total * (financialSettings.mercadoPagoRate / 100));
+    const paymentFee = roundMoney(total * (financialSettings.pagBankRate / 100));
     const fixedFee = total > 0 ? financialSettings.fixedTransactionFee : 0;
     const shippingCostPaidByStore =
       data.shippingType === "DELIVERY" ? financialSettings.defaultShippingCostPaidByStore : 0;
@@ -304,6 +307,7 @@ export async function createOrderFromCheckout(formData: FormData) {
     const order = await tx.order.create({
       data: {
         orderNumber,
+        accessTokenHash: orderAccess.hash,
         userId: user?.id,
         couponId: dbCart.couponId,
         customerName: sanitizeText(data.customerName),
@@ -381,11 +385,14 @@ export async function createOrderFromCheckout(formData: FormData) {
     await tx.payment.create({
       data: {
         orderId: order.id,
+        provider: "PAGBANK",
         method: data.paymentMethod,
         status: "PENDING",
         amount: total,
       },
     });
+
+    await reserveInventoryForOrder(tx, order.id);
 
     if (dbCart.couponId) {
       if (dbCart.coupon?.usageLimit) {
@@ -407,13 +414,16 @@ export async function createOrderFromCheckout(formData: FormData) {
     await tx.cartItem.deleteMany({ where: { cartId: dbCart.id } });
     await tx.cart.delete({ where: { id: dbCart.id } });
 
-    return tx.order.findUniqueOrThrow({
-      where: { id: order.id },
-      include: {
-        items: true,
-        payments: true,
-      },
-    });
+    return {
+      order: await tx.order.findUniqueOrThrow({
+        where: { id: order.id },
+        include: {
+          items: true,
+          payments: true,
+        },
+      }),
+      accessToken: orderAccess.token,
+    };
     });
   } catch (error) {
     if (isDatabaseUnavailable(error) && isDemoModeAllowed()) {
@@ -430,30 +440,29 @@ export async function createOrderFromCheckout(formData: FormData) {
   }
 
   try {
-    const preference = await createMercadoPagoPreference(createdOrder);
-    const checkoutUrl = getMercadoPagoCheckoutUrl(preference);
+    const checkout = await createPagBankCheckout(createdOrder.order, createdOrder.accessToken);
     await prisma.payment.update({
-      where: { id: createdOrder.payments[0].id },
+      where: { id: createdOrder.order.payments[0].id },
       data: {
-        preferenceId: preference.id,
-        checkoutUrl,
+        preferenceId: checkout.checkoutId,
+        checkoutUrl: checkout.checkoutUrl,
       },
     });
   } catch (error) {
-    console.error("Falha ao criar preferência do Mercado Pago", {
-      orderId: createdOrder.id,
+    console.error("Falha ao criar checkout PagBank", {
+      orderId: createdOrder.order.id,
       message: error instanceof Error ? error.message : "erro desconhecido",
     });
     await prisma.auditLog.create({
       data: {
         action: "payment.preference.failed",
         entity: "orders",
-        entityId: createdOrder.id,
+        entityId: createdOrder.order.id,
       },
     }).catch(() => undefined);
   }
 
   const cookieStore = await cookies();
   cookieStore.delete(CART_COOKIE);
-  redirect(`/pedido/${createdOrder.orderNumber}`);
+  redirect(`/pedido/${createdOrder.order.orderNumber}?access=${encodeURIComponent(createdOrder.accessToken)}`);
 }

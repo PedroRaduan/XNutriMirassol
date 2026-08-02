@@ -1,9 +1,11 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
+import { getGoogleAuthCredentials } from "@/lib/auth/google";
 import { firstEnvironmentValue } from "@/lib/env";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getClientIp } from "@/lib/security/request";
@@ -23,6 +25,14 @@ if (process.env.NODE_ENV === "production" && !authSecret) {
   throw new Error("AUTH_SECRET não configurada. Gere uma chave segura antes de publicar.");
 }
 
+const googleAuth = getGoogleAuthCredentials();
+const googleProvider = googleAuth.clientId && googleAuth.clientSecret
+  ? Google({
+      clientId: googleAuth.clientId,
+      clientSecret: googleAuth.clientSecret,
+    })
+  : null;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   secret: authSecret,
@@ -32,6 +42,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   useSecureCookies: process.env.NODE_ENV === "production",
   trustHost: process.env.AUTH_TRUST_HOST !== "false",
@@ -75,8 +86,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       },
     }),
+    ...(googleProvider ? [googleProvider] : []),
   ],
   callbacks: {
+    async signIn({ account, profile }) {
+      if (account?.provider === "google") {
+        const googleProfile = profile as { email_verified?: boolean } | undefined;
+        return googleProfile?.email_verified === true;
+      }
+
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;

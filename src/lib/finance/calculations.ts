@@ -1,11 +1,11 @@
 export type FinancialSettingsValues = {
-  mercadoPagoRate: number;
+  pagBankRate: number;
   fixedTransactionFee: number;
   posCashRate: number;
   posPixRate: number;
   posDebitRate: number;
   posCreditRate: number;
-  posMercadoPagoRate: number;
+  posPagBankRate: number;
   allowNegativeStock: boolean;
   estimatedTaxRate: number;
   defaultPackagingCost: number;
@@ -15,13 +15,13 @@ export type FinancialSettingsValues = {
 };
 
 export const defaultFinancialSettings: FinancialSettingsValues = {
-  mercadoPagoRate: 4.99,
+  pagBankRate: 4.99,
   fixedTransactionFee: 0,
   posCashRate: 0,
   posPixRate: 0,
   posDebitRate: 1.99,
   posCreditRate: 3.99,
-  posMercadoPagoRate: 4.99,
+  posPagBankRate: 4.99,
   allowNegativeStock: false,
   estimatedTaxRate: 0,
   defaultPackagingCost: 0,
@@ -43,7 +43,7 @@ export function calculateSuggestedPrice({
   costPrice,
   packagingCost = 0,
   desiredMargin = defaultFinancialSettings.minimumMargin,
-  paymentRate = defaultFinancialSettings.mercadoPagoRate,
+  paymentRate = defaultFinancialSettings.pagBankRate,
   taxRate = defaultFinancialSettings.estimatedTaxRate,
 }: {
   costPrice: number;

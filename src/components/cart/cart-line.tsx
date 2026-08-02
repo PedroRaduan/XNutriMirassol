@@ -30,13 +30,11 @@ export function CartLine({ cartId, item }: CartLineProps) {
         {item.imageUrl && <Image src={item.imageUrl} alt={item.name} fill sizes="96px" className="object-cover" />}
       </Link>
       <div className="min-w-0">
-        <Link href={`/produto/${item.slug}`} className="line-clamp-2 font-black leading-snug hover:text-[var(--brand)]">
+        <Link href={`/produto/${item.slug}`} className="line-clamp-2 font-bold leading-snug hover:text-[var(--brand)]">
           {item.name}
         </Link>
-        <p className="mt-1 line-clamp-1 text-xs text-[var(--muted)] sm:text-sm">
-          {item.variantName} · <span className="hidden sm:inline">SKU {item.sku}</span>
-        </p>
-        <p className="mt-2 font-black sm:mt-3">{formatCurrency(item.unitPrice)}</p>
+        {item.variantName && <p className="mt-1 line-clamp-1 text-xs text-[var(--muted)] sm:text-sm">{item.variantName}</p>}
+        <p className="mt-2 font-bold sm:mt-3">{formatCurrency(item.unitPrice)}</p>
         <p className="mt-1 text-xs font-semibold text-[var(--muted)]">{item.availableStock} em estoque</p>
       </div>
       <div className="col-span-2 flex items-center justify-between gap-2 sm:col-span-1 sm:flex-col sm:items-end">

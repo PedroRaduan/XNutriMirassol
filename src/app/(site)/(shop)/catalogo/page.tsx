@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, SlidersHorizontal, Sparkles } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { ProductCard, type ProductCardProduct } from "@/components/product/product-card";
 import { prisma } from "@/lib/db/prisma";
 import { demoFallbackOrThrow } from "@/lib/db/errors";
@@ -59,14 +59,14 @@ function CatalogFilterForm({
 }) {
   return (
     <form className="grid gap-4">
-      <label className="text-sm font-black">
+      <label className="text-sm font-semibold">
         Busca
         <div className="field mt-2 flex items-center gap-2">
           <Search size={16} className="text-[var(--muted)]" />
           <input name="q" defaultValue={q} className="w-full bg-transparent outline-none" placeholder="Suplementos, roupas..." />
         </div>
       </label>
-      <label className="text-sm font-black">
+      <label className="text-sm font-semibold">
         Categoria
         <select name="category" defaultValue={category} className="field mt-2">
           <option value="">Todas</option>
@@ -75,7 +75,7 @@ function CatalogFilterForm({
           ))}
         </select>
       </label>
-      <label className="text-sm font-black">
+      <label className="text-sm font-semibold">
         Ordenação
         <select name="sort" defaultValue={sort} className="field mt-2">
           <option value="recent">Mais recentes</option>
@@ -87,20 +87,20 @@ function CatalogFilterForm({
         </select>
       </label>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-        <label className="text-sm font-black">
+        <label className="text-sm font-semibold">
           Preço mínimo
           <input name="minPrice" type="number" min={0} step="0.01" defaultValue={minPrice ?? ""} className="field mt-2" placeholder="R$ 0,00" />
         </label>
-        <label className="text-sm font-black">
+        <label className="text-sm font-semibold">
           Preço máximo
           <input name="maxPrice" type="number" min={0} step="0.01" defaultValue={maxPrice ?? ""} className="field mt-2" placeholder="R$ 300,00" />
         </label>
       </div>
-      <label className="flex items-center gap-2 rounded-lg border border-[var(--line)] bg-white p-3 text-sm font-black">
+      <label className="flex items-center gap-2 rounded-md border border-[var(--line)] bg-white p-3 text-sm font-semibold">
         <input className="accent-[var(--brand)]" type="checkbox" name="promotion" value="1" defaultChecked={promotion} />
         Ver apenas promoções
       </label>
-      <label className="flex items-center gap-2 rounded-lg border border-[var(--line)] bg-white p-3 text-sm font-black">
+      <label className="flex items-center gap-2 rounded-md border border-[var(--line)] bg-white p-3 text-sm font-semibold">
         <input className="accent-[var(--brand)]" type="checkbox" name="availability" value="1" defaultChecked={availability} />
         Somente disponíveis
       </label>
@@ -214,28 +214,22 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
   const currentCategory = category ? categories.find((item) => item.slug === category) : null;
 
   return (
-    <div className="container-x py-10">
-      <div className="relative overflow-hidden rounded-lg border border-[#ffd2ca] bg-gradient-to-br from-white via-[#fff7f6] to-[#ffe7e2] p-6 text-[var(--ink)] shadow-xl md:p-8">
-        <div className="absolute right-[-4rem] top-[-5rem] h-44 w-44 rounded-full bg-[var(--brand)]/12 blur-2xl" />
-        <div className="absolute bottom-[-5rem] left-[-4rem] h-44 w-44 rounded-full bg-[var(--brand-hot)]/10 blur-2xl" />
-        <span className="relative inline-flex items-center gap-2 rounded-full border border-[#ffc4bc] bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-dark)]">
-          <Sparkles size={14} className="text-[var(--brand)]" />
-          Vitrine XNutri
-        </span>
-        <div className="relative mt-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div className="container-x py-8 md:py-10">
+      <div className="border-b border-[var(--line)] pb-6 md:pb-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-4xl font-black md:text-5xl">{currentCategory?.name ?? "Catálogo"}</h1>
-            <p className="mt-3 max-w-2xl text-[var(--muted)]">
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">{currentCategory?.name ?? "Catálogo"}</h1>
+            <p className="mt-2 max-w-2xl text-[var(--muted)]">
               Suplementos e roupas fitness com retirada na loja em Mirassol.
             </p>
           </div>
-          <span className="rounded-full border border-[#ffc4bc] bg-white px-3 py-2 text-sm font-black text-[var(--brand-dark)]">{products.length} produto(s) encontrado(s)</span>
+          <span className="text-sm font-semibold text-[var(--muted)]">{products.length} produto(s) encontrado(s)</span>
         </div>
       </div>
 
       <div className="mt-4 lg:hidden">
-        <details className="surface mobile-filters overflow-hidden">
-          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between px-4 font-black">
+        <details className="mobile-filters overflow-hidden rounded-lg border border-[var(--line)] bg-white">
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between px-4 font-semibold">
             <span className="inline-flex items-center gap-2"><SlidersHorizontal size={18} className="text-[var(--brand)]" /> Filtros e ordenação</span>
             <span className="text-sm text-[var(--brand)]">Abrir</span>
           </summary>
@@ -246,10 +240,10 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
       </div>
 
       <div className="mt-4 grid gap-6 lg:mt-6 lg:grid-cols-[290px_1fr]">
-        <aside className="surface hidden self-start p-5 lg:sticky lg:top-28 lg:block">
+        <aside className="hidden self-start rounded-lg border border-[var(--line)] bg-white p-5 lg:sticky lg:top-28 lg:block">
           <div className="flex items-center gap-2">
             <SlidersHorizontal size={18} className="text-[var(--brand)]" />
-            <h2 className="text-xl font-black">Filtros</h2>
+            <h2 className="text-lg font-bold">Filtros</h2>
           </div>
           <div className="mt-5">
             <CatalogFilterForm categories={categories} q={q} category={category} sort={sort} minPrice={minPrice} maxPrice={maxPrice} promotion={onlyPromotion} availability={onlyAvailable} />

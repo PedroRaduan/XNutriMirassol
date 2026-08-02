@@ -57,7 +57,7 @@ export default async function AdminSettingsPage() {
         <section className="grid gap-6 lg:grid-cols-3">
           <div className="surface p-5">
             <h2 className="text-xl font-black">Pagamento</h2>
-            <textarea className="field mt-4 min-h-40" name="paymentInfo" defaultValue={getText(payments, "instructions", "Pagamentos processados pelo Mercado Pago.")} />
+            <textarea className="field mt-4 min-h-40" name="paymentInfo" defaultValue={getText(payments, "instructions", "Pagamentos processados pelo PagBank.")} />
           </div>
           <div className="surface p-5">
             <h2 className="text-xl font-black">Entrega</h2>

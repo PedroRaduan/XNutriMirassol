@@ -23,7 +23,7 @@ export default async function CustomerOrdersPage() {
 
   return (
     <div>
-      <h1 className="text-4xl font-black">Histórico de pedidos</h1>
+      <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Histórico de pedidos</h1>
       <div className="mt-6 grid gap-4">
         {orders.map((order) => (
           <Link key={order.id} href={`/pedido/${order.orderNumber}`} className="surface p-5 hover:border-[var(--brand)]">

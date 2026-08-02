@@ -54,6 +54,7 @@ enum ShippingProvider {
 
 enum PaymentProvider {
   MERCADO_PAGO
+  PAGBANK
 }
 
 enum PaymentMethod {
@@ -105,6 +106,7 @@ enum POSPaymentMethod {
   DEBIT_CARD
   CREDIT_CARD
   MERCADO_PAGO
+  PAGBANK
 }
 
 enum POSPaymentStatus {
@@ -422,6 +424,7 @@ model Coupon {
 model Order {
   id                      String       @id @default(cuid())
   orderNumber             String       @unique
+  accessTokenHash         String?      @unique @db.VarChar(64)
   userId                  String?
   couponId                String?
   shippingAddressId       String?
@@ -508,7 +511,7 @@ model OrderItem {
 model Payment {
   id              String          @id @default(cuid())
   orderId         String
-  provider        PaymentProvider @default(MERCADO_PAGO)
+  provider        PaymentProvider @default(PAGBANK)
   method          PaymentMethod   @default(UNKNOWN)
   status          PaymentStatus   @default(PENDING)
   amount          Decimal         @db.Decimal(10, 2)
@@ -689,13 +692,13 @@ model StoreSetting {
 model FinancialSettings {
   id                             String   @id @default(cuid())
   name                           String   @unique @default("default")
-  mercadoPagoRate                Decimal  @default(4.99) @db.Decimal(5, 2)
+  pagBankRate                    Decimal  @default(4.99) @db.Decimal(5, 2)
   fixedTransactionFee            Decimal  @default(0) @db.Decimal(10, 2)
   posCashRate                    Decimal  @default(0) @db.Decimal(5, 2)
   posPixRate                     Decimal  @default(0) @db.Decimal(5, 2)
   posDebitRate                   Decimal  @default(1.99) @db.Decimal(5, 2)
   posCreditRate                  Decimal  @default(3.99) @db.Decimal(5, 2)
-  posMercadoPagoRate             Decimal  @default(4.99) @db.Decimal(5, 2)
+  posPagBankRate                 Decimal  @default(4.99) @db.Decimal(5, 2)
   allowNegativeStock             Boolean  @default(false)
   estimatedTaxRate               Decimal  @default(0) @db.Decimal(5, 2)
   defaultPackagingCost           Decimal  @default(0) @db.Decimal(10, 2)

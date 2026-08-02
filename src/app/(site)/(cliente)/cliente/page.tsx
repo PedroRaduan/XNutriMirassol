@@ -30,7 +30,7 @@ export default async function CustomerPage() {
 
   return (
     <div>
-      <h1 className="text-4xl font-black">Minha conta</h1>
+      <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Minha conta</h1>
       <p className="mt-2 text-[var(--muted)]">Olá, {profile?.name ?? user.email}.</p>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         <Link href="/cliente/pedidos" className="surface p-5 hover:border-[var(--brand)]">
@@ -52,8 +52,8 @@ export default async function CustomerPage() {
 
       <section className="surface mt-6 p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-black">Últimos pedidos</h2>
-          <Link href="/cliente/pedidos" className="text-sm font-black text-[var(--brand)]">Ver todos</Link>
+          <h2 className="text-xl font-bold">Últimos pedidos</h2>
+          <Link href="/cliente/pedidos" className="text-sm font-semibold text-[var(--brand)]">Ver todos</Link>
         </div>
         <div className="mt-4 grid gap-3">
           {orders.map((order) => (

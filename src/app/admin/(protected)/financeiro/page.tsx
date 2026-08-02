@@ -313,7 +313,7 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
             <CircleDollarSign size={20} className="text-[var(--brand)]" />
             <h2 className="text-xl font-black">Configurações financeiras</h2>
           </div>
-          <label className="text-sm font-black">Taxa Mercado Pago %<input className="field mt-2" name="mercadoPagoRate" type="number" step="0.01" min={0} defaultValue={settings.mercadoPagoRate} /></label>
+          <label className="text-sm font-black">Taxa PagBank %<input className="field mt-2" name="pagBankRate" type="number" step="0.01" min={0} defaultValue={settings.pagBankRate} /></label>
           <label className="text-sm font-black">Taxa fixa por pedido<input className="field mt-2" name="fixedTransactionFee" type="number" step="0.01" min={0} defaultValue={settings.fixedTransactionFee} /></label>
           <div className="rounded-lg border border-[#ffd8d1] bg-[#fff8f7] p-3">
             <h3 className="text-sm font-black text-[var(--brand-dark)]">Taxas do PDV por forma de pagamento</h3>
@@ -322,7 +322,7 @@ export default async function AdminFinancialPage({ searchParams }: { searchParam
               <label className="text-sm font-black">Pix %<input className="field mt-2" name="posPixRate" type="number" step="0.01" min={0} defaultValue={settings.posPixRate} /></label>
               <label className="text-sm font-black">Débito %<input className="field mt-2" name="posDebitRate" type="number" step="0.01" min={0} defaultValue={settings.posDebitRate} /></label>
               <label className="text-sm font-black">Crédito %<input className="field mt-2" name="posCreditRate" type="number" step="0.01" min={0} defaultValue={settings.posCreditRate} /></label>
-              <label className="text-sm font-black sm:col-span-2">Mercado Pago PDV %<input className="field mt-2" name="posMercadoPagoRate" type="number" step="0.01" min={0} defaultValue={settings.posMercadoPagoRate} /></label>
+              <label className="text-sm font-black sm:col-span-2">PagBank PDV %<input className="field mt-2" name="posPagBankRate" type="number" step="0.01" min={0} defaultValue={settings.posPagBankRate} /></label>
             </div>
             <label className="mt-3 flex items-center gap-2 text-sm font-bold">
               <input className="accent-[var(--brand)]" name="allowNegativeStock" type="checkbox" defaultChecked={settings.allowNegativeStock} />

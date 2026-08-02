@@ -29,7 +29,7 @@ function posErrorMessage(error: unknown) {
   return initialFailure.message;
 }
 
-const paymentMethods = ["CASH", "PIX", "DEBIT_CARD", "CREDIT_CARD", "MERCADO_PAGO"] as const;
+const paymentMethods = ["CASH", "PIX", "DEBIT_CARD", "CREDIT_CARD", "PAGBANK"] as const;
 const moneySchema = z.coerce.number().finite().min(0).max(1_000_000_000);
 
 const openSessionSchema = z.object({
@@ -109,7 +109,8 @@ function rateForMethod(method: POSPaymentMethod, settings: Awaited<ReturnType<ty
     PIX: settings.posPixRate,
     DEBIT_CARD: settings.posDebitRate,
     CREDIT_CARD: settings.posCreditRate,
-    MERCADO_PAGO: settings.posMercadoPagoRate,
+    MERCADO_PAGO: settings.posPagBankRate,
+    PAGBANK: settings.posPagBankRate,
   };
 
   return rates[method] ?? 0;

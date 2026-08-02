@@ -1,3 +1,5 @@
+# OBSOLETO — novos pagamentos usam PagBank. Consulte [o guia único](../GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL.md).
+
 # Guia Mercado Pago
 
 ## Integração implementada

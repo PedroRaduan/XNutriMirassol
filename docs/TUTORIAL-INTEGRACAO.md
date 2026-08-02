@@ -1,3 +1,5 @@
+# OBSOLETO — consulte [o guia único](../GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL.md).
+
 # Tutorial completo para conectar a XNutri
 
 Este arquivo é o passo a passo principal para ligar tudo do projeto: loja online, carrinho, checkout, admin, estoque, financeiro, PDV, Mercado Pago, Cloudinary e banco PostgreSQL.

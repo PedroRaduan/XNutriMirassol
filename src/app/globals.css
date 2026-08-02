@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f4f5;
-  --foreground: #171719;
-  --muted: #686c73;
-  --brand: #f2382f;
-  --brand-hot: #ff5226;
-  --brand-dark: #a81713;
-  --accent: #d7dbe2;
-  --ink: #0b0b0d;
-  --graphite: #202126;
-  --line: #e1e3e7;
-  --silver: #c9ced6;
-  --font-sans-local: Arial, Helvetica, sans-serif;
+  --background: #f7f6f4;
+  --foreground: #1d1c1a;
+  --muted: #696661;
+  --brand: #dc332c;
+  --brand-hot: #dc332c;
+  --brand-dark: #a9221d;
+  --accent: #dedbd6;
+  --ink: #171614;
+  --graphite: #292724;
+  --line: #e4e1dc;
+  --silver: #cbc7c1;
+  --font-sans-local: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono-local: "Courier New", Consolas, monospace;
 }
 
@@ -24,11 +24,10 @@
 }
 
 body {
-  background:
-    linear-gradient(180deg, #ffffff 0, var(--background) 360px),
-    var(--background);
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans-local);
+  -webkit-font-smoothing: antialiased;
 }
 
 html {
@@ -70,7 +69,7 @@ a {
 }
 
 .container-x {
-  width: min(1200px, calc(100% - 32px));
+  width: min(1180px, calc(100% - 32px));
   margin-inline: auto;
 }
 
@@ -79,14 +78,14 @@ a {
   border: 1px solid var(--line);
   background: #ffffff;
   padding: 0.75rem 0.875rem;
-  border-radius: 8px;
+  border-radius: 6px;
   outline: none;
   transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
 .field:focus {
   border-color: var(--brand);
-  box-shadow: 0 0 0 4px rgb(242 56 47 / 14%);
+  box-shadow: 0 0 0 3px rgb(220 51 44 / 12%);
 }
 
 .btn {
@@ -94,16 +93,11 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 0.78rem 1rem;
   font-weight: 700;
   line-height: 1;
-  transition:
-    transform 180ms ease,
-    background 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    color 180ms ease;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 .btn.hidden {
@@ -111,11 +105,11 @@ a {
 }
 
 .btn:hover {
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .btn:active {
-  transform: translateY(1px);
+  transform: none;
 }
 
 .btn:disabled {
@@ -125,14 +119,12 @@ a {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--brand), var(--brand-hot));
-  box-shadow: 0 12px 28px rgb(242 56 47 / 24%);
+  background: var(--brand);
   color: white;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, var(--brand-dark), var(--brand));
-  box-shadow: 0 16px 34px rgb(242 56 47 / 30%);
+  background: var(--brand-dark);
 }
 
 .btn-secondary {
@@ -142,8 +134,8 @@ a {
 }
 
 .btn-secondary:hover {
-  border-color: #bfc4cc;
-  box-shadow: 0 10px 24px rgb(11 11 13 / 8%);
+  border-color: #c8c4bd;
+  background: #f8f7f5;
 }
 
 .btn-dark {
@@ -161,14 +153,14 @@ a {
   border: 1px solid var(--line);
   background: white;
   border-radius: 8px;
-  box-shadow: 0 10px 28px rgb(17 17 17 / 5%);
+  box-shadow: none;
 }
 
 .badge {
   border-radius: 999px;
-  border: 1px solid #ffc4bc;
-  background: #fff0ee;
-  color: #8f1813;
+  border: 1px solid #ead0cd;
+  background: #fff7f6;
+  color: #9d211c;
   padding: 0.25rem 0.625rem;
   font-size: 0.75rem;
   font-weight: 700;
@@ -190,34 +182,26 @@ a {
 .xnutri-logo-mark {
   position: relative;
   display: inline-block;
-  font-size: 2.65rem;
-  font-weight: 950;
+  font-size: 2.45rem;
+  font-weight: 900;
   font-style: italic;
   letter-spacing: 0;
   color: var(--brand);
-  text-shadow: 2px 2px 0 #ffffff, 4px 4px 0 rgb(11 11 13 / 42%);
+  text-shadow: none;
 }
 
 .xnutri-logo-light .xnutri-logo-mark {
-  text-shadow: 2px 2px 0 #ffffff, 4px 4px 0 rgb(0 0 0 / 50%);
+  text-shadow: none;
 }
 
 .xnutri-logo-mark::after {
-  content: "";
-  position: absolute;
-  left: -0.22rem;
-  top: 48%;
-  width: 2.85rem;
-  height: 0.16rem;
-  background: linear-gradient(90deg, transparent, var(--silver), transparent);
-  transform: rotate(-43deg);
-  transform-origin: center;
+  display: none;
 }
 
 .xnutri-logo-word {
   display: block;
-  font-size: 1.92rem;
-  font-weight: 950;
+  font-size: 1.75rem;
+  font-weight: 900;
   font-style: italic;
   letter-spacing: 0;
 }
@@ -226,7 +210,7 @@ a {
   grid-column: 2;
   margin-top: 0.16rem;
   font-size: 0.68rem;
-  font-weight: 950;
+  font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--brand);
@@ -239,73 +223,48 @@ a {
 .hero-xnutri {
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 88% 12%, rgb(255 255 255 / 34%), transparent 18rem),
-    linear-gradient(135deg, #f2382f 0%, #c9231d 42%, #ff5a27 76%, #fff0ee 100%);
-  color: white;
+  border-bottom: 1px solid var(--line);
+  background: #f1efeb;
+  color: var(--ink);
 }
 
 .hero-xnutri::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(115deg, rgb(255 255 255 / 8%) 0 1px, transparent 1px 88px),
-    linear-gradient(0deg, rgb(255 255 255 / 4%) 0 1px, transparent 1px 72px);
-  mask-image: linear-gradient(90deg, black, rgb(0 0 0 / 72%), transparent);
+  display: none;
 }
 
 .hero-xnutri::after {
-  content: "";
-  position: absolute;
-  inset: auto -16% -38% -12%;
-  height: 62%;
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 14%), transparent);
-  transform: rotate(-5deg);
+  display: none;
 }
 
 .hero-panel {
-  border: 1px solid rgb(255 255 255 / 16%);
-  background: linear-gradient(145deg, rgb(255 255 255 / 16%), rgb(255 255 255 / 5%));
+  border: 1px solid var(--line);
+  background: white;
   border-radius: 8px;
-  box-shadow: 0 28px 80px rgb(0 0 0 / 30%);
-  backdrop-filter: blur(16px);
+  box-shadow: none;
 }
 
 .animate-hero {
-  animation: hero-in 680ms cubic-bezier(.2, .9, .2, 1) both;
+  animation: none;
 }
 
 .reveal-card {
-  animation: reveal-card 640ms ease both;
-}
-
-@supports (animation-timeline: view()) {
-  .reveal-card {
-    animation-timeline: view();
-    animation-range: entry 0% cover 28%;
-  }
+  animation: none;
 }
 
 .product-card {
   position: relative;
   overflow: hidden;
-  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  transition: border-color 160ms ease;
 }
 
 .product-card:hover {
-  border-color: #c9ced6;
-  box-shadow: 0 22px 48px rgb(17 17 17 / 12%);
-  transform: translateY(-4px);
+  border-color: #c9c5be;
+  box-shadow: none;
+  transform: none;
 }
 
 .product-card-media::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgb(0 0 0 / 18%));
-  opacity: 0;
-  transition: opacity 220ms ease;
+  display: none;
 }
 
 .product-card:hover .product-card-media::after {
@@ -320,9 +279,9 @@ a {
   border: 1px solid #dfe4df;
   background: #f4faf4;
   color: #246136;
-  padding: 0.28rem 0.58rem;
-  font-size: 0.72rem;
-  font-weight: 800;
+  padding: 0.2rem 0.46rem;
+  font-size: 0.66rem;
+  font-weight: 700;
 }
 
 .stock-pill-low {
@@ -520,8 +479,8 @@ a {
   border-top: 1px solid rgb(225 227 231 / 90%);
   background: rgb(255 255 255 / 94%);
   padding: 0.72rem max(0.8rem, env(safe-area-inset-right)) calc(0.72rem + env(safe-area-inset-bottom)) max(0.8rem, env(safe-area-inset-left));
-  box-shadow: 0 -18px 40px rgb(17 17 17 / 14%);
-  backdrop-filter: blur(18px);
+  box-shadow: 0 -4px 18px rgb(17 17 17 / 8%);
+  backdrop-filter: blur(12px);
 }
 
 @keyframes hero-in {
@@ -609,6 +568,14 @@ a {
     overflow: visible;
   }
 
+  .site-header-logo .xnutri-logo-mark {
+    font-size: 1.8rem;
+  }
+
+  .site-header-logo .xnutri-logo-word {
+    font-size: 1.3rem;
+  }
+
   .site-header-logo-link {
     display: inline-flex;
     min-width: max-content;
@@ -661,11 +628,11 @@ a {
 
 @media (max-width: 360px) {
   .site-header-logo .xnutri-logo-mark {
-    font-size: 1.8rem;
+    font-size: 1.68rem;
   }
 
   .site-header-logo .xnutri-logo-word {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
 
   .site-header-logo .xnutri-logo-subtitle {

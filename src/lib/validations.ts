@@ -56,6 +56,24 @@ function isSafeImageUrl(value: string) {
   }
 }
 
+function isSafeNavigationUrl(value: string) {
+  const trimmed = value.trim();
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return true;
+
+  try {
+    return new URL(trimmed).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+const optionalSafeNavigationUrl = z
+  .string()
+  .trim()
+  .max(2048, "Link muito longo")
+  .optional()
+  .refine((value) => !value || isSafeNavigationUrl(value), "Use um caminho interno ou uma URL HTTPS válida");
+
 export const optionalDocumentSchema = z
   .string()
   .trim()
@@ -84,13 +102,13 @@ const optionalCode = z.preprocess((value) => {
 }, z.string().min(3).max(64).optional());
 
 export const loginSchema = z.object({
-  email: z.string().email("E-mail inválido").toLowerCase(),
-  password: z.string().min(8, "Informe pelo menos 8 caracteres"),
+  email: z.string().trim().max(254, "E-mail muito longo").email("E-mail inválido").toLowerCase(),
+  password: z.string().min(8, "Informe pelo menos 8 caracteres").max(128, "Senha muito longa"),
 });
 
 export const registerSchema = z.object({
   name: z.string().trim().min(3, "Informe seu nome completo").max(120),
-  email: z.string().email("E-mail inválido").toLowerCase(),
+  email: z.string().trim().max(254, "E-mail muito longo").email("E-mail inválido").toLowerCase(),
   phone: z.string().min(10, "Telefone inválido").max(20, "Telefone inválido"),
   password: z
     .string()
@@ -108,20 +126,20 @@ export const profileSchema = z.object({
 });
 
 export const passwordRecoverySchema = z.object({
-  email: z.string().email("E-mail inválido").toLowerCase(),
+  email: z.string().trim().max(254, "E-mail muito longo").email("E-mail inválido").toLowerCase(),
 });
 
 export const addressSchema = z.object({
-  label: z.string().min(2, required),
-  recipient: z.string().min(3, required),
+  label: z.string().trim().min(2, required).max(40, "Identificação muito longa"),
+  recipient: z.string().trim().min(3, required).max(120, "Nome muito longo"),
   zipCode: z.string().regex(/^\d{5}-?\d{3}$/, "CEP inválido"),
-  street: z.string().min(2, required),
-  number: z.string().min(1, required),
-  complement: z.string().optional(),
-  district: z.string().min(2, required),
-  city: z.string().min(2, required),
+  street: z.string().trim().min(2, required).max(160, "Rua muito longa"),
+  number: z.string().trim().min(1, required).max(30, "Número muito longo"),
+  complement: z.string().trim().max(160, "Complemento muito longo").optional(),
+  district: z.string().trim().min(2, required).max(100, "Bairro muito longo"),
+  city: z.string().trim().min(2, required).max(100, "Cidade muito longa"),
   state: z.string().length(2, "UF inválida").toUpperCase(),
-  reference: z.string().optional(),
+  reference: z.string().trim().max(240, "Referência muito longa").optional(),
 });
 
 export const cartItemSchema = z.object({
@@ -141,22 +159,22 @@ export const shippingQuoteSchema = z.object({
 
 export const checkoutSchema = z
   .object({
-    customerName: z.string().min(3, required),
-    customerEmail: z.string().email("E-mail inválido").toLowerCase(),
-    customerPhone: z.string().min(10, "Telefone inválido"),
+    customerName: z.string().trim().min(3, required).max(120, "Nome muito longo"),
+    customerEmail: z.string().trim().max(254, "E-mail muito longo").email("E-mail inválido").toLowerCase(),
+    customerPhone: z.string().trim().min(10, "Telefone inválido").max(20, "Telefone inválido"),
     document: optionalDocumentSchema,
     shippingType: z.enum(["DELIVERY", "PICKUP"]),
     paymentMethod: z.enum(["PIX", "CREDIT_CARD"]),
-    zipCode: z.string().optional(),
-    street: z.string().optional(),
-    number: z.string().optional(),
-    complement: z.string().optional(),
-    district: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    shippingMethodId: z.string().optional(),
-    pickupLocationId: z.string().optional(),
-    notes: z.string().max(1000, "Observações muito longas").optional(),
+    zipCode: z.string().trim().max(9).optional(),
+    street: z.string().trim().max(160, "Rua muito longa").optional(),
+    number: z.string().trim().max(30, "Número muito longo").optional(),
+    complement: z.string().trim().max(160, "Complemento muito longo").optional(),
+    district: z.string().trim().max(100, "Bairro muito longo").optional(),
+    city: z.string().trim().max(100, "Cidade muito longa").optional(),
+    state: z.string().trim().max(2, "UF inválida").optional(),
+    shippingMethodId: z.string().trim().max(64).optional(),
+    pickupLocationId: z.string().trim().max(64).optional(),
+    notes: z.string().trim().max(1000, "Observações muito longas").optional(),
     privacyConsent: z.boolean().refine(Boolean, "Confirme a política de privacidade para continuar"),
   })
   .superRefine((data, ctx) => {
@@ -233,7 +251,7 @@ export const categoryAdminSchema = z.object({
   name: z.string().min(2, required),
   slug: z.string().min(2).optional(),
   description: z.string().optional(),
-  imageUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  imageUrl: z.string().max(2048, "URL muito longa").url("URL inválida").refine(isSafeImageUrl, "Use uma URL HTTPS válida").optional().or(z.literal("")),
   active: z.coerce.boolean().optional(),
   sortOrder: optionalInt,
 });
@@ -262,12 +280,12 @@ export const couponAdminSchema = z.object({
 });
 
 export const bannerAdminSchema = z.object({
-  id: z.string().optional(),
-  title: z.string().min(3, required),
-  subtitle: z.string().optional(),
-  imageUrl: z.string().url("URL inválida"),
-  ctaLabel: z.string().optional(),
-  ctaHref: z.string().optional(),
+  id: z.string().max(64).optional(),
+  title: z.string().trim().min(3, required).max(160, "Título muito longo"),
+  subtitle: z.string().trim().max(500, "Subtítulo muito longo").optional(),
+  imageUrl: z.string().max(2048, "URL muito longa").url("URL inválida").refine(isSafeImageUrl, "Use uma URL HTTPS válida"),
+  ctaLabel: z.string().trim().max(80, "Texto do botão muito longo").optional(),
+  ctaHref: optionalSafeNavigationUrl,
   location: z.enum(["HOME_HERO", "HOME_PROMO", "CATALOG"]),
   sortOrder: optionalInt,
   startsAt: optionalDateString,
@@ -278,7 +296,7 @@ export const bannerAdminSchema = z.object({
 export const orderAdminSchema = z.object({
   id: z.string().min(1),
   status: z.enum(["PENDING", "PAID", "PREPARING", "AWAITING_PICKUP", "SHIPPED", "DELIVERED", "CANCELED", "REFUNDED"]),
-  notes: z.string().optional(),
+  notes: z.string().trim().max(2000, "Observações muito longas").optional(),
 });
 
 export const shippingMethodAdminSchema = z.object({
@@ -313,13 +331,13 @@ export const pickupLocationAdminSchema = z.object({
 });
 
 export const financialSettingsAdminSchema = z.object({
-  mercadoPagoRate: z.coerce.number().min(0).max(100),
+  pagBankRate: z.coerce.number().min(0).max(100),
   fixedTransactionFee: z.coerce.number().min(0),
   posCashRate: z.coerce.number().min(0).max(100),
   posPixRate: z.coerce.number().min(0).max(100),
   posDebitRate: z.coerce.number().min(0).max(100),
   posCreditRate: z.coerce.number().min(0).max(100),
-  posMercadoPagoRate: z.coerce.number().min(0).max(100),
+  posPagBankRate: z.coerce.number().min(0).max(100),
   allowNegativeStock: z.coerce.boolean().optional(),
   estimatedTaxRate: z.coerce.number().min(0).max(100),
   defaultPackagingCost: z.coerce.number().min(0),
@@ -336,33 +354,33 @@ export const inventoryAdjustmentSchema = z.object({
 });
 
 export const storeSettingsAdminSchema = z.object({
-  storeName: z.string().min(2, required),
-  legalName: z.string().optional(),
-  phone: z.string().optional(),
-  whatsapp: z.string().optional(),
-  email: z.string().email("E-mail inválido"),
-  address: z.string().optional(),
-  city: z.string().min(2, required),
+  storeName: z.string().trim().min(2, required).max(120),
+  legalName: z.string().trim().max(160).optional(),
+  phone: z.string().trim().max(20).optional(),
+  whatsapp: z.string().trim().max(20).optional(),
+  email: z.string().trim().max(254).email("E-mail inválido"),
+  address: z.string().trim().max(240).optional(),
+  city: z.string().trim().min(2, required).max(100),
   state: z.string().length(2, "UF inválida").toUpperCase(),
-  businessHours: z.string().optional(),
-  instagram: z.string().optional(),
-  paymentInfo: z.string().optional(),
-  deliveryInfo: z.string().optional(),
-  pickupMessage: z.string().optional(),
+  businessHours: z.string().trim().max(500).optional(),
+  instagram: z.string().trim().max(2048).optional().refine((value) => !value || isSafeNavigationUrl(value), "Use uma URL HTTPS válida"),
+  paymentInfo: z.string().trim().max(1000).optional(),
+  deliveryInfo: z.string().trim().max(1000).optional(),
+  pickupMessage: z.string().trim().max(1000).optional(),
 });
 
 export const homeContentAdminSchema = z.object({
-  heroTitle: z.string().min(3, required),
-  heroSubtitle: z.string().min(3, required),
-  heroPrimaryLabel: z.string().min(2, required),
-  heroPrimaryHref: z.string().min(1, required),
-  heroSecondaryLabel: z.string().min(2, required),
-  heroSecondaryHref: z.string().min(1, required),
-  institutionalText: z.string().optional(),
-  footerText: z.string().optional(),
+  heroTitle: z.string().trim().min(3, required).max(180),
+  heroSubtitle: z.string().trim().min(3, required).max(500),
+  heroPrimaryLabel: z.string().trim().min(2, required).max(80),
+  heroPrimaryHref: z.string().trim().min(1, required).max(2048).refine(isSafeNavigationUrl, "Use um caminho interno ou URL HTTPS"),
+  heroSecondaryLabel: z.string().trim().min(2, required).max(80),
+  heroSecondaryHref: z.string().trim().min(1, required).max(2048).refine(isSafeNavigationUrl, "Use um caminho interno ou URL HTTPS"),
+  institutionalText: z.string().trim().max(4000).optional(),
+  footerText: z.string().trim().max(2000).optional(),
 });
 
 export const newsletterSchema = z.object({
-  email: z.string().email("E-mail inválido").toLowerCase(),
-  name: z.string().optional(),
+  email: z.string().trim().max(254, "E-mail muito longo").email("E-mail inválido").toLowerCase(),
+  name: z.string().trim().max(120, "Nome muito longo").optional(),
 });

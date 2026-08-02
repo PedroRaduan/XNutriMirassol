@@ -8,10 +8,10 @@ export function FloatingWhatsApp() {
       target="_blank"
       rel="noreferrer"
       aria-label="Falar com a XNutri pelo WhatsApp"
-      className="fixed bottom-20 right-4 z-40 inline-flex min-h-12 items-center gap-2 rounded-full bg-[#16a34a] px-4 text-sm font-black text-white shadow-[0_16px_35px_rgb(22_163_74_/_32%)] transition hover:-translate-y-0.5 hover:bg-[#12823d] focus:outline-none focus:ring-4 focus:ring-green-200 md:bottom-6 md:right-6"
+      className="fixed bottom-20 right-3 z-40 inline-flex size-10 items-center justify-center rounded-full border border-green-700 bg-[#168447] text-white shadow-sm transition-colors hover:bg-[#116d3a] focus:outline-none focus:ring-4 focus:ring-green-100 sm:h-11 sm:w-auto sm:gap-2 sm:px-4 md:bottom-6 md:right-6"
     >
-      <MessageCircle size={20} />
-      <span className="hidden sm:inline">WhatsApp</span>
+      <MessageCircle size={18} />
+      <span className="hidden text-sm font-semibold sm:inline">WhatsApp</span>
     </a>
   );
 }

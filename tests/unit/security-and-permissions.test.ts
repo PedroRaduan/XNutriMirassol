@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { canAccessAdminModule } from "@/lib/auth/permissions";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
+import { serializeJsonLd } from "@/lib/security/json-ld";
 
 describe("permissões administrativas", () => {
   it("mantém os limites de ADMIN, MANAGER, CASHIER e VIEWER", () => {
@@ -19,6 +20,12 @@ describe("proteções de entrada", () => {
   it("remove HTML e scripts de textos persistidos", () => {
     expect(sanitizeText('<img src=x onerror=alert(1)>Olá <script>alert(2)</script>')).toBe("Olá");
     expect(sanitizeOptionalText("   ")).toBeUndefined();
+  });
+
+  it("impede fechamento de script em JSON-LD", () => {
+    const serialized = serializeJsonLd({ name: "</script><script>alert(1)</script>" });
+    expect(serialized).not.toContain("</script>");
+    expect(serialized).toContain("\\u003c/script\\u003e");
   });
 
   it("bloqueia requisições depois do limite", () => {

@@ -5,7 +5,7 @@ import { useActionState, useCallback, useEffect, useRef, useState, useTransition
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
-import { CheckCircle2, CreditCard, LoaderCircle, MapPin, QrCode, Save, ShieldCheck, Store, Truck, UserRound, type LucideIcon } from "lucide-react";
+import { CheckCircle2, LoaderCircle, ShieldCheck } from "lucide-react";
 import { submitCheckout, type CheckoutActionState } from "@/lib/actions/checkout";
 import { selectPickup, selectShipping } from "@/lib/actions/cart";
 import { fetchWithTimeout } from "@/lib/http/fetch-with-timeout";
@@ -26,8 +26,9 @@ type CheckoutFormProps = {
 };
 
 const initialCheckoutState: CheckoutActionState = { ok: false, message: "" };
-const checkoutDraftKey = "xnutri:checkout-draft:v1";
-const checkoutDraftMaxAge = 1000 * 60 * 60 * 24 * 30;
+const checkoutDraftKey = "xnutri:checkout-draft:v2";
+const legacyCheckoutDraftKey = "xnutri:checkout-draft:v1";
+const checkoutDraftMaxAge = 1000 * 60 * 60 * 24;
 
 type CheckoutField = keyof CheckoutFormValues;
 
@@ -137,7 +138,6 @@ const persistedCheckoutFields: CheckoutField[] = [
   "customerName",
   "customerEmail",
   "customerPhone",
-  "document",
   "shippingType",
   "paymentMethod",
   "zipCode",
@@ -148,17 +148,17 @@ const persistedCheckoutFields: CheckoutField[] = [
   "city",
   "state",
   "pickupLocationId",
-  "notes",
 ];
 
 function readCheckoutDraft() {
   try {
-    const raw = window.localStorage.getItem(checkoutDraftKey);
+    window.localStorage.removeItem(legacyCheckoutDraftKey);
+    const raw = window.sessionStorage.getItem(checkoutDraftKey);
     if (!raw) return null;
 
     const draft = JSON.parse(raw) as { savedAt?: unknown; values?: Record<string, unknown> };
     if (typeof draft.savedAt !== "number" || Date.now() - draft.savedAt > checkoutDraftMaxAge || !draft.values) {
-      window.localStorage.removeItem(checkoutDraftKey);
+      window.sessionStorage.removeItem(checkoutDraftKey);
       return null;
     }
 
@@ -188,22 +188,19 @@ function writeCheckoutDraft(values: Partial<CheckoutFormValues>) {
     const persistedValues = Object.fromEntries(
       persistedCheckoutFields.map((field) => [field, typeof values[field] === "string" ? values[field] : ""]),
     );
-    window.localStorage.setItem(checkoutDraftKey, JSON.stringify({ savedAt: Date.now(), values: persistedValues }));
+    window.sessionStorage.setItem(checkoutDraftKey, JSON.stringify({ savedAt: Date.now(), values: persistedValues }));
     return true;
   } catch {
     return false;
   }
 }
 
-function StepTitle({ number, title, text, icon: Icon }: { number: string; title: string; text: string; icon: LucideIcon }) {
+function StepTitle({ number, title, text }: { number: string; title: string; text: string }) {
   return (
     <div className="flex gap-3">
-      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-[var(--ink)] text-sm font-black text-white">{number}</span>
+      <span className="grid size-8 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-[#faf9f7] text-sm font-bold text-[var(--brand)]">{number}</span>
       <div>
-        <div className="flex items-center gap-2">
-          <Icon size={18} className="text-[var(--brand)]" />
-          <h2 className="text-lg font-black">{title}</h2>
-        </div>
+        <h2 className="text-lg font-bold">{title}</h2>
         <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{text}</p>
       </div>
     </div>
@@ -604,49 +601,46 @@ export function CheckoutForm({
       onSubmit={handleCheckoutSubmit}
     >
       <section className="surface grid gap-5 p-5 md:p-6">
-        <StepTitle number="1" title="Dados do cliente" text="Informações para contato, nota e confirmação do pedido." icon={UserRound} />
+        <StepTitle number="1" title="Dados do cliente" text="Informações para contato, nota e confirmação do pedido." />
         <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs font-semibold leading-5 text-blue-900" aria-live="polite">
-          <Save size={16} className="mt-0.5 shrink-0" />
           <span>
             Salvamento automático ativo. Se você sair ou atualizar a página, seus dados continuarão neste dispositivo.
           </span>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="text-sm font-black">
+          <label className="text-sm font-semibold">
             Nome
             <input className="field mt-2" autoComplete="name" {...form.register("customerName")} name="customerName" />
             <FieldError message={form.formState.errors.customerName?.message ? friendlyFieldMessage("customerName", String(form.formState.errors.customerName.message)) : undefined} />
           </label>
-          <label className="text-sm font-black">
+          <label className="text-sm font-semibold">
             E-mail
             <input className="field mt-2" type="email" inputMode="email" autoComplete="email" {...form.register("customerEmail")} name="customerEmail" />
             <FieldError message={form.formState.errors.customerEmail?.message ? friendlyFieldMessage("customerEmail", String(form.formState.errors.customerEmail.message)) : undefined} />
           </label>
-          <label className="text-sm font-black">
+          <label className="text-sm font-semibold">
             WhatsApp
             <input className="field mt-2" inputMode="tel" autoComplete="tel" {...form.register("customerPhone")} name="customerPhone" />
             <FieldError message={form.formState.errors.customerPhone?.message ? friendlyFieldMessage("customerPhone", String(form.formState.errors.customerPhone.message)) : undefined} />
           </label>
-          <label className="text-sm font-black">CPF/CNPJ<input className="field mt-2" inputMode="numeric" autoComplete="off" {...form.register("document")} name="document" /></label>
+          <label className="text-sm font-semibold">CPF/CNPJ<input className="field mt-2" inputMode="numeric" autoComplete="off" {...form.register("document")} name="document" /></label>
         </div>
       </section>
 
       <section className="surface grid gap-5 p-5 md:p-6">
-        <StepTitle number="2" title="Entrega ou retirada" text="Retire na loja sem frete ou receba no endereço informado." icon={Truck} />
+        <StepTitle number="2" title="Entrega ou retirada" text="Retire na loja sem frete ou receba no endereço informado." />
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${shippingType === "DELIVERY" ? "border-[var(--brand)] bg-[#fff1ef] shadow-[0_12px_28px_rgb(242_56_47_/_10%)]" : "border-[var(--line)] bg-white"}`}>
+          <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${shippingType === "DELIVERY" ? "border-[var(--brand)] bg-[#fff7f6]" : "border-[var(--line)] bg-white"}`}>
             <input className="accent-[var(--brand)]" type="radio" value="DELIVERY" name="shippingType" checked={shippingType === "DELIVERY"} onChange={() => handleShippingTypeChange("DELIVERY")} disabled={shippingPending} />
-            <MapPin size={21} className="text-[var(--brand)]" />
             <span>
-              <span className="block font-black">Receber no endereço</span>
+              <span className="block font-bold">Receber no endereço</span>
               <span className="text-xs font-semibold text-[var(--muted)]">Cálculo por CEP e método escolhido</span>
             </span>
           </label>
-          <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${shippingType === "PICKUP" ? "border-[var(--brand)] bg-[#fff1ef] shadow-[0_12px_28px_rgb(242_56_47_/_10%)]" : "border-[var(--line)] bg-white"}`}>
+          <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${shippingType === "PICKUP" ? "border-[var(--brand)] bg-[#fff7f6]" : "border-[var(--line)] bg-white"}`}>
             <input className="accent-[var(--brand)]" type="radio" value="PICKUP" name="shippingType" checked={shippingType === "PICKUP"} onChange={() => handleShippingTypeChange("PICKUP")} disabled={shippingPending} />
-            <Store size={21} className="text-[var(--brand)]" />
             <span>
-              <span className="block font-black">Retirar na loja</span>
+              <span className="block font-bold">Retirar na loja</span>
               <span className="text-xs font-semibold text-[var(--muted)]">Sem frete e com protocolo</span>
             </span>
           </label>
@@ -655,7 +649,7 @@ export function CheckoutForm({
         {shippingType === "DELIVERY" ? (
           <div className="grid gap-4 md:grid-cols-2">
             <input type="hidden" name="shippingMethodId" value={selectedShippingMethodId} />
-            <label className="text-sm font-black">
+            <label className="text-sm font-semibold">
               CEP
               <input
                 className="field mt-2"
@@ -697,7 +691,7 @@ export function CheckoutForm({
             <div className="grid gap-3 rounded-lg border border-[var(--line)] bg-[#fafafa] p-4 md:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h3 className="font-black">Opções de frete</h3>
+                  <h3 className="font-bold">Opções de frete</h3>
                   <p className="mt-1 text-xs font-semibold text-[var(--muted)]">Escolha uma opção antes de finalizar o pedido.</p>
                 </div>
                 {shippingQuoteState.status === "loading" && (
@@ -709,7 +703,7 @@ export function CheckoutForm({
 
               {selectedShippingMethodId && shippingMethodName && shippingQuotes.length === 0 && (
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-900">
-                  <span className="inline-flex items-center gap-2 font-black"><CheckCircle2 size={17} /> {shippingMethodName}</span>
+                  <span className="inline-flex items-center gap-2 font-bold"><CheckCircle2 size={17} /> {shippingMethodName}</span>
                   <strong>{shippingCost === 0 ? "Grátis" : formatCurrency(shippingCost)}</strong>
                 </div>
               )}
@@ -720,7 +714,7 @@ export function CheckoutForm({
                   <button
                     key={quote.methodId}
                     type="button"
-                    className={`rounded-lg border p-4 text-left transition ${selected ? "border-[var(--brand)] bg-[#fff1ef] shadow-sm" : "border-[var(--line)] bg-white hover:border-[var(--brand)]"}`}
+                    className={`rounded-lg border p-4 text-left transition ${selected ? "border-[var(--brand)] bg-[#fff7f6]" : "border-[var(--line)] bg-white hover:border-[var(--brand)]"}`}
                     onClick={() => handleSelectShipping(quote)}
                     disabled={shippingPending}
                     aria-pressed={selected}
@@ -756,7 +750,7 @@ export function CheckoutForm({
                 >
                   <span>{shippingQuoteState.message}</span>
                   {shippingQuoteState.status === "error" && currentCepDigits.length === 8 && (
-                    <button className="font-black underline underline-offset-2" type="button" onClick={() => setShippingQuoteAttempt((attempt) => attempt + 1)}>
+                    <button className="font-semibold underline underline-offset-2" type="button" onClick={() => setShippingQuoteAttempt((attempt) => attempt + 1)}>
                       Tentar novamente
                     </button>
                   )}
@@ -768,28 +762,28 @@ export function CheckoutForm({
               </div>
             </div>
 
-            <label className="text-sm font-black">
+            <label className="text-sm font-semibold">
               Rua
               <input className="field mt-2" autoComplete="address-line1" {...form.register("street")} name="street" />
               <FieldError message={form.formState.errors.street?.message ? friendlyFieldMessage("street", String(form.formState.errors.street.message)) : undefined} />
             </label>
-            <label className="text-sm font-black">
+            <label className="text-sm font-semibold">
               Número
               <input className="field mt-2" inputMode="numeric" autoComplete="address-line2" {...form.register("number")} name="number" />
               <FieldError message={form.formState.errors.number?.message ? friendlyFieldMessage("number", String(form.formState.errors.number.message)) : undefined} />
             </label>
-            <label className="text-sm font-black">Complemento<input className="field mt-2" autoComplete="address-line3" {...form.register("complement")} name="complement" /></label>
-            <label className="text-sm font-black">
+            <label className="text-sm font-semibold">Complemento<input className="field mt-2" autoComplete="address-line3" {...form.register("complement")} name="complement" /></label>
+            <label className="text-sm font-semibold">
               Bairro
               <input className="field mt-2" autoComplete="address-level3" {...form.register("district")} name="district" />
               <FieldError message={form.formState.errors.district?.message ? friendlyFieldMessage("district", String(form.formState.errors.district.message)) : undefined} />
             </label>
-            <label className="text-sm font-black">
+            <label className="text-sm font-semibold">
               Cidade
               <input className="field mt-2" autoComplete="address-level2" {...form.register("city")} name="city" />
               <FieldError message={form.formState.errors.city?.message ? friendlyFieldMessage("city", String(form.formState.errors.city.message)) : undefined} />
             </label>
-            <label className="text-sm font-black">
+            <label className="text-sm font-semibold">
               UF
               <input className="field mt-2 uppercase" autoComplete="address-level1" maxLength={2} {...form.register("state")} name="state" />
               <FieldError message={form.formState.errors.state?.message ? friendlyFieldMessage("state", String(form.formState.errors.state.message)) : undefined} />
@@ -798,8 +792,8 @@ export function CheckoutForm({
         ) : (
           <div className="grid gap-3">
             {pickupOptions.map((pickup) => (
-              <label key={pickup.id} className={`rounded-lg border p-4 transition hover:border-[var(--brand)] ${selectedPickupLocationId === pickup.id ? "border-[var(--brand)] bg-[#fff1ef]" : "border-[var(--line)] bg-white"}`}>
-                <span className="flex items-center gap-3 font-black">
+              <label key={pickup.id} className={`rounded-lg border p-4 transition hover:border-[var(--brand)] ${selectedPickupLocationId === pickup.id ? "border-[var(--brand)] bg-[#fff7f6]" : "border-[var(--line)] bg-white"}`}>
+                <span className="flex items-center gap-3 font-bold">
                   <input className="accent-[var(--brand)]" type="radio" value={pickup.id} name="pickupLocationId" checked={selectedPickupLocationId === pickup.id} onChange={() => handlePickupLocationChange(pickup.id)} disabled={shippingPending} />
                   {pickup.name}
                 </span>
@@ -817,30 +811,28 @@ export function CheckoutForm({
       </section>
 
       <section className="surface grid gap-5 p-5 md:p-6">
-        <StepTitle number="3" title="Pagamento Mercado Pago" text="PIX ou cartão com retorno automático de status." icon={ShieldCheck} />
+        <StepTitle number="3" title="Pagamento PagBank" text="PIX ou cartão com retorno automático de status." />
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${paymentMethod === "PIX" ? "border-[var(--brand)] bg-[#fff1ef] shadow-[0_12px_28px_rgb(242_56_47_/_10%)]" : "border-[var(--line)] bg-white"}`}>
+          <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${paymentMethod === "PIX" ? "border-[var(--brand)] bg-[#fff7f6]" : "border-[var(--line)] bg-white"}`}>
             <input className="accent-[var(--brand)]" type="radio" value="PIX" name="paymentMethod" checked={paymentMethod === "PIX"} onChange={() => form.setValue("paymentMethod", "PIX", { shouldDirty: true, shouldValidate: true })} />
-            <QrCode size={21} className="text-[var(--brand)]" />
             <span>
-              <span className="block font-black">PIX</span>
+              <span className="block font-bold">PIX</span>
               <span className="text-xs font-semibold text-[var(--muted)]">Rápido para confirmar</span>
             </span>
           </label>
-          <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${paymentMethod === "CREDIT_CARD" ? "border-[var(--brand)] bg-[#fff1ef] shadow-[0_12px_28px_rgb(242_56_47_/_10%)]" : "border-[var(--line)] bg-white"}`}>
+          <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${paymentMethod === "CREDIT_CARD" ? "border-[var(--brand)] bg-[#fff7f6]" : "border-[var(--line)] bg-white"}`}>
             <input className="accent-[var(--brand)]" type="radio" value="CREDIT_CARD" name="paymentMethod" checked={paymentMethod === "CREDIT_CARD"} onChange={() => form.setValue("paymentMethod", "CREDIT_CARD", { shouldDirty: true, shouldValidate: true })} />
-            <CreditCard size={21} className="text-[var(--brand)]" />
             <span>
-              <span className="block font-black">Cartão</span>
-              <span className="text-xs font-semibold text-[var(--muted)]">Processado pelo Mercado Pago</span>
+              <span className="block font-bold">Cartão</span>
+              <span className="text-xs font-semibold text-[var(--muted)]">Processado pelo PagBank</span>
             </span>
           </label>
         </div>
       </section>
 
       <section className="surface grid gap-4 p-5 md:p-6">
-        <StepTitle number="4" title="Observações" text="Informe detalhes úteis para separação, entrega ou retirada do pedido." icon={Store} />
-        <label className="text-sm font-black">
+        <StepTitle number="4" title="Observações" text="Informe detalhes úteis para separação, entrega ou retirada do pedido." />
+        <label className="text-sm font-semibold">
           Observações do pedido
           <textarea
             className="field mt-2 min-h-24"
@@ -857,7 +849,7 @@ export function CheckoutForm({
           {...form.register("privacyConsent")}
         />
         <span>
-          Li e concordo com a <a className="font-black text-[var(--brand-dark)] underline underline-offset-2" href="/privacidade" target="_blank" rel="noreferrer">Política de Privacidade</a> para o processamento dos dados necessários ao pedido.
+          Li e concordo com a <a className="font-semibold text-[var(--brand-dark)] underline underline-offset-2" href="/privacidade" target="_blank" rel="noreferrer">Política de Privacidade</a> para o processamento dos dados necessários ao pedido.
           <FieldError message={form.formState.errors.privacyConsent?.message ? friendlyFieldMessage("privacyConsent", String(form.formState.errors.privacyConsent.message)) : undefined} />
         </span>
       </label>
@@ -892,9 +884,9 @@ export function CheckoutForm({
       {showStickySubmit && (
       <div className="mobile-sticky-action md:hidden">
         <div className="min-w-0">
-          <span className="block text-xs font-black uppercase text-[var(--muted)]">Total do pedido</span>
+          <span className="block text-xs font-semibold uppercase text-[var(--muted)]">Total do pedido</span>
           <strong className="block truncate text-lg">{formatCurrency(total)}</strong>
-          <span className="mt-1 block text-[11px] font-bold text-[var(--muted)]">Mercado Pago seguro</span>
+          <span className="mt-1 block text-[11px] font-bold text-[var(--muted)]">PagBank seguro</span>
         </div>
         <button className="btn btn-primary min-w-[156px] px-4" type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Enviando..." : "Finalizar"}

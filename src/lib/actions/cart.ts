@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { assertSameOrigin } from "@/lib/security/request";
+import { assertSameOrigin, getClientIp } from "@/lib/security/request";
+import { rateLimit } from "@/lib/security/rate-limit";
 import { getMutableCart, getCartForDisplay, assertCartOwnership } from "@/lib/ecommerce/cart";
 import { calculateDiscount, isCouponActive } from "@/lib/ecommerce/coupons";
 import {
@@ -40,12 +41,17 @@ function stockError(available: number) {
 
 function safeCartError(error: unknown) {
   const message = error instanceof Error ? error.message : "";
-  return /produto|variação|estoque|carrinho|item|quantidade|origem/i.test(message)
+  return /produto|variação|estoque|carrinho|item|quantidade|origem|tentativas|aguarde/i.test(message)
     ? message
     : "Não foi possível atualizar o carrinho agora. Tente novamente em instantes.";
 }
 
 const cartQuantitySchema = z.coerce.number().int().min(0).max(99);
+
+async function allowCartMutation(action: string, limit: number) {
+  const ip = await getClientIp();
+  return rateLimit(`cart:${action}:${ip}`, limit, 60_000).ok;
+}
 
 async function invalidateCartDelivery(cartId: string) {
   await prisma.cart.update({
@@ -72,6 +78,9 @@ export async function addToCart(formData: FormData): Promise<CartActionState> {
 
 async function performAddToCart(formData: FormData) {
   await assertSameOrigin();
+  if (!(await allowCartMutation("add", 120))) {
+    throw new Error("Muitas tentativas no carrinho. Aguarde alguns instantes.");
+  }
   const parsed = cartItemSchema.safeParse({
     productId: formData.get("productId"),
     variantId: formData.get("variantId") || undefined,
@@ -199,6 +208,9 @@ export async function updateCartItem(formData: FormData): Promise<CartActionStat
 
 async function performUpdateCartItem(formData: FormData) {
   await assertSameOrigin();
+  if (!(await allowCartMutation("update", 120))) {
+    throw new Error("Muitas tentativas no carrinho. Aguarde alguns instantes.");
+  }
   const cartId = String(formData.get("cartId") ?? "");
   const itemId = String(formData.get("itemId") ?? "");
   const parsedQuantity = cartQuantitySchema.safeParse(formData.get("quantity") ?? 1);
@@ -281,6 +293,9 @@ export async function removeCartItem(formData: FormData) {
 
 export async function applyCoupon(_: CouponActionState, formData: FormData): Promise<CouponActionState> {
   await assertSameOrigin();
+  if (!(await allowCartMutation("coupon", 30))) {
+    return { ok: false, message: "Muitas tentativas de cupom. Aguarde alguns instantes." };
+  }
   let cart;
   let current;
   try {

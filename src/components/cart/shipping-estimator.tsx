@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Truck } from "lucide-react";
 import { selectShipping } from "@/lib/actions/cart";
 import { fetchWithTimeout } from "@/lib/http/fetch-with-timeout";
 import { formatCurrency, onlyDigits } from "@/lib/utils";
@@ -65,10 +64,7 @@ export function ShippingEstimator({ subtotal }: { subtotal: number }) {
 
   return (
     <div className="surface p-5">
-      <div className="flex items-center gap-2">
-        <Truck size={18} />
-        <h2 className="font-black">Frete</h2>
-      </div>
+      <h2 className="font-bold">Frete</h2>
       <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
         <input
           className="field"

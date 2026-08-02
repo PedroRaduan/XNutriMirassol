@@ -24,6 +24,9 @@ if (!databaseUrl) {
 const parsedDatabaseUrl = new URL(databaseUrl);
 const databaseName = parsedDatabaseUrl.pathname.replace(/^\//, "").toLowerCase();
 const isTestDatabase = /(^|[-_])test($|[-_])/.test(databaseName);
+const seededAdminEmail = isTestDatabase ? "admin@xnutri.com.br" : process.env.ADMIN_EMAIL?.trim().toLowerCase();
+const seededAdminPassword = isTestDatabase ? "Admin@12345" : process.env.ADMIN_PASSWORD;
+const seededAdminName = isTestDatabase ? "Administrador XNutri" : process.env.ADMIN_NAME?.trim() || "Administrador XNutri";
 
 if (!isTestDatabase && process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
   throw new Error(
@@ -31,6 +34,26 @@ if (!isTestDatabase && process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
       "O seed apaga os dados existentes. Use um banco com nome de teste ou defina ALLOW_DESTRUCTIVE_SEED=true conscientemente.",
   );
 }
+
+if (!seededAdminEmail || !/^\S+@\S+\.\S+$/.test(seededAdminEmail)) {
+  throw new Error("ADMIN_EMAIL válido é obrigatório para executar o seed fora do banco de teste.");
+}
+
+if (
+  !isTestDatabase &&
+  (!seededAdminPassword ||
+    seededAdminPassword.length < 12 ||
+    !/[a-z]/.test(seededAdminPassword) ||
+    !/[A-Z]/.test(seededAdminPassword) ||
+    !/\d/.test(seededAdminPassword) ||
+    !/[^A-Za-z0-9]/.test(seededAdminPassword) ||
+    ["Admin@12345", "Gerente@12345", "Caixa@12345", "Cliente@12345"].includes(seededAdminPassword))
+) {
+  throw new Error("ADMIN_PASSWORD forte e exclusiva é obrigatória fora do banco de teste (12+ caracteres, maiúscula, minúscula, número e símbolo).");
+}
+
+const requiredAdminEmail = seededAdminEmail as string;
+const requiredAdminPassword = seededAdminPassword as string;
 
 const adapter = new PrismaPg(databaseUrl);
 const prisma = new PrismaClient({ adapter });
@@ -653,11 +676,11 @@ async function cleanDatabase() {
 async function main() {
   await cleanDatabase();
 
-  const passwordHash = await bcrypt.hash("Admin@12345", 12);
+  const passwordHash = await bcrypt.hash(requiredAdminPassword, 12);
   const admin = await prisma.user.create({
     data: {
-      name: "Administrador XNutri",
-      email: "admin@xnutri.com.br",
+      name: seededAdminName,
+      email: requiredAdminEmail,
       passwordHash,
       role: UserRole.ADMIN,
       phone: "(17) 99700-0000",
@@ -689,66 +712,68 @@ async function main() {
     },
   });
 
-  await prisma.user.create({
-    data: {
-      name: "Cliente Demonstração",
-      email: "cliente@xnutri.com.br",
-      passwordHash: await bcrypt.hash("Cliente@12345", 12),
-      role: UserRole.CLIENT,
-      phone: "(17) 99600-0000",
-      addresses: {
-        create: {
-          label: "Casa",
-          recipient: "Cliente Demonstração",
-          zipCode: "15130-055",
-          street: "Rua Rui Barbosa",
-          number: "100",
-          district: "Centro",
-          city: "Mirassol",
-          state: "SP",
-          isDefault: true,
-        },
-      },
-    },
-  });
-
-  const cashier = await prisma.user.create({
-    data: {
-      name: "Caixa XNutri",
-      email: "caixa@xnutri.com.br",
-      passwordHash: await bcrypt.hash("Caixa@12345", 12),
-      role: UserRole.ADMIN,
-      phone: "(17) 99500-0000",
-      adminProfile: {
-        create: {
-          active: true,
-          role: "CASHIER",
-          permissions: {
-            modules: ["pos"],
+  if (isTestDatabase) {
+    await prisma.user.create({
+      data: {
+        name: "Cliente Demonstração",
+        email: "cliente@xnutri.com.br",
+        passwordHash: await bcrypt.hash("Cliente@12345", 12),
+        role: UserRole.CLIENT,
+        phone: "(17) 99600-0000",
+        addresses: {
+          create: {
+            label: "Casa",
+            recipient: "Cliente Demonstração",
+            zipCode: "15130-055",
+            street: "Rua Rui Barbosa",
+            number: "100",
+            district: "Centro",
+            city: "Mirassol",
+            state: "SP",
+            isDefault: true,
           },
         },
       },
-    },
-  });
+    });
 
-  await prisma.user.create({
-    data: {
-      name: "Gerente XNutri",
-      email: "gerente@xnutri.com.br",
-      passwordHash: await bcrypt.hash("Gerente@12345", 12),
-      role: UserRole.ADMIN,
-      phone: "(17) 99400-0000",
-      adminProfile: {
-        create: {
-          active: true,
-          role: "MANAGER",
-          permissions: {
-            modules: ["dashboard", "products", "inventory", "orders", "reports"],
+    await prisma.user.create({
+      data: {
+        name: "Caixa XNutri",
+        email: "caixa@xnutri.com.br",
+        passwordHash: await bcrypt.hash("Caixa@12345", 12),
+        role: UserRole.ADMIN,
+        phone: "(17) 99500-0000",
+        adminProfile: {
+          create: {
+            active: true,
+            role: "CASHIER",
+            permissions: {
+              modules: ["pos"],
+            },
           },
         },
       },
-    },
-  });
+    });
+
+    await prisma.user.create({
+      data: {
+        name: "Gerente XNutri",
+        email: "gerente@xnutri.com.br",
+        passwordHash: await bcrypt.hash("Gerente@12345", 12),
+        role: UserRole.ADMIN,
+        phone: "(17) 99400-0000",
+        adminProfile: {
+          create: {
+            active: true,
+            role: "MANAGER",
+            permissions: {
+              modules: ["dashboard", "products", "inventory", "orders", "reports"],
+            },
+          },
+        },
+      },
+    });
+  }
 
   const categories = new Map<string, string>();
   for (const category of categorySeeds) {
@@ -858,22 +883,22 @@ async function main() {
   await prisma.banner.createMany({
     data: [
       {
-        title: "Xnutri Suplementos Nutricionais",
-        subtitle: "Suplementos, moda fitness e acessórios selecionados para treinos reais em Mirassol-SP.",
+        title: "Suplementos, roupas fitness e retirada rápida em Mirassol",
+        subtitle: "Compre pelo site, tire dúvidas no WhatsApp e retire na loja sem frete.",
         imageUrl:
           "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1800&q=85",
-        ctaLabel: "Comprar agora",
+        ctaLabel: "Ver produtos",
         ctaHref: "/catalogo",
         location: "HOME_HERO",
         sortOrder: 1,
       },
       {
-        title: "Vitrine fitness Xnutri",
-        subtitle: "Compre roupa fitness, suplementos e acessórios online; retire sem frete no Centro de Mirassol.",
+        title: "Compre online e retire em Mirassol",
+        subtitle: "Faça seu pedido pelo site e retire na loja sem pagar frete.",
         imageUrl:
           "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1800&q=85",
-        ctaLabel: "Ver roupas",
-        ctaHref: "/catalogo?category=roupas-fitness",
+        ctaLabel: "Escolher produtos",
+        ctaHref: "/catalogo",
         location: "HOME_PROMO",
         sortOrder: 1,
       },
@@ -902,9 +927,8 @@ async function main() {
         key: "home",
         description: "Conteudo editavel da home",
         value: {
-          heroTitle: "Performance, saúde e estilo em um só lugar.",
-          heroSubtitle:
-            "Suplementos, moda fitness e acessórios para quem treina de verdade. Compre online e retire na loja em Mirassol.",
+          heroTitle: "Suplementos, roupas fitness e retirada rápida em Mirassol",
+          heroSubtitle: "Compre pelo site, tire dúvidas no WhatsApp e retire na loja sem frete.",
           heroPrimaryLabel: "Ver produtos",
           heroPrimaryHref: "/catalogo",
           heroSecondaryLabel: "Retirar na loja",
@@ -940,10 +964,10 @@ async function main() {
         key: "payments",
         description: "Informacoes publicas de pagamento",
         value: {
-          provider: "Mercado Pago",
+          provider: "PagBank",
           pixEnabled: true,
           creditCardEnabled: true,
-          instructions: "Pagamentos sao processados pelo Mercado Pago.",
+          instructions: "Pagamentos são processados pelo PagBank.",
         },
       },
     ],
@@ -952,13 +976,13 @@ async function main() {
   await prisma.financialSettings.create({
     data: {
       name: "default",
-      mercadoPagoRate: 4.99,
+      pagBankRate: 4.99,
       fixedTransactionFee: 0,
       posCashRate: 0,
       posPixRate: 0,
       posDebitRate: 1.99,
       posCreditRate: 3.99,
-      posMercadoPagoRate: 4.99,
+      posPagBankRate: 4.99,
       allowNegativeStock: false,
       estimatedTaxRate: 0,
       defaultPackagingCost: 2.5,
@@ -1058,26 +1082,25 @@ async function main() {
         {
           productId: created.id,
           rating: 5,
-          title: "Entrega rápida e produto aprovado",
-          comment: "Comprei pela loja online e o atendimento foi muito bom. Produto chegou bem embalado.",
+          title: "Retirei no mesmo dia",
+          comment: "Fiz o pedido pelo site e retirei no mesmo dia na loja. O atendimento pelo WhatsApp foi rápido.",
           approved: true,
         },
         {
           productId: created.id,
           rating: 4,
-          title: "Bom custo-benefício",
-          comment: "Gostei da qualidade e voltaria a comprar. A retirada na loja ajudou bastante.",
+          title: "Dúvida resolvida pelo WhatsApp",
+          comment: "Tirei uma dúvida antes da compra pelo WhatsApp e consegui escolher com tranquilidade.",
           approved: true,
         },
       ],
     });
   }
 
-  console.log("Seed concluido: admin, gerente, caixa, cliente, categorias, fretes, cupons, banners e 25 produtos criados.");
-  console.log("Admin: admin@xnutri.com.br / Admin@12345");
-  console.log("Gerente: gerente@xnutri.com.br / Gerente@12345");
-  console.log(`Caixa: ${cashier.email} / Caixa@12345`);
-  console.log("Cliente: cliente@xnutri.com.br / Cliente@12345");
+  console.log(`Seed concluído com catálogo, fretes, cupons, banners e administrador ${requiredAdminEmail}.`);
+  if (isTestDatabase) {
+    console.log("Contas de teste locais criadas. Consulte a documentação de testes; nenhuma senha foi impressa no terminal.");
+  }
 }
 
 main()

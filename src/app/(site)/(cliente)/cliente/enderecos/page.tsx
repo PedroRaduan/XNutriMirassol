@@ -19,7 +19,7 @@ export default async function AddressesPage() {
 
   return (
     <div>
-      <h1 className="text-4xl font-black">Endereços</h1>
+      <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Endereços</h1>
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_420px]">
         <section className="grid gap-4">
           {addresses.map((address) => (
@@ -44,7 +44,7 @@ export default async function AddressesPage() {
         </section>
 
         <form action={createAddress} className="surface grid gap-3 self-start p-5">
-          <h2 className="text-xl font-black">Novo endereço</h2>
+          <h2 className="text-xl font-bold">Novo endereço</h2>
           <input className="field" name="label" placeholder="Apelido" required />
           <input className="field" name="recipient" placeholder="Destinatário" required />
           <input className="field" name="zipCode" placeholder="CEP" required />

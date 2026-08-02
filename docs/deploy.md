@@ -1,3 +1,5 @@
+# OBSOLETO — use [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md).
+
 # Guia de Deploy
 
 > O guia completo, atualizado e com comandos prontos está em [PRODUCAO.md](./PRODUCAO.md).

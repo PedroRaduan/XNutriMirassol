@@ -4,12 +4,13 @@ const isProduction = process.env.NODE_ENV === "production";
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"}`,
+  "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://images.unsplash.com https://res.cloudinary.com",
   "font-src 'self' data:",
-  `connect-src 'self' https://api.mercadopago.com${isProduction ? "" : " ws://localhost:* ws://127.0.0.1:*"}`,
-  "frame-src 'self' https://www.mercadopago.com.br https://*.mercadopago.com",
-  "form-action 'self' https://www.mercadopago.com.br https://*.mercadopago.com",
+  `connect-src 'self'${isProduction ? "" : " ws://localhost:* ws://127.0.0.1:*"}`,
+  "frame-src 'self' https://*.pagseguro.com https://*.pagseguro.uol.com.br",
+  "form-action 'self' https://*.pagseguro.com https://*.pagseguro.uol.com.br",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
@@ -53,6 +54,15 @@ const nextConfig: NextConfig = {
             : []),
         ],
       },
+      ...["/admin/:path*", "/cliente/:path*", "/pdv/:path*", "/pedido/:path*", "/checkout/:path*", "/carrinho/:path*"].map((source) => ({
+        source,
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "private, no-store, max-age=0, must-revalidate",
+          },
+        ],
+      })),
     ];
   },
 };

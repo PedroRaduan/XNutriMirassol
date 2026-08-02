@@ -16,6 +16,10 @@ test.describe("loja pública", () => {
     await page.goto("/catalogo?q=Creatina");
     await expect(page.getByRole("heading", { name: "Catálogo" })).toBeVisible();
     await expect(page.getByRole("link", { name: /Creatina Monohidratada XNutri 300g/i }).first()).toBeVisible();
+    const productCard = page.locator("article.product-card").filter({ hasText: "Creatina Monohidratada XNutri 300g" }).first();
+    await expect(productCard.getByRole("button", { name: "Adicionar ao carrinho" })).toBeVisible();
+    await expect(productCard.getByRole("button", { name: "Comprar agora" })).toBeVisible();
+    await expect(productCard.getByRole("link", { name: /Ver detalhes/i })).toHaveCount(0);
 
     await page.goto("/produto/whey-protein-isolado-xnutri-900g");
     await expect(page.getByRole("heading", { name: "Whey Protein Isolado XNutri 900g" })).toBeVisible();
@@ -73,16 +77,16 @@ test.describe("loja pública", () => {
 
     await addMainProductToCart(page);
     await page.goto("/carrinho");
-    await expect(page.getByRole("heading", { name: "Confira seu pedido" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Seu carrinho" })).toBeVisible();
 
     await page.getByRole("button", { name: "Aumentar" }).click();
-    await expect(page.getByRole("link", { name: "Carrinho" }).locator("span")).toHaveText("2");
+    await expect(page.getByTestId("cart-count")).toHaveText("2");
     await page.getByRole("button", { name: "Aumentar" }).click();
     await page.getByRole("button", { name: "Aumentar" }).click();
     await expect(page.getByTestId("cart-item-quantity")).toHaveText("4");
-    await expect(page.getByRole("link", { name: "Carrinho" }).locator("span")).toHaveText("4");
+    await expect(page.getByTestId("cart-count")).toHaveText("4");
     await page.reload();
-    await expect(page.getByRole("link", { name: "Carrinho" }).locator("span")).toHaveText("4");
+    await expect(page.getByTestId("cart-count")).toHaveText("4");
 
     const couponInput = page.getByPlaceholder("BEMVINDO10");
     await couponInput.fill("NAOEXISTE");
@@ -142,12 +146,21 @@ test.describe("loja pública", () => {
     await expect(page).toHaveURL(/\/pedido\/XN/, { timeout: 20_000 });
     await expect(page.getByRole("heading", { name: /Pedido XN/ })).toBeVisible();
 
-    const orderNumber = page.url().split("/").pop();
+    const orderNumber = new URL(page.url()).pathname.split("/").pop();
     const orders = await queryTestDatabase<{ count: string; orderNumber: string }>(
       'SELECT COUNT(*)::text AS count, MAX("orderNumber") AS "orderNumber" FROM "orders" WHERE "customerEmail" = $1',
       [customerEmail],
     );
     expect(orders.rows[0]).toEqual({ count: "1", orderNumber });
+
+    const reservations = await queryTestDatabase<{ count: string }>(
+      `SELECT COUNT(*)::text AS count
+       FROM "inventory_movements" movement
+       INNER JOIN "orders" orders ON orders.id = movement."orderId"
+       WHERE orders."customerEmail" = $1 AND movement.type = 'RESERVATION'`,
+      [customerEmail],
+    );
+    expect(reservations.rows[0].count).toBe("1");
   });
 
   test("produto sem estoque não pode ser adicionado", async ({ page }) => {

@@ -55,7 +55,7 @@ type CartItem = ProductRow & {
   discount: number;
 };
 
-type PaymentMethod = "CASH" | "PIX" | "DEBIT_CARD" | "CREDIT_CARD" | "MERCADO_PAGO";
+type PaymentMethod = "CASH" | "PIX" | "DEBIT_CARD" | "CREDIT_CARD" | "PAGBANK";
 
 type PaymentLine = {
   id: string;
@@ -69,7 +69,7 @@ const methodLabels: Record<PaymentMethod, string> = {
   PIX: "Pix",
   DEBIT_CARD: "Débito",
   CREDIT_CARD: "Crédito",
-  MERCADO_PAGO: "Mercado Pago",
+  PAGBANK: "PagBank",
 };
 
 const paymentMethodList = Object.keys(methodLabels) as PaymentMethod[];
@@ -79,7 +79,7 @@ const methodIcons: Record<PaymentMethod, typeof Banknote> = {
   PIX: QrCode,
   DEBIT_CARD: CreditCard,
   CREDIT_CARD: CreditCard,
-  MERCADO_PAGO: WalletCards,
+  PAGBANK: WalletCards,
 };
 
 const demoProducts: ProductRow[] = [

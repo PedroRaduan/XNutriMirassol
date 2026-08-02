@@ -72,9 +72,9 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
 
   return (
     <div className="space-y-3 pb-24 md:pb-0">
-      <div ref={purchaseRef} data-testid="product-purchase" className="surface space-y-4 p-4 md:space-y-5 md:p-5">
+      <div ref={purchaseRef} data-testid="product-purchase" className="space-y-4 rounded-lg border border-[var(--line)] bg-white p-4 md:space-y-5 md:p-5">
         <div>
-          <label className="text-sm font-black" htmlFor="product-variant">Opção</label>
+          <label className="text-sm font-semibold" htmlFor="product-variant">Opção</label>
           <select
             id="product-variant"
             className="field mt-2"
@@ -93,7 +93,7 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <label className="text-sm font-black">
+          <label className="text-sm font-semibold">
             Quantidade
             <span className="mt-2 grid min-h-12 grid-cols-[48px_1fr_48px] overflow-hidden rounded-lg border border-[var(--line)] bg-white">
               <button
@@ -107,7 +107,7 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
               </button>
               <input
                 aria-label="Quantidade do produto"
-                className="w-full border-0 bg-white text-center text-base font-black outline-none"
+                className="w-full border-0 bg-white text-center text-base font-bold outline-none"
                 type="number"
                 min={1}
                 max={maxQuantity}
@@ -127,7 +127,7 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
             </span>
           </label>
           <div className="rounded-md border border-[var(--line)] bg-[#f9faf7] p-3">
-            <span className="block text-xs font-bold text-[var(--muted)]">Disponível</span>
+            <span className="block text-xs font-semibold text-[var(--muted)]">Disponível</span>
             <strong className={available === 0 ? "text-red-700" : undefined}>
               {available === 0 ? "Sem estoque" : `${available} unidades`}
             </strong>
@@ -137,7 +137,7 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
 
         <div className="grid gap-3 sm:flex sm:items-end sm:justify-between sm:gap-4">
           <div>
-            <span className="text-xs font-bold uppercase text-[var(--muted)]">Preço</span>
+            <span className="text-xs font-semibold uppercase text-[var(--muted)]">Preço</span>
             <strong className="block text-3xl">{formatCurrency(unitPrice)}</strong>
             <span className="mt-1 block text-xs font-semibold text-[var(--muted)]">Total do item: {formatCurrency(itemTotal)}</span>
           </div>

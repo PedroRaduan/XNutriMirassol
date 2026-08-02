@@ -1,3 +1,5 @@
+# OBSOLETO — consulte [o guia único](../GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL.md).
+
 # Produção da XNutri: banco online, Vercel e integrações
 
 Para publicar pela **Aplicação Web Node.js gerenciada da Hostinger**, use o passo a passo específico em [HOSTINGER.md](HOSTINGER.md).

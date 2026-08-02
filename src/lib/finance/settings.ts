@@ -8,13 +8,13 @@ export async function getFinancialSettings(): Promise<FinancialSettingsValues> {
     if (!settings) return defaultFinancialSettings;
 
     return {
-      mercadoPagoRate: toNumber(settings.mercadoPagoRate),
+      pagBankRate: toNumber(settings.pagBankRate),
       fixedTransactionFee: toNumber(settings.fixedTransactionFee),
       posCashRate: toNumber(settings.posCashRate),
       posPixRate: toNumber(settings.posPixRate),
       posDebitRate: toNumber(settings.posDebitRate),
       posCreditRate: toNumber(settings.posCreditRate),
-      posMercadoPagoRate: toNumber(settings.posMercadoPagoRate),
+      posPagBankRate: toNumber(settings.posPagBankRate),
       allowNegativeStock: settings.allowNegativeStock,
       estimatedTaxRate: toNumber(settings.estimatedTaxRate),
       defaultPackagingCost: toNumber(settings.defaultPackagingCost),

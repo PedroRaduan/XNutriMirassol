@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MessageCircle, ShieldCheck, Store, Truck } from "lucide-react";
 import { ProductGallery } from "@/components/product/product-gallery";
 import { ProductPurchase } from "@/components/product/product-purchase";
 import { ProductCard } from "@/components/product/product-card";
@@ -9,6 +8,7 @@ import { prisma } from "@/lib/db/prisma";
 import { demoFallbackOrThrow } from "@/lib/db/errors";
 import { hasProductAvailableStock } from "@/lib/ecommerce/product-stock";
 import { fallbackProducts, getStorefrontCategory } from "@/lib/fallback/catalog";
+import { serializeJsonLd } from "@/lib/security/json-ld";
 import { formatCurrency, getBaseUrl, toNumber } from "@/lib/utils";
 import { getWhatsAppHref } from "@/lib/whatsapp";
 
@@ -116,19 +116,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="container-x py-6 md:py-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       <nav className="text-sm font-semibold text-[var(--muted)]">
         <Link href="/catalogo" className="hover:text-[var(--brand)]">Catálogo</Link> /{" "}
         <Link href={`/catalogo?category=${storefrontCategory.slug}`} className="hover:text-[var(--brand)]">{storefrontCategory.name}</Link>
       </nav>
 
-      <section className="mt-4 grid gap-6 md:mt-6 lg:grid-cols-[1fr_480px] lg:gap-10">
+      <section className="mt-4 grid gap-6 md:mt-6 lg:grid-cols-[1fr_460px] lg:gap-10">
         <ProductGallery images={product.images} />
         <div className="space-y-6">
           <div>
             <span className="badge">{storefrontCategory.name}</span>
-            <h1 className="mt-4 text-3xl font-black leading-tight md:text-4xl">{product.name}</h1>
-            <p className="mt-3 text-base leading-7 text-[var(--muted)] md:mt-4 md:text-lg md:leading-8">{product.shortDescription}</p>
+            <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight md:text-4xl">{product.name}</h1>
+            <p className="mt-3 text-base leading-7 text-[var(--muted)] md:mt-4 md:text-lg">{product.shortDescription}</p>
             <div className="mt-5 flex flex-wrap items-end gap-3">
               {product.compareAtPrice && <span className="text-lg text-[var(--muted)] line-through">{formatCurrency(product.compareAtPrice)}</span>}
               <strong className="text-3xl md:text-4xl">{formatCurrency(product.price)}</strong>
@@ -140,48 +140,46 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <a href={whatsappHref} target="_blank" rel="noreferrer" className="btn btn-secondary w-full">
-              <MessageCircle size={18} />
               Tirar dúvida no WhatsApp
             </a>
             <Link href="/retirada-na-loja" className="btn btn-secondary w-full">
-              <Store size={18} />
               Retirada em Mirassol
             </Link>
           </div>
 
-          <div className="surface grid gap-3 p-4 text-sm font-semibold text-[var(--muted)] sm:grid-cols-3">
-            <span className="inline-flex items-center gap-2"><Store size={17} className="text-[var(--brand)]" /> Retirada disponível</span>
-            <span className="inline-flex items-center gap-2"><Truck size={17} className="text-[var(--brand)]" /> Entrega regional</span>
-            <span className="inline-flex items-center gap-2"><ShieldCheck size={17} className="text-[var(--brand)]" /> Compra protegida</span>
+          <div className="grid gap-2 border-y border-[var(--line)] py-4 text-sm font-semibold text-[var(--muted)] sm:grid-cols-3">
+            <span>Retirada disponível</span>
+            <span>Entrega regional</span>
+            <span>Compra protegida</span>
           </div>
 
-          <div className="surface p-5">
-            <h2 className="text-xl font-black">Descrição</h2>
+          <div className="rounded-lg border border-[var(--line)] bg-white p-5">
+            <h2 className="text-xl font-bold">Descrição</h2>
             <p className="mt-3 leading-7 text-[var(--muted)]">{product.description}</p>
             <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-              <div><dt className="font-black">SKU</dt><dd className="text-[var(--muted)]">{product.sku}</dd></div>
-              <div><dt className="font-black">Peso</dt><dd className="text-[var(--muted)]">{product.weightGrams}g</dd></div>
-              <div><dt className="font-black">Dimensões</dt><dd className="text-[var(--muted)]">{product.widthCm} x {product.heightCm} x {product.lengthCm} cm</dd></div>
-              <div><dt className="font-black">Marca</dt><dd className="text-[var(--muted)]">{product.brand}</dd></div>
+              <div><dt className="font-semibold">SKU</dt><dd className="text-[var(--muted)]">{product.sku}</dd></div>
+              <div><dt className="font-semibold">Peso</dt><dd className="text-[var(--muted)]">{product.weightGrams}g</dd></div>
+              <div><dt className="font-semibold">Dimensões</dt><dd className="text-[var(--muted)]">{product.widthCm} x {product.heightCm} x {product.lengthCm} cm</dd></div>
+              <div><dt className="font-semibold">Marca</dt><dd className="text-[var(--muted)]">{product.brand}</dd></div>
             </dl>
           </div>
         </div>
       </section>
 
       <section className="mt-10 md:mt-14">
-        <h2 className="text-2xl font-black md:text-3xl">Avaliações</h2>
+        <h2 className="text-2xl font-bold md:text-3xl">Avaliações</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           {product.reviews.map((review) => (
-            <article key={review.id} className="surface p-5">
+            <article key={review.id} className="rounded-lg border border-[var(--line)] bg-white p-5">
               <div className="text-lg tracking-wider text-[var(--brand)]" aria-label={`${review.rating} de 5 estrelas`}>
                 {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
               </div>
-              <h3 className="mt-3 font-black">{review.title}</h3>
+              <h3 className="mt-3 font-bold">{review.title}</h3>
               <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{review.comment}</p>
             </article>
           ))}
           {product.reviews.length === 0 && (
-            <div className="surface p-5 text-sm leading-6 text-[var(--muted)] md:col-span-3">
+            <div className="rounded-lg border border-[var(--line)] bg-white p-5 text-sm leading-6 text-[var(--muted)] md:col-span-3">
               Este produto ainda não tem avaliações publicadas. Se quiser, fale com a equipe da XNutri pelo WhatsApp para tirar dúvidas antes de comprar.
             </div>
           )}
@@ -190,7 +188,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
       {related.length > 0 && (
         <section className="mt-10 md:mt-14">
-          <h2 className="text-2xl font-black md:text-3xl">Produtos relacionados</h2>
+          <h2 className="text-2xl font-bold md:text-3xl">Produtos relacionados</h2>
           <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
             {related.map((item) => <ProductCard key={item.id} product={item} />)}
           </div>

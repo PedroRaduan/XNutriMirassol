@@ -19,6 +19,13 @@ export type ActionState = {
   message: string;
 };
 
+function getSafeCustomerRedirect(formData: FormData) {
+  const target = String(formData.get("callbackUrl") ?? "/cliente");
+  const isInternalPath = target.startsWith("/") && !target.startsWith("//");
+  const isRestrictedArea = target.startsWith("/admin") || target.startsWith("/pdv");
+  return isInternalPath && !isRestrictedArea && target !== "/login" ? target : "/cliente";
+}
+
 export async function loginWithCredentials(_: ActionState, formData: FormData): Promise<ActionState> {
   await assertSameOrigin();
   const ip = await getClientIp();
@@ -32,7 +39,7 @@ export async function loginWithCredentials(_: ActionState, formData: FormData): 
     await signIn("credentials", {
       email: String(formData.get("email") ?? ""),
       password: String(formData.get("password") ?? ""),
-      redirectTo: "/cliente",
+      redirectTo: getSafeCustomerRedirect(formData),
     });
   } catch (error) {
     if (error instanceof AuthError) {
@@ -43,6 +50,20 @@ export async function loginWithCredentials(_: ActionState, formData: FormData): 
   }
 
   return { ok: true, message: "Login efetuado." };
+}
+
+export async function loginWithGoogle(formData: FormData) {
+  await assertSameOrigin();
+  const googleConfigured = Boolean(
+    (process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID) &&
+      (process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET),
+  );
+
+  if (!googleConfigured) {
+    redirect("/login?error=GoogleNotConfigured");
+  }
+
+  await signIn("google", { redirectTo: getSafeCustomerRedirect(formData) });
 }
 
 export async function loginAdminWithCredentials(_: ActionState, formData: FormData): Promise<ActionState> {

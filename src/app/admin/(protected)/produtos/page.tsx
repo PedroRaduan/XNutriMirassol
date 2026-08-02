@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Pencil, Plus, Search } from "lucide-react";
 import { AdminActionForm } from "@/components/admin/admin-action-form";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { AdminSubmitButton, ConfirmSubmitButton } from "@/components/admin/admin-submit";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
@@ -150,10 +151,16 @@ function ProductForm({
         </div>
       </AdminFormSection>
 
-      <AdminFormSection title="Imagens e destaques" description="Use uma URL de imagem por linha e escolha onde o produto será destacado.">
-        <label className="text-sm font-black">Imagens
-          <textarea className="field mt-2 min-h-24" name="imageUrls" defaultValue={imageUrls} placeholder="Uma URL por linha" required />
-        </label>
+      <AdminFormSection title="Imagens e destaques" description="Envie imagens do computador ou informe uma URL por linha. Máximo de 10 imagens, com até 4 MB cada.">
+        <ImageUploadField
+          name="imageUrls"
+          label="Imagens"
+          defaultValue={imageUrls}
+          placeholder="Uma URL por linha"
+          required
+          multiple
+          multiline
+        />
         <div className="grid gap-2 rounded-lg bg-[#f7f8fa] p-3 sm:grid-cols-3">
           <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="featured" type="checkbox" defaultChecked={product?.featured} /> Destaque</label>
           <label className="flex items-center gap-2 text-sm font-bold"><input className="accent-[var(--brand)]" name="bestSeller" type="checkbox" defaultChecked={product?.bestSeller} /> Mais vendido</label>

@@ -1,3 +1,5 @@
+# OBSOLETO — a aplicação é hospedada somente na Vercel. Consulte [o guia único](../GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL.md).
+
 # Deploy da XNutri na Hostinger
 
 Este guia prepara a XNutri para **Aplicação Web Node.js gerenciada** da Hostinger. A aplicação roda como servidor Next.js; o PostgreSQL continua em um provedor externo, como o Neon. O `docker-compose.yml` permanece apenas para desenvolvimento local.

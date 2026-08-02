@@ -21,9 +21,9 @@ export function CouponForm({ coupon }: { coupon: { code: string } | null }) {
   if (coupon) {
     return (
       <div className="mt-4">
-        <form action={clearCoupon} className="flex items-center justify-between rounded-md bg-[#fff1ef] p-3">
-          <span className="font-black">{coupon.code}</span>
-          <button className="text-sm font-black text-red-700">Remover</button>
+        <form action={clearCoupon} className="flex items-center justify-between rounded-md bg-[#fff7f6] p-3">
+          <span className="font-bold">{coupon.code}</span>
+          <button className="text-sm font-semibold text-red-700">Remover</button>
         </form>
         <p className="mt-2 text-xs font-semibold text-emerald-700">Cupom aplicado ao resumo do pedido.</p>
       </div>

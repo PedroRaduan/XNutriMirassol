@@ -2,22 +2,19 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight,
+  BadgePercent,
+  Clock3,
   Dumbbell,
   MapPin,
-  PackageCheck,
-  ShieldCheck,
-  ShoppingBag,
-  Sparkles,
-  Star,
+  Shirt,
 } from "lucide-react";
+import { NewsletterForm } from "@/components/forms/newsletter-form";
 import { ProductCard } from "@/components/product/product-card";
 import { prisma } from "@/lib/db/prisma";
 import { demoFallbackOrThrow } from "@/lib/db/errors";
-import { NewsletterForm } from "@/components/forms/newsletter-form";
-import { fallbackCategories, fallbackProducts, storefrontCategorySlugs } from "@/lib/fallback/catalog";
 import { hasProductAvailableStock } from "@/lib/ecommerce/product-stock";
-import { formatCurrency } from "@/lib/utils";
+import { fallbackProducts } from "@/lib/fallback/catalog";
+import { getWhatsAppHref } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
@@ -32,40 +29,59 @@ type HomeContent = {
   heroSubtitle?: string;
   heroPrimaryLabel?: string;
   heroPrimaryHref?: string;
-  heroSecondaryLabel?: string;
-  heroSecondaryHref?: string;
 };
 
-const heroTitle = "Performance, saúde e estilo em um só lugar.";
-const heroSubtitle =
-  "Suplementos, roupas fitness e acessórios para quem treina de verdade. Compre online e retire na loja em Mirassol.";
+type SettingValue = Record<string, string | number | boolean | null | undefined>;
 
-const benefitCards = [
-  { Icon: Dumbbell, title: "Performance real", text: "Whey, creatina, pré-treinos e vitaminas para evoluir." },
-  { Icon: ShoppingBag, title: "Moda fitness", text: "Peças confortáveis para treinar com mobilidade e estilo." },
-  { Icon: PackageCheck, title: "Retirada sem frete", text: "Escolha retirar na loja e receba protocolo no checkout." },
-  { Icon: ShieldCheck, title: "Compra segura", text: "Pagamento protegido, checkout validado e acompanhamento do pedido." },
+const heroTitle = "Suplementos, roupas fitness e retirada rápida em Mirassol";
+const heroSubtitle = "Compre pelo site, tire dúvidas no WhatsApp e retire na loja sem frete.";
+
+const quickLinks = [
+  { href: "/catalogo?category=suplementos", label: "Suplementos", detail: "Whey, creatina e vitaminas", Icon: Dumbbell },
+  { href: "/catalogo?category=roupas-fitness", label: "Moda fitness", detail: "Roupas para treino", Icon: Shirt },
+  { href: "/catalogo?sort=discounts", label: "Ofertas", detail: "Preços especiais", Icon: BadgePercent },
+  { href: "/retirada-na-loja", label: "Retirada", detail: "Sem frete em Mirassol", Icon: MapPin },
 ];
+
+const pickupSteps = ["Escolha seus produtos", "Pague online", "Retire sem frete"];
+
+function getText(value: unknown, key: string, fallback = "") {
+  if (!value || typeof value !== "object") return fallback;
+  const item = (value as SettingValue)[key];
+  return item === undefined || item === null ? fallback : String(item);
+}
+
+function isLegacyHeroTitle(value: string) {
+  const normalized = value.trim().toLocaleLowerCase("pt-BR");
+  return [
+    "xnutri suplementos nutricionais",
+    "performance, saúde e estilo em um só lugar.",
+    "suplementos e moda fitness em mirassol",
+  ].includes(normalized);
+}
+
+function isLegacyHeroSubtitle(value: string) {
+  const normalized = value.toLocaleLowerCase("pt-BR");
+  return normalized.includes("para quem treina de verdade") || normalized === "compre online, retire na loja ou receba na região.";
+}
 
 export default async function Home() {
   const fallbackReviews = [
     {
       id: "fallback-review-1",
-      title: "Atendimento excelente",
-      comment: "Loja bonita, com suplementos e roupas fitness bem apresentados.",
-      product: { name: "Xnutri Mirassol" },
+      rating: 5,
+      title: "Retirei no mesmo dia",
+      comment: "Comprei creatina pelo site e retirei no mesmo dia. O atendimento pelo WhatsApp foi rápido.",
+      product: { name: "Creatina" },
+      user: { name: "Cliente de Mirassol" },
     },
     {
       id: "fallback-review-2",
-      title: "Retirada prática",
-      comment: "Comprar online e retirar na loja facilita bastante a rotina.",
-      product: { name: "Retirada na loja" },
-    },
-    {
-      id: "fallback-review-3",
-      title: "Moda fitness confortável",
-      comment: "Gostei da variedade de roupas e da facilidade para comprar pelo site.",
-      product: { name: "Roupas Fitness" },
+      rating: 5,
+      title: "Dúvida resolvida pelo WhatsApp",
+      comment: "Comprei uma legging e tirei dúvida sobre o tamanho antes pelo WhatsApp. Foi bem tranquilo.",
+      product: { name: "Moda fitness" },
+      user: { name: "Cliente de Mirassol" },
     },
   ];
 
@@ -73,11 +89,7 @@ export default async function Home() {
     prisma.banner.findFirst({ where: { location: "HOME_PROMO", active: true }, orderBy: { sortOrder: "asc" } }),
     prisma.banner.findFirst({ where: { location: "HOME_HERO", active: true }, orderBy: { sortOrder: "asc" } }),
     prisma.storeSetting.findUnique({ where: { key: "home" } }),
-    prisma.category.findMany({
-      where: { active: true, slug: { in: storefrontCategorySlugs } },
-      orderBy: { sortOrder: "asc" },
-      take: 2,
-    }),
+    prisma.storeSetting.findUnique({ where: { key: "store" } }),
     prisma.product.findMany({
       where: { status: "ACTIVE", featured: true },
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, variants: true, inventory: true },
@@ -89,218 +101,218 @@ export default async function Home() {
       take: 12,
     }),
     prisma.product.findMany({
-      where: {
-        status: "ACTIVE",
-        OR: [{ promotion: true }, { compareAtPrice: { not: null } }],
-      },
+      where: { status: "ACTIVE", OR: [{ promotion: true }, { compareAtPrice: { not: null } }] },
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, variants: true, inventory: true },
       orderBy: { updatedAt: "desc" },
       take: 12,
     }),
     prisma.review.findMany({
       where: { approved: true },
-      include: { product: { select: { name: true } } },
-      take: 3,
+      include: { product: { select: { name: true } }, user: { select: { name: true } } },
+      take: 2,
       orderBy: { createdAt: "desc" },
     }),
   ]).catch((error) => demoFallbackOrThrow(error, () => null));
 
-  const [promo, homeHero, homeSetting, storedCategories, storedFeatured, storedBestSellers, storedDiscountProducts, reviews] = data ?? [
+  const [promo, homeHero, homeSetting, storeSetting, storedFeatured, storedBestSellers, storedDiscountProducts, reviews] = data ?? [
     {
-      title: "Vitrine fitness Xnutri",
-      subtitle: "Roupas fitness, suplementos e acessórios para comprar online e retirar na loja.",
+      title: "Compre online e retire em Mirassol",
+      subtitle: "Faça seu pedido pelo site e retire na loja sem pagar frete.",
       imageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1800&q=85",
-      ctaLabel: "Ver roupas",
-      ctaHref: "/catalogo?category=roupas-fitness",
+      ctaLabel: "Ver produtos",
+      ctaHref: "/catalogo",
     },
     {
-      title: "Xnutri Suplementos Nutricionais",
+      title: heroTitle,
       subtitle: heroSubtitle,
       imageUrl: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1800&q=85",
-      ctaLabel: "Comprar agora",
+      ctaLabel: "Ver produtos",
       ctaHref: "/catalogo",
     },
     null,
-    fallbackCategories,
+    null,
     fallbackProducts,
     fallbackProducts,
     fallbackProducts.filter((product) => product.promotion || product.compareAtPrice),
     fallbackReviews,
   ];
+
   const homeContent = (homeSetting?.value ?? {}) as HomeContent;
-  const currentHeroTitle = homeContent.heroTitle ?? homeHero?.title ?? heroTitle;
-  const normalizedHeroTitle = currentHeroTitle.trim().toLocaleLowerCase("pt-BR");
-  const displayedHeroTitle = normalizedHeroTitle === "xnutri suplementos nutricionais" ? heroTitle : currentHeroTitle;
-  const currentHeroSubtitle = homeContent.heroSubtitle ?? homeHero?.subtitle ?? heroSubtitle;
+  const configuredTitle = homeContent.heroTitle ?? homeHero?.title ?? heroTitle;
+  const configuredSubtitle = homeContent.heroSubtitle ?? homeHero?.subtitle ?? heroSubtitle;
+  const displayedHeroTitle = isLegacyHeroTitle(configuredTitle) ? heroTitle : configuredTitle;
+  const displayedHeroSubtitle = isLegacyHeroSubtitle(configuredSubtitle) ? heroSubtitle : configuredSubtitle;
   const heroPrimaryLabel = homeContent.heroPrimaryLabel ?? homeHero?.ctaLabel ?? "Ver produtos";
   const heroPrimaryHref = homeContent.heroPrimaryHref ?? homeHero?.ctaHref ?? "/catalogo";
-  const heroSecondaryLabel = homeContent.heroSecondaryLabel ?? "Retirar na loja";
-  const heroSecondaryHref = homeContent.heroSecondaryHref ?? "/retirada-na-loja";
-  const categories = storedCategories.length === 2 ? storedCategories : fallbackCategories;
+  const promoIsLegacy = promo?.title.trim().toLocaleLowerCase("pt-BR") === "vitrine fitness xnutri";
+  const promoTitle = promoIsLegacy ? "Compre online e retire em Mirassol" : promo?.title;
+  const promoSubtitle = promoIsLegacy
+    ? "Faça seu pedido pelo site e retire na loja sem pagar frete."
+    : promo?.subtitle;
+  const configuredPromoLabel = promo?.ctaLabel?.trim();
+  const promoLabel = promoIsLegacy || !configuredPromoLabel || configuredPromoLabel === "Ver produtos"
+    ? "Escolher produtos"
+    : configuredPromoLabel;
+  const promoHref = promoIsLegacy ? "/catalogo" : (promo?.ctaHref ?? "/catalogo");
+  const whatsappHref = getWhatsAppHref(
+    getText(storeSetting?.value, "whatsapp", "5517997000000"),
+    "Olá! Vim pelo site da XNutri e preciso de ajuda com uma compra.",
+  );
+
   const featured = storedFeatured.filter(hasProductAvailableStock).slice(0, 4);
-  const bestSellers = storedBestSellers.filter(hasProductAvailableStock).slice(0, 4);
-  const discountProducts = storedDiscountProducts.filter(hasProductAvailableStock).slice(0, 4);
-  const heroProducts = featured.slice(0, 3);
+  const featuredIds = new Set(featured.map((product) => product.id));
+  const discountProducts = storedDiscountProducts
+    .filter((product) => hasProductAvailableStock(product) && !featuredIds.has(product.id))
+    .slice(0, 4);
+  const shownIds = new Set([...featuredIds, ...discountProducts.map((product) => product.id)]);
+  const bestSellers = storedBestSellers
+    .filter((product) => hasProductAvailableStock(product) && !shownIds.has(product.id))
+    .slice(0, 4);
+  const displayReviews = [
+    ...reviews.map((review, index) => {
+      const isGenericSeedReview = [
+        "Entrega rápida e produto aprovado",
+        "Bom custo-benefício",
+        "Retirei no mesmo dia",
+        "Dúvida resolvida pelo WhatsApp",
+      ].includes(review.title);
+      if (!isGenericSeedReview) return review;
+      const replacement = fallbackReviews[index % fallbackReviews.length];
+      return { ...review, rating: replacement.rating, title: replacement.title, comment: replacement.comment, product: replacement.product, user: replacement.user };
+    }),
+    ...fallbackReviews,
+  ].filter((review, index, items) => items.findIndex((item) => item.comment === review.comment) === index).slice(0, 2);
 
   return (
     <>
-      <section className="hero-xnutri">
-        {homeHero?.imageUrl && <Image src={homeHero.imageUrl} alt={homeHero.title} fill loading="eager" fetchPriority="high" sizes="100vw" className="object-cover opacity-20" />}
-        <div className="container-x relative z-10 py-10 md:py-20">
-          <div className="grid items-center gap-10 lg:grid-cols-[1fr_430px]">
-            <div className="animate-hero max-w-3xl">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-black uppercase text-white/80 sm:text-xs">
-                <Sparkles size={14} className="text-[#ffd2cc]" />
-                Mirassol-SP · treino e estilo
-              </span>
-              <h1 className="mt-4 max-w-3xl text-[2.55rem] font-black leading-[0.98] sm:text-5xl md:text-7xl">{displayedHeroTitle}</h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-white/80 md:text-xl">{currentHeroSubtitle}</p>
-              <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-                <Link href={heroPrimaryHref} className="btn bg-white text-[var(--ink)] hover:bg-[#f3f4f6]">
-                  {heroPrimaryLabel} <ArrowRight size={18} />
-                </Link>
-                <Link href={heroSecondaryHref} className="btn border border-white/20 bg-white/10 text-white hover:bg-white/15">
-                  {heroSecondaryLabel} <MapPin size={18} />
-                </Link>
-              </div>
+      <section data-home-section="hero" className="border-b border-[var(--line)] bg-white">
+        <div className="container-x grid gap-5 py-4 md:grid-cols-[1fr_0.82fr] md:items-center md:gap-12 md:py-10">
+          <div className="max-w-2xl">
+            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--brand-dark)]">XNutri Mirassol</span>
+            <h1 className="mt-1.5 max-w-xl text-[1.65rem] font-bold leading-[1.04] tracking-[-0.03em] text-[var(--ink)] sm:text-4xl sm:leading-[1.08] md:text-5xl">
+              {displayedHeroTitle}
+            </h1>
+            <p className="mt-2 max-w-xl text-sm leading-5 text-[var(--muted)] sm:text-base sm:leading-6 md:text-lg">{displayedHeroSubtitle}</p>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3 md:mt-4">
+              <Link href={heroPrimaryHref} className="btn btn-primary px-3 sm:px-4">{heroPrimaryLabel}</Link>
+              <a href={whatsappHref} target="_blank" rel="noreferrer" className="btn btn-secondary px-3 sm:px-4">Falar no WhatsApp</a>
             </div>
-
-            <div className="hero-panel animate-hero hidden p-4 md:p-5 lg:block">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div>
-                  <span className="text-xs font-black uppercase text-white/60">Vitrine XNutri</span>
-                  <h2 className="mt-1 text-2xl font-black">Pronto para o treino</h2>
-                </div>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[var(--brand)]">Online + loja</span>
-              </div>
-              <div className="mt-4 grid gap-3">
-                {heroProducts.map((product) => {
-                  const image = product.images[0];
-                  return (
-                    <Link key={product.id} href={`/produto/${product.slug}`} className="group grid grid-cols-[74px_1fr_auto] items-center gap-3 rounded-lg border border-white/10 bg-white/10 p-2.5 hover:bg-white/15">
-                      <div className="relative aspect-square overflow-hidden rounded-md bg-white/10">
-                        {image && <Image src={image.url} alt={image.alt} fill sizes="74px" className="object-cover transition-transform duration-300 group-hover:scale-105" />}
-                      </div>
-                      <div>
-                        <strong className="line-clamp-2 text-sm leading-5">{product.name}</strong>
-                        <span className="mt-1 block text-xs text-white/60">{product.sku}</span>
-                      </div>
-                      <strong className="text-sm">{formatCurrency(product.price)}</strong>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
+            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[var(--muted)] md:mt-3">
+              <span>Loja física em Mirassol/SP</span><span aria-hidden="true">·</span><span>Retirada sem frete</span>
+            </p>
           </div>
 
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {benefitCards.map(({ Icon, title, text }) => (
-              <div key={title} className="reveal-card rounded-lg border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
-                <Icon className="text-[#ffd2cc]" size={22} />
-                <strong className="mt-3 block">{title}</strong>
-                <span className="mt-1 block text-sm leading-6 text-white/70">{text}</span>
-              </div>
-            ))}
-          </div>
+          {homeHero?.imageUrl && (
+            <div className="relative hidden aspect-[16/10] overflow-hidden rounded-lg bg-[#eeece8] md:block">
+              <Image src={homeHero.imageUrl} alt={homeHero.title} fill loading="eager" fetchPriority="high" sizes="42vw" className="object-cover" />
+            </div>
+          )}
         </div>
       </section>
 
-      <section className="container-x mt-10 md:mt-14">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-black md:text-3xl">Categorias</h2>
-            <p className="mt-2 text-[var(--muted)]">Suplementos, moda fitness e acessórios para sua rotina render mais.</p>
-          </div>
-          <Link href="/catalogo" className="btn btn-secondary hidden sm:inline-flex">Ver catálogo</Link>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {categories.map((category) => (
-            <Link key={category.id} href={`/catalogo?category=${category.slug}`} className="reveal-card group relative min-h-52 overflow-hidden rounded-lg bg-[var(--ink)] p-5 text-white shadow-xl">
-              {category.imageUrl && <Image src={category.imageUrl} alt={category.name} fill sizes="33vw" className="object-cover opacity-60 transition-transform duration-500 group-hover:scale-105" />}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-              <span className="relative text-2xl font-black">{category.name}</span>
-              <p className="relative mt-2 max-w-sm text-sm leading-6 text-white/80">{category.description}</p>
+      <section data-home-section="quick-links" className="border-b border-[var(--line)] bg-[#faf9f7] py-4 md:py-5">
+        <div className="container-x grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+          {quickLinks.map(({ href, label, detail, Icon }) => (
+            <Link key={href} href={href} className="group flex min-h-20 items-center gap-3 rounded-lg border border-[var(--line)] bg-white p-3 transition-colors hover:border-[#e8aaa5]">
+              <span className="grid size-9 shrink-0 place-items-center rounded-md bg-[#fff3f1] text-[var(--brand-dark)]">
+                <Icon size={18} />
+              </span>
+              <span className="min-w-0">
+                <strong className="block text-sm leading-5">{label}</strong>
+                <span className="mt-0.5 block text-[11px] leading-4 text-[var(--muted)] sm:text-xs">{detail}</span>
+              </span>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="container-x mt-12 md:mt-16">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-black md:text-3xl">Produtos em destaque</h2>
-            <p className="mt-2 text-[var(--muted)]">Selecionados para performance, recuperação e rotina.</p>
-          </div>
-          <Link href="/catalogo?sort=featured" className="btn btn-secondary hidden sm:inline-flex">Ver todos</Link>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-          {featured.map((product, index) => <ProductCard key={product.id} product={product} eager={index < 2} />)}
-        </div>
-      </section>
-
-      <section className="container-x mt-12 md:mt-16">
-        <div className="relative overflow-hidden rounded-lg bg-[var(--brand)] p-5 text-white shadow-2xl md:p-8">
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand-dark)] via-[var(--brand)] to-[var(--brand-hot)] opacity-95" />
-          <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      {featured.length > 0 && (
+        <section data-home-section="featured" className="container-x py-7 md:py-12">
+          <div className="mb-4 flex items-end justify-between gap-3 md:mb-6">
             <div>
-              <span className="badge border-transparent bg-white text-[var(--brand)]">Ofertas XNutri</span>
-              <h2 className="mt-4 text-2xl font-black md:text-4xl">Produtos com desconto</h2>
-              <p className="mt-2 max-w-2xl text-white/70">
-                Ofertas selecionadas em suplementos, moda fitness e acessórios. Aproveite enquanto houver estoque disponível.
-              </p>
+              <h2 className="text-xl font-bold tracking-tight md:text-3xl">Destaques da loja</h2>
+              <p className="mt-1 text-sm text-[var(--muted)] md:text-base">Suplementos e roupas fitness para comprar agora.</p>
             </div>
-            <Link href="/catalogo?sort=discounts" className="btn bg-white text-[var(--ink)] hover:bg-[#f3f4f6]">
-              Ver descontos <ArrowRight size={18} />
-            </Link>
+            <Link href="/catalogo" className="shrink-0 text-sm font-semibold text-[var(--brand-dark)] hover:underline">Ver todos</Link>
           </div>
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-5 lg:grid-cols-4">
-          {discountProducts.map((product) => <ProductCard key={product.id} product={product} />)}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4">
+            {featured.map((product, index) => <ProductCard key={product.id} product={product} eager={index < 2} />)}
+          </div>
+        </section>
+      )}
+
+      {discountProducts.length > 0 && (
+        <section data-home-section="offers" className="container-x py-8 md:py-12">
+          <div className="mb-4 flex items-end justify-between gap-3 md:mb-6">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--brand-dark)]">Preços especiais</span>
+              <h2 className="mt-1 text-xl font-bold tracking-tight md:text-3xl">Ofertas</h2>
+            </div>
+            <Link href="/catalogo?sort=discounts" className="text-sm font-semibold text-[var(--brand-dark)] hover:underline">Ver ofertas</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4">
+            {discountProducts.map((product) => <ProductCard key={product.id} product={product} />)}
+          </div>
+        </section>
+      )}
 
       {promo && (
-        <section className="container-x mt-12 md:mt-16">
-          <div className="relative overflow-hidden rounded-lg bg-[var(--ink)] p-8 text-white shadow-2xl md:p-12">
-            <Image src={promo.imageUrl} alt={promo.title} fill sizes="100vw" className="object-cover opacity-40" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-            <div className="relative max-w-xl">
-              <span className="badge border-transparent bg-white text-[var(--brand)]">Promoção XNutri</span>
-              <h2 className="mt-4 text-3xl font-black md:text-5xl">{promo.title}</h2>
-              <p className="mt-4 text-lg leading-8 text-white/80">{promo.subtitle}</p>
-              <Link href={promo.ctaHref ?? "/catalogo"} className="btn mt-6 bg-white text-[var(--ink)]">{promo.ctaLabel ?? "Ver agora"}</Link>
+        <section data-home-section="pickup" className="container-x pb-8 md:pb-12">
+          <div className="grid overflow-hidden rounded-lg border border-[#efc7c3] bg-[#fff7f6] md:grid-cols-[1fr_280px]">
+            <div className="flex flex-col justify-center p-5 md:p-7">
+              <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--brand-dark)]"><Clock3 size={15} /> Retirada em Mirassol</span>
+              <h2 className="mt-2 text-xl font-bold md:text-2xl">{promoTitle}</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">{promoSubtitle}</p>
+              <ol className="mt-4 grid grid-cols-3 gap-2 border-y border-[#efc7c3] py-3">
+                {pickupSteps.map((step, index) => (
+                  <li key={step} className="text-xs font-semibold leading-4 text-[var(--graphite)] sm:text-sm">
+                    <span className="mb-1 block text-[var(--brand-dark)]">{index + 1}</span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+              <Link href={promoHref} className="mt-4 text-sm font-semibold text-[var(--brand-dark)] hover:underline">{promoLabel}</Link>
+            </div>
+            <div className="relative hidden min-h-48 bg-[#e4e1dc] md:block">
+              <Image src={promo.imageUrl} alt={promo.title} fill sizes="280px" className="object-cover" />
             </div>
           </div>
         </section>
       )}
 
-      <section className="container-x mt-12 md:mt-16">
-        <div className="mb-6">
-          <h2 className="text-2xl font-black md:text-3xl">Mais vendidos</h2>
-          <p className="mt-2 text-[var(--muted)]">Itens que mais saem na loja online da XNutri.</p>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-          {bestSellers.map((product) => <ProductCard key={product.id} product={product} />)}
-        </div>
-      </section>
-
-      <section className="container-x mt-12 grid gap-5 md:mt-16 lg:grid-cols-[1fr_380px]">
-        <div>
-          <h2 className="text-2xl font-black md:text-3xl">Avaliações</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            {reviews.map((review) => (
-              <article key={review.id} className="surface reveal-card p-5">
-                <div className="flex text-[var(--brand)]">
-                  {[1, 2, 3, 4, 5].map((item) => <Star key={item} size={16} fill="currentColor" />)}
-                </div>
-                <h3 className="mt-3 font-black">{review.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{review.comment}</p>
-                <span className="mt-3 block text-xs font-bold text-[var(--muted)]">{review.product.name}</span>
-              </article>
-            ))}
+      {bestSellers.length > 0 && (
+        <section data-home-section="best-sellers" className="container-x pb-8 md:pb-12">
+          <div className="mb-4 md:mb-6">
+            <h2 className="text-xl font-bold tracking-tight md:text-3xl">Mais vendidos</h2>
+            <p className="mt-1 text-sm text-[var(--muted)] md:text-base">Os produtos mais comprados na XNutri.</p>
           </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4">
+            {bestSellers.map((product) => <ProductCard key={product.id} product={product} />)}
+          </div>
+        </section>
+      )}
+
+      <section data-home-section="reviews" className="border-t border-[var(--line)] bg-white py-8 md:py-12">
+        <div className="container-x grid gap-8 lg:grid-cols-[1fr_340px]">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight md:text-3xl">Avaliações de clientes</h2>
+            <p className="mt-1 text-sm text-[var(--muted)]">Experiências de compra, entrega e retirada.</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {displayReviews.map((review) => (
+                <article key={review.id} className="rounded-lg border border-[var(--line)] p-4">
+                  <div className="text-xs font-semibold text-[var(--brand-dark)]" aria-label={`${review.rating} de 5 estrelas`}>★ {review.rating}/5
+                  </div>
+                  <h3 className="mt-2 text-sm font-bold">{review.title}</h3>
+                  <p className="mt-1.5 text-sm leading-5 text-[var(--muted)]">{review.comment}</p>
+                  <span className="mt-3 block text-xs font-semibold text-[var(--muted)]">
+                    {review.user?.name ?? "Compra verificada"} · {review.product.name}
+                  </span>
+                </article>
+              ))}
+            </div>
+          </div>
+          <NewsletterForm />
         </div>
-        <NewsletterForm />
       </section>
     </>
   );

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  bannerAdminSchema,
   checkoutSchema,
   couponAdminSchema,
   inventoryAdjustmentSchema,
@@ -43,6 +44,27 @@ describe("validações de entrada", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("limita dados pessoais e bloqueia links executáveis", () => {
+    const longCheckout = checkoutSchema.safeParse({
+      customerName: "A".repeat(121),
+      customerEmail: "qa@xnutri.test",
+      customerPhone: "17999999999",
+      shippingType: "PICKUP",
+      pickupLocationId: "pickup-1",
+      paymentMethod: "PIX",
+      privacyConsent: true,
+    });
+    expect(longCheckout.success).toBe(false);
+
+    const unsafeBanner = bannerAdminSchema.safeParse({
+      title: "Banner seguro",
+      imageUrl: "https://res.cloudinary.com/demo/image/upload/teste.jpg",
+      ctaHref: "javascript:alert(1)",
+      location: "HOME_PROMO",
+    });
+    expect(unsafeBanner.success).toBe(false);
   });
 
   it("bloqueia cupom percentual acima de 100%", () => {

@@ -32,7 +32,9 @@ const appUrl = firstValue(
   vercelHostname ? `https://${vercelHostname}` : undefined,
 );
 const authSecret = firstValue(process.env.AUTH_SECRET, process.env.NEXTAUTH_SECRET);
-const mercadoPagoEnvironment = process.env.MERCADO_PAGO_ENVIRONMENT ?? "sandbox";
+const googleClientId = firstValue(process.env.GOOGLE_CLIENT_ID, process.env.AUTH_GOOGLE_ID);
+const googleClientSecret = firstValue(process.env.GOOGLE_CLIENT_SECRET, process.env.AUTH_GOOGLE_SECRET);
+const pagBankEnvironment = process.env.PAGBANK_ENVIRONMENT ?? "sandbox";
 const authSessionMaxAge = Number(process.env.AUTH_SESSION_MAX_AGE_SECONDS ?? 28_800);
 
 function parseUrl(name: string, value: string | undefined) {
@@ -91,20 +93,37 @@ if (!authSecret) {
   errors.push("AUTH_SECRET deve ter pelo menos 32 caracteres aleatórios.");
 }
 
+const cronSecret = process.env.CRON_SECRET?.trim();
+if (!cronSecret) {
+  errors.push("CRON_SECRET não configurada. Ela é necessária para liberar reservas de estoque expiradas na Vercel.");
+} else if (cronSecret.length < 32) {
+  errors.push("CRON_SECRET deve ter pelo menos 32 caracteres aleatórios.");
+}
+
+if (Boolean(googleClientId) !== Boolean(googleClientSecret)) {
+  errors.push("Google OAuth incompleto. Configure GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET juntos.");
+} else if (!googleClientId) {
+  warnings.push("Google OAuth não configurado; o botão de login com Google ficará oculto.");
+}
+
 if (!Number.isInteger(authSessionMaxAge) || authSessionMaxAge < 900 || authSessionMaxAge > 86_400) {
   errors.push("AUTH_SESSION_MAX_AGE_SECONDS deve ser um inteiro entre 900 e 86400 segundos.");
 }
 
-if (!["sandbox", "production"].includes(mercadoPagoEnvironment)) {
-  errors.push("MERCADO_PAGO_ENVIRONMENT deve ser sandbox ou production.");
+if (!["sandbox", "production"].includes(pagBankEnvironment)) {
+  errors.push("PAGBANK_ENVIRONMENT deve ser sandbox ou production.");
 }
 
-if (mercadoPagoEnvironment === "production" && process.env.MERCADO_PAGO_ACCESS_TOKEN?.startsWith("TEST-")) {
-  errors.push("MERCADO_PAGO_ENVIRONMENT está em production, mas o Access Token é de teste.");
+if (pagBankEnvironment === "production" && process.env.PAGBANK_TOKEN?.toLowerCase().includes("sandbox")) {
+  errors.push("PAGBANK_ENVIRONMENT está em production, mas o token parece ser de sandbox.");
 }
 
-if (process.env.MERCADO_PAGO_ACCESS_TOKEN && !firstValue(process.env.MERCADO_PAGO_PUBLIC_KEY, process.env.NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY)) {
-  warnings.push("Mercado Pago tem Access Token, mas a Public Key não foi configurada.");
+if (!process.env.PAGBANK_TOKEN?.trim()) {
+  errors.push("PAGBANK_TOKEN não configurada. O checkout online não pode ser publicado sem ela.");
+}
+
+if (process.env.PAGBANK_TOKEN && !process.env.PAGBANK_WEBHOOK_TOKEN) {
+  warnings.push("PAGBANK_WEBHOOK_TOKEN não configurada; o projeto usará PAGBANK_TOKEN para validar a assinatura do webhook.");
 }
 
 if (process.env.CLOUDINARY_FOLDER && !/^[A-Za-z0-9_/-]{1,120}$/.test(process.env.CLOUDINARY_FOLDER)) {
@@ -112,8 +131,6 @@ if (process.env.CLOUDINARY_FOLDER && !/^[A-Za-z0-9_/-]{1,120}$/.test(process.env
 }
 
 const optionalIntegrations = [
-  "MERCADO_PAGO_ACCESS_TOKEN",
-  "MERCADO_PAGO_WEBHOOK_SECRET",
   "CLOUDINARY_CLOUD_NAME",
   "CLOUDINARY_API_KEY",
   "CLOUDINARY_API_SECRET",
@@ -132,7 +149,7 @@ for (const warning of warnings) console.warn(`AVISO: ${warning}`);
 if (errors.length > 0) {
   for (const error of errors) console.error(`ERRO: ${error}`);
   console.error(
-    `\nConfiguração de produção inválida (${errors.length} erro(s)). Consulte docs/HOSTINGER.md ou docs/PRODUCAO.md.`,
+    `\nConfiguração de produção inválida (${errors.length} erro(s)). Consulte GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL.md.`,
   );
   process.exit(1);
 }
