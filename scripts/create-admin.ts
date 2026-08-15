@@ -24,9 +24,10 @@ function firstNonEmpty(...values: Array<string | undefined>) {
   return values.find((value) => value?.trim())?.trim();
 }
 
-const email = firstNonEmpty(process.env.ADMIN_EMAIL, process.argv[2]);
-const password = firstNonEmpty(process.env.ADMIN_PASSWORD, process.argv[3]);
-const name = firstNonEmpty(process.env.ADMIN_NAME, process.argv[4]) ?? "Administrador XNutri";
+// Explicit command-line values must win over defaults copied from .env.example.
+const email = firstNonEmpty(process.argv[2], process.env.ADMIN_EMAIL);
+const password = firstNonEmpty(process.argv[3], process.env.ADMIN_PASSWORD);
+const name = firstNonEmpty(process.argv[4], process.env.ADMIN_NAME) ?? "Administrador XNutri";
 
 function exitWithUsage(): never {
   console.error("Informe o e-mail e a senha do administrador.");

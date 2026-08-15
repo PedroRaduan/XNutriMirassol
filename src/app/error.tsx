@@ -22,9 +22,9 @@ export default function ErrorPage({
           <AlertTriangle size={28} />
         </span>
         <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand)]">Algo saiu do ritmo</p>
-        <h1 className="mt-2 text-3xl font-black">Não foi possível carregar esta parte</h1>
+        <h1 className="mt-2 text-3xl font-black">Não conseguimos abrir esta página</h1>
         <p className="mx-auto mt-3 max-w-md leading-7 text-[var(--muted)]">
-          Seus dados continuam seguros. Tente novamente e, se o problema persistir, confira a conexão com o banco e as integrações.
+          Tente novamente. Se o problema continuar, fale com o atendimento e informe o código de suporte abaixo.
         </p>
         {error.digest && <p className="mt-3 text-xs font-semibold text-[var(--muted)]">Código de suporte: {error.digest}</p>}
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">

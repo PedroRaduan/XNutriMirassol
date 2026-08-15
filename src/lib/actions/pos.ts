@@ -51,6 +51,7 @@ const cashMovementSchema = z.object({
 });
 
 const posSaleSchema = z.object({
+  requestId: z.string().uuid(),
   sessionId: z.string().min(1),
   customerId: z.string().optional(),
   customer: z
@@ -315,9 +316,36 @@ export async function finalizePOSSale(input: unknown): Promise<POSActionState> {
   const payload = parsed.data;
   const settings = await getFinancialSettings();
 
+  const existingSale = await prisma.pOSSale.findUnique({
+    where: { idempotencyKey: payload.requestId },
+    select: { saleNumber: true, cashierId: true, sessionId: true },
+  });
+  if (existingSale) {
+    if (existingSale.cashierId !== admin.id || existingSale.sessionId !== payload.sessionId) {
+      return { ok: false, message: "Esta identificação de venda já foi utilizada." };
+    }
+    return {
+      ok: true,
+      message: "Venda já finalizada anteriormente.",
+      saleNumber: existingSale.saleNumber,
+      receiptUrl: `/pdv/comprovante/${existingSale.saleNumber}`,
+    };
+  }
+
   try {
     const result = await prisma.$transaction(async (tx) => {
       await assertSessionForUser(tx, payload.sessionId, admin.id, admin.adminRole);
+
+      const duplicate = await tx.pOSSale.findUnique({
+        where: { idempotencyKey: payload.requestId },
+        select: { saleNumber: true, cashierId: true, sessionId: true },
+      });
+      if (duplicate) {
+        if (duplicate.cashierId !== admin.id || duplicate.sessionId !== payload.sessionId) {
+          throw new Error("Esta identificação de venda já foi utilizada.");
+        }
+        return duplicate;
+      }
 
       const customerId = await resolvePOSCustomer(tx, payload.customerId, payload.customer);
       const saleLines = [];
@@ -423,6 +451,7 @@ export async function finalizePOSSale(input: unknown): Promise<POSActionState> {
         data: {
           saleNumber,
           receiptToken: nanoid(24),
+          idempotencyKey: payload.requestId,
           customerId,
           cashierId: admin.id,
           sessionId: payload.sessionId,
@@ -532,6 +561,20 @@ export async function finalizePOSSale(input: unknown): Promise<POSActionState> {
       receiptUrl: `/pdv/comprovante/${result.saleNumber}`,
     };
   } catch (error) {
+    if (typeof error === "object" && error && "code" in error && error.code === "P2002") {
+      const duplicate = await prisma.pOSSale.findUnique({
+        where: { idempotencyKey: payload.requestId },
+        select: { saleNumber: true, cashierId: true, sessionId: true },
+      });
+      if (duplicate?.cashierId === admin.id && duplicate.sessionId === payload.sessionId) {
+        return {
+          ok: true,
+          message: "Venda já finalizada anteriormente.",
+          saleNumber: duplicate.saleNumber,
+          receiptUrl: `/pdv/comprovante/${duplicate.saleNumber}`,
+        };
+      }
+    }
     return { ...initialFailure, message: posErrorMessage(error) };
   }
 }

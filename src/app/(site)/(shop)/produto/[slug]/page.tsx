@@ -27,8 +27,11 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
   if (!product) return {};
 
+  const configuredTitle = "metaTitle" in product && product.metaTitle ? product.metaTitle : product.name;
+  const titleWithoutDuplicateBrand = configuredTitle.replace(/\s*\|\s*XNutri\s*$/i, "");
+
   return {
-    title: "metaTitle" in product && product.metaTitle ? product.metaTitle : product.name,
+    title: titleWithoutDuplicateBrand,
     description: "metaDescription" in product && product.metaDescription ? product.metaDescription : product.shortDescription,
     openGraph: {
       title: product.name,
@@ -189,7 +192,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {related.length > 0 && (
         <section className="mt-10 md:mt-14">
           <h2 className="text-2xl font-bold md:text-3xl">Produtos relacionados</h2>
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+          <div className="mt-5 grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 sm:gap-5 lg:grid-cols-4">
             {related.map((item) => <ProductCard key={item.id} product={item} />)}
           </div>
         </section>

@@ -43,7 +43,7 @@
     "date-fns": "^4.4.0",
     "dotenv": "^17.4.2",
     "lucide-react": "^1.18.0",
-    "nanoid": "^5.1.11",
+    "nanoid": "^5.1.16",
     "next": "16.2.12",
     "next-auth": "^5.0.0-beta.32",
     "pg": "^8.21.0",
@@ -83,6 +83,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "overrides": {
+    "undici": "7.29.0",
     "@prisma/dev": {
       "@hono/node-server": "2.0.5"
     },

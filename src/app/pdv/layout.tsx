@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "PDV XNutri",
   description: "Sistema de caixa integrado ao e-commerce XNutri.",
+  robots: { index: false, follow: false },
 };
 
 export default function PDVLayout({ children }: { children: React.ReactNode }) {

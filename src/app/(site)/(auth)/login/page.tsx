@@ -5,6 +5,7 @@ import { isGoogleAuthConfigured } from "@/lib/auth/google";
 export const metadata = {
   title: "Login",
   description: "Entre na sua conta XNutri para acompanhar pedidos, endereços e histórico de compras.",
+  robots: { index: false, follow: false },
 };
 
 type LoginPageProps = {

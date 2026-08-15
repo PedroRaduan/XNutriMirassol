@@ -220,6 +220,22 @@ export async function createOrderFromCheckout(formData: FormData) {
     if (dbCart.coupon && !isCouponActive(dbCart.coupon)) {
       throw new Error("O cupom aplicado expirou ou atingiu o limite de uso. Remova-o e tente novamente.");
     }
+    if (dbCart.coupon?.perCustomerLimit) {
+      const customerKey = user?.id ? `user:${user.id}` : `email:${data.customerEmail}`;
+      await tx.$queryRaw`
+        SELECT pg_advisory_xact_lock(hashtextextended(${`coupon:${dbCart.coupon.id}:${customerKey}`}, 0))
+      `;
+      const customerUsage = await tx.order.count({
+        where: {
+          couponId: dbCart.coupon.id,
+          status: { notIn: ["CANCELED", "REFUNDED"] },
+          ...(user?.id ? { userId: user.id } : { customerEmail: data.customerEmail }),
+        },
+      });
+      if (customerUsage >= dbCart.coupon.perCustomerLimit) {
+        throw new Error("Este cupom já atingiu o limite de uso por cliente.");
+      }
+    }
     const discount = calculateDiscount(
       dbCart.coupon,
       subtotal,

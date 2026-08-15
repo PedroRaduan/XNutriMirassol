@@ -1,7 +1,23 @@
+import type { Metadata } from "next";
 import { LogOut } from "lucide-react";
+import { AdminAppInstall } from "@/components/admin/admin-app-install";
 import { AdminNav } from "@/components/layout/admin-nav";
 import { logout } from "@/lib/actions/auth";
 import { requireAdmin } from "@/lib/auth/session";
+
+export const metadata: Metadata = {
+  title: {
+    default: "Painel administrativo",
+    template: "%s | Painel XNutri",
+  },
+  manifest: "/admin/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "XNutri Admin",
+  },
+  robots: { index: false, follow: false },
+};
 
 export default async function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();
@@ -21,12 +37,15 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
                 perfil {admin.adminRole}{isDemo ? " treinamento" : ""}
               </p>
             </div>
-            <form action={logout}>
-              <button className="btn btn-secondary px-3">
-                <LogOut size={17} />
-                Sair
-              </button>
-            </form>
+            <div className="flex flex-col gap-2 sm:items-end">
+              {admin.adminRole === "ADMIN" && !isDemo ? <AdminAppInstall /> : null}
+              <form action={logout}>
+                <button className="btn btn-secondary px-3">
+                  <LogOut size={17} />
+                  Sair
+                </button>
+              </form>
+            </div>
           </header>
           {isDemo && (
             <div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold leading-6 text-red-800">

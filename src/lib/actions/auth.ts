@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
 import { clearDemoAdminSession, createDemoAdminSession } from "@/lib/auth/demo-admin";
 import { canAccessAdminModule, requireUser } from "@/lib/auth/session";
+import { DUMMY_PASSWORD_HASH } from "@/lib/auth/password";
 import { prisma } from "@/lib/db/prisma";
 import { isDatabaseUnavailable, isDemoModeAllowed } from "@/lib/db/errors";
 import { rateLimit } from "@/lib/security/rate-limit";
@@ -118,26 +119,27 @@ export async function loginAdminWithCredentials(_: ActionState, formData: FormDa
     throw error;
   }
 
-  if (!admin?.user.passwordHash) {
+  const passwordMatches = await bcrypt.compare(
+    parsed.data.password,
+    admin?.user.passwordHash ?? DUMMY_PASSWORD_HASH,
+  );
+  if (!admin?.user.passwordHash || !passwordMatches) {
+    if (admin) {
+      await prisma.auditLog.create({
+        data: {
+          adminUserId: admin.id,
+          action: "auth.login.failed",
+          entity: "security",
+          entityId: admin.userId,
+          ipAddress: ip,
+          metadata: { reason: "invalid_credentials" },
+        },
+      }).catch(() => undefined);
+    }
     return { ok: false, message: "Acesso administrativo não autorizado." };
   }
 
   if (isSafePOSTarget && !canAccessAdminModule(admin.role, "pos")) {
-    return { ok: false, message: "Este usuário não tem permissão para acessar o PDV." };
-  }
-
-  const passwordMatches = await bcrypt.compare(parsed.data.password, admin.user.passwordHash);
-  if (!passwordMatches) {
-    await prisma.auditLog.create({
-      data: {
-        adminUserId: admin.id,
-        action: "auth.login.failed",
-        entity: "security",
-        entityId: admin.userId,
-        ipAddress: ip,
-        metadata: { reason: "invalid_credentials" },
-      },
-    }).catch(() => undefined);
     return { ok: false, message: "Acesso administrativo não autorizado." };
   }
 
@@ -196,23 +198,39 @@ export async function registerCustomer(_: ActionState, formData: FormData): Prom
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
+  // O hash é calculado antes da consulta para reduzir diferenças de tempo entre
+  // e-mails existentes e novos. A mensagem também não confirma a existência.
+  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   const existing = await prisma.user.findUnique({
     where: { email: parsed.data.email },
     select: { id: true },
   });
 
   if (existing) {
-    return { ok: false, message: "Já existe uma conta com este e-mail." };
+    return {
+      ok: false,
+      message: "Não foi possível concluir o cadastro. Se você já possui uma conta, entre ou recupere sua senha.",
+    };
   }
 
-  await prisma.user.create({
-    data: {
-      name: sanitizeText(parsed.data.name),
-      email: parsed.data.email,
-      phone: sanitizeText(parsed.data.phone),
-      passwordHash: await bcrypt.hash(parsed.data.password, 12),
-    },
-  });
+  try {
+    await prisma.user.create({
+      data: {
+        name: sanitizeText(parsed.data.name),
+        email: parsed.data.email,
+        phone: sanitizeText(parsed.data.phone),
+        passwordHash,
+      },
+    });
+  } catch (error) {
+    if (typeof error === "object" && error && "code" in error && error.code === "P2002") {
+      return {
+        ok: false,
+        message: "Não foi possível concluir o cadastro. Se você já possui uma conta, entre ou recupere sua senha.",
+      };
+    }
+    throw error;
+  }
 
   await signIn("credentials", {
     email: parsed.data.email,
@@ -264,25 +282,9 @@ export async function requestPasswordRecovery(_: ActionState, formData: FormData
     return { ok: false, message: "Informe um e-mail válido." };
   }
 
-  const user = await prisma.user.findUnique({ where: { email: parsed.data.email }, select: { id: true } });
-  if (user) {
-    const identifier = `password-reset:${parsed.data.email}`;
-    const token = crypto.randomUUID();
-    await prisma.$transaction([
-      prisma.verificationToken.deleteMany({ where: { identifier } }),
-      prisma.verificationToken.create({
-        data: {
-          identifier,
-          token,
-          expires: new Date(Date.now() + 1000 * 60 * 30),
-        },
-      }),
-    ]);
-  }
-
   return {
     ok: true,
-    message: "Se o e-mail existir, um link de recuperação será enviado pela integração de e-mail configurada.",
+    message: "Se a conta existir, as instruções serão enviadas quando o serviço de e-mail estiver configurado. Enquanto isso, fale com a XNutri pelo WhatsApp.",
   };
 }
 

@@ -4,6 +4,7 @@ import { RecoveryForm } from "@/components/forms/recovery-form";
 export const metadata = {
   title: "Recuperação de senha",
   description: "Solicite recuperação de senha da sua conta XNutri.",
+  robots: { index: false, follow: false },
 };
 
 export default function RecoveryPage() {

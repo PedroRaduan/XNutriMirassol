@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { PackageCheck } from "lucide-react";
 import { AddToCartButton } from "@/components/product/add-to-cart";
+import { SafeImage } from "@/components/ui/safe-image";
 import { getProductAvailableStock } from "@/lib/ecommerce/product-stock";
 import { formatCurrency, toNumber } from "@/lib/utils";
 
@@ -55,13 +55,11 @@ export function ProductCard({ product, eager = false }: { product: ProductCardPr
       <Link href={`/produto/${product.slug}`} className="block" aria-label={product.name}>
         <div className="product-card-media relative aspect-square overflow-hidden bg-[#f5f4f1]">
           {image ? (
-            <Image
+            <SafeImage
               src={image.url}
               alt={image.alt}
-              fill
-              loading={eager ? "eager" : "lazy"}
-              fetchPriority={eager ? "high" : "auto"}
-              sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+              eager={eager}
+              sizes="(max-width: 339px) 100vw, (min-width: 1280px) 25vw, 50vw"
               className="object-contain p-3 sm:p-4"
             />
           ) : (

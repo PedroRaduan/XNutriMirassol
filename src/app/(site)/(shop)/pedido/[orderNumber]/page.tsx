@@ -10,6 +10,11 @@ import { formatCurrency, formatDate, statusLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Acompanhar pedido",
+  robots: { index: false, follow: false },
+};
+
 export default async function OrderPage({
   params,
   searchParams,

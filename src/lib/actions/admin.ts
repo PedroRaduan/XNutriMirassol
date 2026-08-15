@@ -8,6 +8,8 @@ import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { isDatabaseUnavailable } from "@/lib/db/errors";
 import { decrementInventoryForOrder, releaseInventoryReservationForOrder, restoreInventoryForOrder } from "@/lib/ecommerce/inventory";
+import { releaseCouponUsageForOrder } from "@/lib/ecommerce/coupons";
+import { canTransitionOrderStatus } from "@/lib/ecommerce/order-status";
 import { assertSameOrigin, getClientIp } from "@/lib/security/request";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
 import {
@@ -24,17 +26,6 @@ import {
   shippingMethodAdminSchema,
   storeSettingsAdminSchema,
 } from "@/lib/validations";
-
-const orderStatuses: OrderStatus[] = [
-  "PENDING",
-  "PAID",
-  "PREPARING",
-  "AWAITING_PICKUP",
-  "SHIPPED",
-  "DELIVERED",
-  "CANCELED",
-  "REFUNDED",
-];
 
 function slug(value: string) {
   return slugify(value, { lower: true, strict: true, locale: "pt" });
@@ -191,7 +182,7 @@ export async function upsertProduct(formData: FormData) {
         widthCm: data.widthCm,
         heightCm: data.heightCm,
         lengthCm: data.lengthCm,
-        metaTitle: `${sanitizeText(data.name)} | XNutri`,
+        metaTitle: sanitizeText(data.name),
         metaDescription: sanitizeText(data.shortDescription),
       };
 
@@ -250,12 +241,15 @@ export async function upsertProduct(formData: FormData) {
           },
         });
       } else if (inventory.quantity !== data.stock || inventory.lowStockThreshold !== (data.lowStockThreshold ?? inventory.lowStockThreshold)) {
+        if (data.stock < inventory.reserved) {
+          throw new Error(`O estoque não pode ficar abaixo das ${inventory.reserved} unidade(s) reservadas em pedidos pendentes.`);
+        }
         const updated = await tx.inventory.update({
           where: { id: inventory.id },
           data: {
             quantity: data.stock,
             lowStockThreshold: data.lowStockThreshold ?? inventory.lowStockThreshold,
-            available: data.stock > 0,
+            available: data.stock - inventory.reserved > 0,
           },
         });
 
@@ -395,12 +389,15 @@ export async function upsertProductVariant(formData: FormData) {
           },
         });
       } else if (inventory.quantity !== data.stock || inventory.lowStockThreshold !== (data.lowStockThreshold ?? inventory.lowStockThreshold)) {
+        if (data.stock < inventory.reserved) {
+          throw new Error(`O estoque não pode ficar abaixo das ${inventory.reserved} unidade(s) reservadas em pedidos pendentes.`);
+        }
         const updated = await tx.inventory.update({
           where: { id: inventory.id },
           data: {
             quantity: data.stock,
             lowStockThreshold: data.lowStockThreshold ?? inventory.lowStockThreshold,
-            available: data.stock > 0,
+            available: data.stock - inventory.reserved > 0,
           },
         });
         await tx.inventoryMovement.create({
@@ -532,12 +529,15 @@ export async function adjustInventory(formData: FormData) {
   const reason = sanitizeText(parsed.data.reason);
 
   const inventory = await prisma.inventory.findUniqueOrThrow({ where: { id: inventoryId } });
+  if (quantity < inventory.reserved) {
+    throw new Error(`O estoque não pode ficar abaixo das ${inventory.reserved} unidade(s) reservadas em pedidos pendentes.`);
+  }
   const updated = await prisma.inventory.update({
     where: { id: inventoryId },
     data: {
       quantity,
       lowStockThreshold: lowStockThreshold ?? inventory.lowStockThreshold,
-      available: quantity > 0,
+      available: quantity - inventory.reserved > 0,
     },
   });
 
@@ -574,6 +574,7 @@ export async function upsertCoupon(formData: FormData) {
     startsAt: emptyToUndefined(formData.get("startsAt")),
     endsAt: emptyToUndefined(formData.get("endsAt")),
     usageLimit: emptyToUndefined(formData.get("usageLimit")),
+    perCustomerLimit: emptyToUndefined(formData.get("perCustomerLimit")),
     productIds: emptyToUndefined(formData.get("productIds")),
     categoryIds: emptyToUndefined(formData.get("categoryIds")),
     active: formData.get("active") === "on",
@@ -598,6 +599,7 @@ export async function upsertCoupon(formData: FormData) {
             startsAt: optionalDate(data.startsAt),
             endsAt: optionalDate(data.endsAt),
             usageLimit: data.usageLimit,
+            perCustomerLimit: data.perCustomerLimit,
             productIds: parseIdList(formData, "productIds"),
             categoryIds: parseIdList(formData, "categoryIds"),
             active: Boolean(data.active),
@@ -614,6 +616,7 @@ export async function upsertCoupon(formData: FormData) {
             startsAt: optionalDate(data.startsAt),
             endsAt: optionalDate(data.endsAt),
             usageLimit: data.usageLimit,
+            perCustomerLimit: data.perCustomerLimit,
             productIds: parseIdList(formData, "productIds"),
             categoryIds: parseIdList(formData, "categoryIds"),
             active: Boolean(data.active),
@@ -727,7 +730,7 @@ export async function updateOrderStatus(formData: FormData) {
     notes: formData.get("notes"),
   });
 
-  if (!parsed.success || !orderStatuses.includes(parsed.data.status)) {
+  if (!parsed.success) {
     throw new Error("Status invalido.");
   }
 
@@ -740,16 +743,27 @@ export async function updateOrderStatus(formData: FormData) {
     throw new Error("Pedido não encontrado.");
   }
 
+  if (!canTransitionOrderStatus(before.status, parsed.data.status, before.shippingType)) {
+    throw new Error(`A mudança de ${before.status} para ${parsed.data.status} não é permitida.`);
+  }
+
   const paidStatuses: OrderStatus[] = ["PAID", "PREPARING", "AWAITING_PICKUP", "SHIPPED", "DELIVERED"];
   const terminalStatuses: OrderStatus[] = ["CANCELED", "REFUNDED"];
   const hasApprovedPayment = before.payments.some((payment) => payment.status === "APPROVED");
+  const manualPaymentOverride = paidStatuses.includes(parsed.data.status)
+    && !paidStatuses.includes(before.status)
+    && !hasApprovedPayment;
 
   if (terminalStatuses.includes(before.status) && parsed.data.status !== before.status) {
     throw new Error("Pedido cancelado ou reembolsado não pode ser reaberto.");
   }
 
-  if (paidStatuses.includes(parsed.data.status) && !hasApprovedPayment && admin.adminRole !== "ADMIN") {
+  if (manualPaymentOverride && admin.adminRole !== "ADMIN") {
     throw new Error("Somente um administrador pode confirmar manualmente um pedido sem pagamento aprovado.");
+  }
+
+  if (manualPaymentOverride && (sanitizeOptionalText(parsed.data.notes)?.length ?? 0) < 10) {
+    throw new Error("Informe nas observações o motivo da confirmação manual sem pagamento aprovado.");
   }
 
   await prisma.$transaction(async (tx) => {
@@ -776,12 +790,14 @@ export async function updateOrderStatus(formData: FormData) {
       } else {
         await restoreInventoryForOrder(tx, order.id, reason);
       }
+      await releaseCouponUsageForOrder(tx, order.id);
     }
   });
 
   await audit(admin.admin.id, "order.status", "orders", parsed.data.id, {
     before: before ? { status: before.status, notes: before.notes } : null,
     after: { status: parsed.data.status, notes: parsed.data.notes },
+    manualPaymentOverride,
   });
   revalidatePath("/admin/pedidos");
   revalidatePath(`/admin/pedidos/${parsed.data.id}`);

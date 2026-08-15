@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { CartQuantityControl } from "@/components/cart/cart-quantity-control";
+import { SafeImage } from "@/components/ui/safe-image";
 import { removeCartItem } from "@/lib/actions/cart";
 import { formatCurrency } from "@/lib/utils";
 
@@ -27,7 +27,7 @@ export function CartLine({ cartId, item }: CartLineProps) {
   return (
     <div className="grid grid-cols-[82px_1fr] gap-3 border-b border-[var(--line)] py-4 sm:grid-cols-[96px_1fr_auto] sm:gap-4 sm:py-5">
       <Link href={`/produto/${item.slug}`} className="relative aspect-square overflow-hidden rounded-md bg-[#f0efed]">
-        {item.imageUrl && <Image src={item.imageUrl} alt={item.name} fill sizes="96px" className="object-cover" />}
+        <SafeImage src={item.imageUrl} alt={item.name} sizes="96px" className="object-cover" />
       </Link>
       <div className="min-w-0">
         <Link href={`/produto/${item.slug}`} className="line-clamp-2 font-bold leading-snug hover:text-[var(--brand)]">

@@ -38,7 +38,8 @@ export async function getDemoAdminSession() {
 
   const offline = await databaseIsUnavailable();
   if (!offline) {
-    await clearDemoAdminSession();
+    // Server Components cannot mutate cookies. Treat the stale development
+    // cookie as invalid; it will be removed by the next explicit login/logout.
     return null;
   }
 

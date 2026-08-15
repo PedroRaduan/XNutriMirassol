@@ -3,10 +3,11 @@ import "server-only";
 import type { Order, OrderItem, Payment, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { decrementInventoryForOrder, releaseInventoryReservationForOrder, restoreInventoryForOrder } from "@/lib/ecommerce/inventory";
+import { releaseCouponUsageForOrder } from "@/lib/ecommerce/coupons";
 import { getBaseUrl, toNumber } from "@/lib/utils";
-import { getPagBankCheckoutUrl, mapPagBankMethod, mapPagBankStatus } from "@/lib/payments/pagbank-mappers";
+import { getPagBankCheckoutIdempotencyKey, getPagBankCheckoutUrl, mapPagBankMethod, mapPagBankStatus, shouldApplyPagBankStatus } from "@/lib/payments/pagbank-mappers";
 
-export { getPagBankCheckoutUrl, mapPagBankMethod, mapPagBankStatus } from "@/lib/payments/pagbank-mappers";
+export { getPagBankCheckoutIdempotencyKey, getPagBankCheckoutUrl, mapPagBankMethod, mapPagBankStatus, shouldApplyPagBankStatus } from "@/lib/payments/pagbank-mappers";
 export { validatePagBankWebhookSignature } from "@/lib/payments/pagbank-signature";
 
 type PagBankLink = { rel?: string; href?: string; method?: string };
@@ -87,18 +88,24 @@ async function pagBankRequest<T>(path: string, init: RequestInit) {
 
 export async function createPagBankCheckout(
   order: Order & { items: OrderItem[]; payments: Payment[] },
-  accessToken: string,
+  accessToken?: string,
 ) {
   const total = toNumber(order.total);
   if (total <= 0) throw new Error("O total do pedido precisa ser maior que zero para pagamento online.");
 
   const baseUrl = getBaseUrl();
   const callbackUrl = `${baseUrl}/api/payments/pagbank/webhook`;
-  const orderUrl = `${baseUrl}/pedido/${order.orderNumber}?access=${encodeURIComponent(accessToken)}`;
+  const orderUrl = new URL(`/pedido/${order.orderNumber}`, baseUrl);
+  if (accessToken) orderUrl.searchParams.set("access", accessToken);
+  const paymentReturnUrl = new URL(orderUrl);
+  paymentReturnUrl.searchParams.set("payment", "return");
   const selectedMethod = order.payments.find((payment) => payment.provider === "PAGBANK")?.method ?? "PIX";
   const paymentMethod = selectedMethod === "CREDIT_CARD" ? "CREDIT_CARD" : "PIX";
   const checkout = await pagBankRequest<PagBankCheckout>("/checkouts", {
     method: "POST",
+    headers: {
+      "x-idempotency-key": getPagBankCheckoutIdempotencyKey(order.id),
+    },
     body: JSON.stringify({
       reference_id: order.orderNumber,
       customer: getCustomer(order),
@@ -121,8 +128,8 @@ export async function createPagBankCheckout(
         }],
       } : {}),
       soft_descriptor: "XNUTRI",
-      redirect_url: `${orderUrl}?payment=return`,
-      return_url: orderUrl,
+      redirect_url: paymentReturnUrl.toString(),
+      return_url: orderUrl.toString(),
       notification_urls: [callbackUrl],
       payment_notification_urls: [callbackUrl],
     }),
@@ -162,6 +169,9 @@ export async function syncPagBankWebhook(payload: PagBankWebhook) {
     const expectedAmount = toNumber(order.total);
     const currency = String(charge?.amount?.currency ?? "BRL").toUpperCase();
 
+    if (status === "APPROVED" && (!charge || !Number.isFinite(amountInCents) || !externalId.startsWith("CHAR_"))) {
+      throw new Error("A aprovação do PagBank não trouxe uma cobrança verificável.");
+    }
     if (charge && (!Number.isFinite(amountInCents) || Math.abs(amount - expectedAmount) > 0.01)) {
       throw new Error("O valor confirmado pelo PagBank não corresponde ao pedido.");
     }
@@ -176,18 +186,21 @@ export async function syncPagBankWebhook(payload: PagBankWebhook) {
       paidAt: charge?.paid_at ?? null,
     } satisfies Prisma.InputJsonObject;
 
-    await tx.payment.update({
-      where: { id: payment.id },
-      data: {
-        ...(externalId.startsWith("CHAR_") ? { externalId } : {}),
-        method: mapPagBankMethod(charge?.payment_method?.type),
-        status,
-        amount,
-        payload: safePayload,
-      },
-    });
+    const applyStatus = shouldApplyPagBankStatus(payment.status, status);
+    if (applyStatus) {
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          ...(externalId.startsWith("CHAR_") ? { externalId } : {}),
+          method: mapPagBankMethod(charge?.payment_method?.type),
+          status,
+          amount,
+          payload: safePayload,
+        },
+      });
+    }
 
-    if (status === "APPROVED") {
+    if (applyStatus && status === "APPROVED") {
       const updated = await tx.order.updateMany({
         where: { id: order.id, status: "PENDING" },
         data: {
@@ -196,9 +209,19 @@ export async function syncPagBankWebhook(payload: PagBankWebhook) {
         },
       });
       if (updated.count === 1) await decrementInventoryForOrder(tx, order.id);
+      if (updated.count === 0 && ["CANCELED", "REFUNDED"].includes(order.status)) {
+        await tx.auditLog.create({
+          data: {
+            action: "payment.pagbank.review_required",
+            entity: "orders",
+            entityId: order.id,
+            metadata: { reason: "approved_after_terminal_order", externalId: externalId || null, orderStatus: order.status },
+          },
+        });
+      }
     }
 
-    if ((status === "REFUNDED" || status === "CANCELED") && ["PAID", "AWAITING_PICKUP"].includes(order.status)) {
+    if (applyStatus && (status === "REFUNDED" || status === "CANCELED") && ["PAID", "AWAITING_PICKUP"].includes(order.status)) {
       await restoreInventoryForOrder(
         tx,
         order.id,
@@ -208,12 +231,14 @@ export async function syncPagBankWebhook(payload: PagBankWebhook) {
         where: { id: order.id },
         data: { status: status === "REFUNDED" ? "REFUNDED" : "CANCELED", canceledAt: status === "CANCELED" ? new Date() : undefined },
       });
-    } else if (status === "CANCELED" && order.status === "PENDING") {
+      await releaseCouponUsageForOrder(tx, order.id);
+    } else if (applyStatus && status === "CANCELED" && order.status === "PENDING") {
       await releaseInventoryReservationForOrder(tx, order.id, `Pagamento cancelado para o pedido ${order.orderNumber}`);
       await tx.order.update({
         where: { id: order.id },
         data: { status: "CANCELED", canceledAt: new Date() },
       });
+      await releaseCouponUsageForOrder(tx, order.id);
     }
 
     await tx.auditLog.create({
@@ -221,7 +246,7 @@ export async function syncPagBankWebhook(payload: PagBankWebhook) {
         action: "payment.pagbank.webhook.processed",
         entity: "orders",
         entityId: order.id,
-        metadata: { externalId: externalId || null, status, amount, currency },
+        metadata: { externalId: externalId || null, status, amount, currency, applied: applyStatus },
       },
     });
 

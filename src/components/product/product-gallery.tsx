@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+import { SafeImage } from "@/components/ui/safe-image";
 
 type ImageItem = {
   id: string;
@@ -22,7 +22,7 @@ export function ProductGallery({ images }: { images: ImageItem[] }) {
         onClick={() => setZoom(true)}
         className="relative aspect-square overflow-hidden rounded-lg border border-[var(--line)] bg-white"
       >
-        <Image src={selected.url} alt={selected.alt} fill loading="eager" fetchPriority="high" sizes="(min-width: 1024px) 48vw, 100vw" className="object-cover" />
+        <SafeImage src={selected.url} alt={selected.alt} eager sizes="(min-width: 1024px) 48vw, 100vw" className="object-cover" />
       </button>
       {images.length > 1 && (
         <div className="grid grid-cols-5 gap-2">
@@ -33,7 +33,7 @@ export function ProductGallery({ images }: { images: ImageItem[] }) {
               onClick={() => setSelected(image)}
               className="relative aspect-square overflow-hidden rounded-md border border-[var(--line)] bg-white"
             >
-              <Image src={image.url} alt={image.alt} fill sizes="96px" className="object-cover" />
+              <SafeImage src={image.url} alt={image.alt} sizes="96px" className="object-cover" />
             </button>
           ))}
         </div>
@@ -46,7 +46,7 @@ export function ProductGallery({ images }: { images: ImageItem[] }) {
           aria-label="Fechar zoom"
         >
           <span className="relative block h-[88vh] w-full max-w-5xl">
-            <Image src={selected.url} alt={selected.alt} fill sizes="90vw" className="object-contain" />
+            <SafeImage src={selected.url} alt={selected.alt} eager sizes="90vw" className="object-contain" />
           </span>
         </button>
       )}

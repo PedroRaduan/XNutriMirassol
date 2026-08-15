@@ -4,11 +4,10 @@ import { AdminActionForm } from "@/components/admin/admin-action-form";
 import { AdminSubmitButton } from "@/components/admin/admin-submit";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
+import { availableOrderStatuses } from "@/lib/ecommerce/order-status";
 import { formatCurrency, formatDate, statusBadgeClass, statusLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-const statuses = ["PENDING", "PAID", "PREPARING", "AWAITING_PICKUP", "SHIPPED", "DELIVERED", "CANCELED", "REFUNDED"];
 
 export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin("orders");
@@ -28,6 +27,7 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
   });
 
   const shippingSnapshot = order.shippingSnapshot as Record<string, string> | null;
+  const statuses = availableOrderStatuses(order.status, order.shippingType);
 
   return (
     <div>

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
-import { getPagBankCheckoutUrl, mapPagBankMethod, mapPagBankStatus } from "@/lib/payments/pagbank-mappers";
+import { getPagBankCheckoutIdempotencyKey, getPagBankCheckoutUrl, mapPagBankMethod, mapPagBankStatus, shouldApplyPagBankStatus } from "@/lib/payments/pagbank-mappers";
 import { validatePagBankWebhookSignature } from "@/lib/payments/pagbank-signature";
 
 describe("mapeamento do PagBank", () => {
@@ -44,5 +44,21 @@ describe("mapeamento do PagBank", () => {
       if (previousToken === undefined) delete process.env.PAGBANK_TOKEN;
       else process.env.PAGBANK_TOKEN = previousToken;
     }
+  });
+
+  it("ignora webhooks atrasados que fariam o pagamento regredir", () => {
+    expect(shouldApplyPagBankStatus("APPROVED", "PENDING")).toBe(false);
+    expect(shouldApplyPagBankStatus("APPROVED", "REJECTED")).toBe(false);
+    expect(shouldApplyPagBankStatus("REFUNDED", "APPROVED")).toBe(false);
+    expect(shouldApplyPagBankStatus("PENDING", "APPROVED")).toBe(true);
+    expect(shouldApplyPagBankStatus("APPROVED", "REFUNDED")).toBe(true);
+  });
+
+  it("gera uma chave de idempotência estável e aceita pelo gateway", () => {
+    const first = getPagBankCheckoutIdempotencyKey("order_123-com-espaço");
+    const second = getPagBankCheckoutIdempotencyKey("order_123-com-espaço");
+    expect(first).toBe(second);
+    expect(first).toMatch(/^[A-Za-z0-9]+$/);
+    expect(first.length).toBeLessThanOrEqual(200);
   });
 });

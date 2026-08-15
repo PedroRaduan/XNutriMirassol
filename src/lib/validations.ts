@@ -50,7 +50,7 @@ function hasValidDocument(value?: string) {
 function isSafeImageUrl(value: string) {
   try {
     const url = new URL(value);
-    return url.protocol === "https:";
+    return url.protocol === "https:" && ["res.cloudinary.com", "images.unsplash.com"].includes(url.hostname);
   } catch {
     return false;
   }
@@ -90,6 +90,11 @@ const optionalInt = z.preprocess((value) => {
   if (value === "" || value === null || value === undefined) return undefined;
   return value;
 }, z.coerce.number().int().min(0).optional());
+
+const optionalPositiveInt = z.preprocess((value) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  return value;
+}, z.coerce.number().int().min(1).optional());
 
 const optionalDateString = z.preprocess((value) => {
   if (value === "" || value === null || value === undefined) return undefined;
@@ -266,7 +271,8 @@ export const couponAdminSchema = z.object({
   maxDiscount: optionalNumber,
   startsAt: optionalDateString,
   endsAt: optionalDateString,
-  usageLimit: optionalInt,
+  usageLimit: optionalPositiveInt,
+  perCustomerLimit: optionalPositiveInt,
   productIds: z.string().optional(),
   categoryIds: z.string().optional(),
   active: z.coerce.boolean().optional(),

@@ -1,6 +1,6 @@
 import type { Coupon } from "@prisma/client";
-import { describe, expect, it } from "vitest";
-import { calculateDiscount, isCouponActive } from "@/lib/ecommerce/coupons";
+import { describe, expect, it, vi } from "vitest";
+import { calculateDiscount, isCouponActive, releaseCouponUsageForOrder } from "@/lib/ecommerce/coupons";
 
 function coupon(overrides: Partial<Coupon> = {}): Coupon {
   return {
@@ -51,5 +51,21 @@ describe("cupons", () => {
 
   it("frete grátis desconta somente o valor do frete", () => {
     expect(calculateDiscount(coupon({ type: "FREE_SHIPPING" }), 200, 24.9)).toBe(24.9);
+  });
+
+  it("libera apenas uma vez o limite do cupom quando o pedido é cancelado", async () => {
+    const findUnique = vi.fn().mockResolvedValue({ couponId: "coupon-1" });
+    const markReleased = vi.fn()
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 });
+    const decrementUsage = vi.fn().mockResolvedValue({ count: 1 });
+    const tx = {
+      order: { findUnique, updateMany: markReleased },
+      coupon: { updateMany: decrementUsage },
+    };
+
+    await expect(releaseCouponUsageForOrder(tx as never, "order-1")).resolves.toBe(true);
+    await expect(releaseCouponUsageForOrder(tx as never, "order-1")).resolves.toBe(false);
+    expect(decrementUsage).toHaveBeenCalledTimes(1);
   });
 });

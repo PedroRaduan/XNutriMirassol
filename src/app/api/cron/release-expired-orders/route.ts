@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { releaseInventoryReservationForOrder } from "@/lib/ecommerce/inventory";
+import { releaseCouponUsageForOrder } from "@/lib/ecommerce/coupons";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -44,6 +45,7 @@ export async function GET(request: Request) {
         candidate.id,
         `Reserva expirada do pedido ${candidate.orderNumber}`,
       );
+      await releaseCouponUsageForOrder(tx, candidate.id);
       await tx.auditLog.create({
         data: {
           action: "order.reservation.expired",

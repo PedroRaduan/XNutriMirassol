@@ -36,10 +36,11 @@ function CouponForm({
         <input className="field" name="minSubtotal" type="number" step="0.01" min={0} placeholder="Compra mínima" defaultValue={coupon?.minSubtotal ? Number(coupon.minSubtotal) : ""} />
         <input className="field" name="maxDiscount" type="number" step="0.01" min={0} placeholder="Desconto máximo" defaultValue={coupon?.maxDiscount ? Number(coupon.maxDiscount) : ""} />
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <label className="text-sm font-black">Início<input className="field mt-2" name="startsAt" type="datetime-local" defaultValue={dateInput(coupon?.startsAt)} /></label>
         <label className="text-sm font-black">Expiração<input className="field mt-2" name="endsAt" type="datetime-local" defaultValue={dateInput(coupon?.endsAt)} /></label>
-        <label className="text-sm font-black">Limite<input className="field mt-2" name="usageLimit" type="number" min={0} defaultValue={coupon?.usageLimit ?? ""} /></label>
+        <label className="text-sm font-black">Limite total<input className="field mt-2" name="usageLimit" type="number" min={1} defaultValue={coupon?.usageLimit ?? ""} /></label>
+        <label className="text-sm font-black">Limite por cliente<input className="field mt-2" name="perCustomerLimit" type="number" min={1} defaultValue={coupon?.perCustomerLimit ?? ""} /></label>
       </div>
       <label className="text-sm font-black">Produtos permitidos
         <select className="field mt-2 min-h-28" name="productIds" multiple defaultValue={coupon?.productIds ?? []}>
@@ -89,10 +90,11 @@ export default async function AdminCouponsPage() {
                     <span className="badge">{coupon.type}</span>
                   </div>
                   <p className="mt-2 text-sm text-[var(--muted)]">{coupon.description}</p>
-                  <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-3">
+                  <div className="mt-3 grid gap-2 text-sm text-[var(--muted)] sm:grid-cols-4">
                     <span><strong className="block text-[var(--ink)]">Desconto</strong>{coupon.type === "PERCENTAGE" ? `${coupon.value}%` : formatCurrency(coupon.value)}</span>
                     <span><strong className="block text-[var(--ink)]">Compra mínima</strong>{coupon.minSubtotal ? formatCurrency(coupon.minSubtotal) : "Sem mínimo"}</span>
                     <span><strong className="block text-[var(--ink)]">Uso</strong>{coupon.usageCount}/{coupon.usageLimit ?? "sem limite"}</span>
+                    <span><strong className="block text-[var(--ink)]">Por cliente</strong>{coupon.perCustomerLimit ?? "sem limite"}</span>
                   </div>
                   <p className="mt-2 text-xs font-bold text-[var(--muted)]">
                     Validade: {coupon.startsAt ? formatDate(coupon.startsAt) : "agora"} até {coupon.endsAt ? formatDate(coupon.endsAt) : "sem expiração"}

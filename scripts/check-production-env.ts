@@ -49,7 +49,11 @@ function parseUrl(name: string, value: string | undefined) {
 
 function isPlaceholderConnectionString(value: string | undefined) {
   if (!value) return false;
-  return /\.\.\.|(?:COLE_|USUARIO|SENHA|HOST_DO_BANCO|EP-EXEMPLO)/i.test(value);
+  return /\.\.\.|(?:COLE_|USUARIO|SENHA|HOST_DO_BANCO|EP-(?:EXEMPLO|EXAMPLE)|PLACEHOLDER|CHANGE_ME)/i.test(value);
+}
+
+function isPlaceholderSecret(value: string | undefined) {
+  return Boolean(value && /(?:COLE_|SEU_TOKEN|TOKEN_AQUI|EXEMPLO|EXAMPLE|PLACEHOLDER|CHANGE_ME)/i.test(value));
 }
 
 const parsedDatabaseUrl = parseUrl("DATABASE_URL", databaseUrl);
@@ -61,8 +65,13 @@ if (!databaseUrl) {
   errors.push("DATABASE_URL precisa ser uma connection string postgresql://.");
 } else if (["localhost", "127.0.0.1", "::1", "host.docker.internal", "postgres"].includes(parsedDatabaseUrl.hostname)) {
   errors.push("DATABASE_URL aponta para Docker/localhost. Use a URL pooler do PostgreSQL online em produção.");
-} else if (parsedDatabaseUrl.hostname.endsWith(".neon.tech") && parsedDatabaseUrl.searchParams.get("sslmode") !== "require") {
-  warnings.push("DATABASE_URL do Neon deve usar sslmode=require.");
+} else if (parsedDatabaseUrl.hostname.endsWith(".neon.tech")) {
+  const sslMode = parsedDatabaseUrl.searchParams.get("sslmode");
+  if (!sslMode || !["require", "verify-full"].includes(sslMode)) {
+    warnings.push("DATABASE_URL do Neon deve validar TLS com sslmode=verify-full.");
+  } else if (sslMode === "require") {
+    warnings.push("DATABASE_URL usa sslmode=require. Prefira verify-full para manter validação estrita em futuras versões do driver PostgreSQL.");
+  }
 }
 
 const parsedDirectUrl = parseUrl("DIRECT_URL", directUrl);
@@ -74,6 +83,8 @@ if (!directUrl) {
   errors.push("DIRECT_URL precisa ser uma connection string postgresql://.");
 } else if (["localhost", "127.0.0.1", "::1", "host.docker.internal", "postgres"].includes(parsedDirectUrl.hostname)) {
   errors.push("DIRECT_URL aponta para Docker/localhost. Use a URL direta do banco online.");
+} else if (parsedDirectUrl.hostname.endsWith(".neon.tech") && !["require", "verify-full"].includes(parsedDirectUrl.searchParams.get("sslmode") ?? "")) {
+  warnings.push("DIRECT_URL do Neon deve validar TLS com sslmode=verify-full.");
 }
 
 const parsedAppUrl = parseUrl("NEXT_PUBLIC_APP_URL", appUrl);
@@ -83,6 +94,8 @@ if (!appUrl) {
   errors.push("NEXT_PUBLIC_APP_URL precisa usar HTTPS em produção.");
 } else if (["localhost", "127.0.0.1", "::1"].includes(parsedAppUrl.hostname)) {
   errors.push("NEXT_PUBLIC_APP_URL não pode apontar para localhost em produção.");
+} else if (parsedAppUrl.hostname.endsWith(".invalid") || /(^|\.)example\.(com|org|net)$/i.test(parsedAppUrl.hostname)) {
+  errors.push("NEXT_PUBLIC_APP_URL ainda aponta para um domínio de exemplo.");
 }
 
 if (!authSecret) {
@@ -120,6 +133,8 @@ if (pagBankEnvironment === "production" && process.env.PAGBANK_TOKEN?.toLowerCas
 
 if (!process.env.PAGBANK_TOKEN?.trim()) {
   errors.push("PAGBANK_TOKEN não configurada. O checkout online não pode ser publicado sem ela.");
+} else if (isPlaceholderSecret(process.env.PAGBANK_TOKEN)) {
+  errors.push("PAGBANK_TOKEN ainda contém um valor de exemplo.");
 }
 
 if (process.env.PAGBANK_TOKEN && !process.env.PAGBANK_WEBHOOK_TOKEN) {

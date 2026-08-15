@@ -155,6 +155,7 @@ export function POSTerminal({
   const searchRef = useRef<HTMLInputElement | null>(null);
   const discountRef = useRef<HTMLInputElement | null>(null);
   const submittingRef = useRef(false);
+  const saleRequestIdRef = useRef<string | null>(null);
 
   const subtotal = useMemo(() => round(cart.reduce((sum, item) => sum + item.price * item.quantity, 0)), [cart]);
   const itemDiscount = useMemo(() => round(cart.reduce((sum, item) => sum + item.discount, 0)), [cart]);
@@ -414,9 +415,11 @@ export function POSTerminal({
     const soldItems = cart.map((item) => ({ id: item.id, quantity: item.quantity }));
 
     submittingRef.current = true;
+    saleRequestIdRef.current ??= crypto.randomUUID();
     startTransition(async () => {
       try {
         const response = await finalizePOSSale({
+          requestId: saleRequestIdRef.current,
           sessionId,
           customerId: selectedCustomer?.id,
           customer: selectedCustomer ? undefined : quickCustomer,
@@ -436,6 +439,7 @@ export function POSTerminal({
 
         setMessage({ type: response.ok ? "ok" : "error", text: response.message });
         if (response.ok) {
+          saleRequestIdRef.current = null;
           setCart([]);
           setGeneralDiscount(0);
           setPayments([{ id: paymentId(), method: "PIX", amount: 0 }]);

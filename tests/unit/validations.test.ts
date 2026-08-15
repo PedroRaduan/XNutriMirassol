@@ -77,6 +77,26 @@ describe("validações de entrada", () => {
     expect(result.success).toBe(false);
   });
 
+  it("exige limites de uso positivos quando configurados no cupom", () => {
+    const invalid = couponAdminSchema.safeParse({
+      code: "LIMITADO",
+      type: "PERCENTAGE",
+      value: 10,
+      usageLimit: 0,
+      perCustomerLimit: 0,
+    });
+    expect(invalid.success).toBe(false);
+
+    const valid = couponAdminSchema.safeParse({
+      code: "LIMITADO",
+      type: "PERCENTAGE",
+      value: 10,
+      usageLimit: 100,
+      perCustomerLimit: 1,
+    });
+    expect(valid.success).toBe(true);
+  });
+
   it("bloqueia estoque e preço negativos", () => {
     expect(inventoryAdjustmentSchema.safeParse({ inventoryId: "inv", quantity: -1, reason: "teste QA" }).success).toBe(false);
     expect(productAdminSchema.safeParse({
@@ -93,6 +113,32 @@ describe("validações de entrada", () => {
       widthCm: 10,
       heightCm: 10,
       lengthCm: 10,
+    }).success).toBe(false);
+  });
+
+  it("aceita imagens apenas dos provedores configurados", () => {
+    const baseProduct = {
+      categoryId: "cat",
+      name: "Produto QA",
+      sku: "QA-002",
+      shortDescription: "Descrição curta válida",
+      description: "Descrição completa válida para o produto de QA.",
+      price: 10,
+      status: "ACTIVE",
+      stock: 1,
+      weightGrams: 100,
+      widthCm: 10,
+      heightCm: 10,
+      lengthCm: 10,
+    };
+
+    expect(productAdminSchema.safeParse({
+      ...baseProduct,
+      imageUrls: "https://res.cloudinary.com/demo/image/upload/teste.jpg",
+    }).success).toBe(true);
+    expect(productAdminSchema.safeParse({
+      ...baseProduct,
+      imageUrls: "https://servidor-nao-autorizado.example/imagem.jpg",
     }).success).toBe(false);
   });
 });

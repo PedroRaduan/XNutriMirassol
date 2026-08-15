@@ -1,4 +1,4 @@
-import type { Coupon } from "@prisma/client";
+import type { Coupon, Prisma } from "@prisma/client";
 import { toNumber } from "@/lib/utils";
 
 export type CouponDiscountItem = {
@@ -48,4 +48,25 @@ export function calculateDiscount(coupon: Coupon | null, subtotal: number, shipp
   const raw = baseSubtotal * (toNumber(coupon.value) / 100);
   const maxDiscount = coupon.maxDiscount ? toNumber(coupon.maxDiscount) : raw;
   return Math.min(raw, maxDiscount, baseSubtotal);
+}
+
+/** Releases a coupon slot once an order becomes terminal. The conditional update makes retries idempotent. */
+export async function releaseCouponUsageForOrder(tx: Prisma.TransactionClient, orderId: string) {
+  const order = await tx.order.findUnique({
+    where: { id: orderId },
+    select: { couponId: true },
+  });
+  if (!order?.couponId) return false;
+
+  const marked = await tx.order.updateMany({
+    where: { id: orderId, couponId: order.couponId, couponUsageReleasedAt: null },
+    data: { couponUsageReleasedAt: new Date() },
+  });
+  if (marked.count !== 1) return false;
+
+  await tx.coupon.updateMany({
+    where: { id: order.couponId, usageCount: { gt: 0 } },
+    data: { usageCount: { decrement: 1 } },
+  });
+  return true;
 }

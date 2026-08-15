@@ -1,6 +1,11 @@
 import { ClientNav } from "@/components/layout/client-nav";
 import { requireUser } from "@/lib/auth/session";
 
+export const metadata = {
+  title: "Minha conta",
+  robots: { index: false, follow: false },
+};
+
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
   await requireUser();
 

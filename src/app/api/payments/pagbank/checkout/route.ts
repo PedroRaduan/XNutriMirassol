@@ -36,7 +36,8 @@ export async function POST(request: Request) {
   if (payment.checkoutUrl) return NextResponse.json({ checkoutId: payment.preferenceId, checkoutUrl: payment.checkoutUrl });
 
   try {
-    if (!parsed.data.accessToken) {
+    const isAuthenticatedOwner = Boolean(order.userId && viewer?.id === order.userId);
+    if (!parsed.data.accessToken && !isAuthenticatedOwner) {
       return NextResponse.json({ error: "Link de pagamento inválido. Abra o pedido novamente." }, { status: 403 });
     }
     const checkout = await createPagBankCheckout(order, parsed.data.accessToken);

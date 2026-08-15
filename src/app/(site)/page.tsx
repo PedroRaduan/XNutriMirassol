@@ -235,7 +235,7 @@ export default async function Home() {
             </div>
             <Link href="/catalogo" className="shrink-0 text-sm font-semibold text-[var(--brand-dark)] hover:underline">Ver todos</Link>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 sm:gap-5 lg:grid-cols-4">
             {featured.map((product, index) => <ProductCard key={product.id} product={product} eager={index < 2} />)}
           </div>
         </section>
@@ -250,7 +250,7 @@ export default async function Home() {
             </div>
             <Link href="/catalogo?sort=discounts" className="text-sm font-semibold text-[var(--brand-dark)] hover:underline">Ver ofertas</Link>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 sm:gap-5 lg:grid-cols-4">
             {discountProducts.map((product) => <ProductCard key={product.id} product={product} />)}
           </div>
         </section>
@@ -286,7 +286,7 @@ export default async function Home() {
             <h2 className="text-xl font-bold tracking-tight md:text-3xl">Mais vendidos</h2>
             <p className="mt-1 text-sm text-[var(--muted)] md:text-base">Os produtos mais comprados na XNutri.</p>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 min-[340px]:grid-cols-2 sm:gap-5 lg:grid-cols-4">
             {bestSellers.map((product) => <ProductCard key={product.id} product={product} />)}
           </div>
         </section>

@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Checkout",
   description: "Finalize seu pedido na XNutri com entrega, retirada em Mirassol, PIX ou cartão pelo PagBank.",
+  robots: { index: false, follow: false },
 };
 
 export default async function CheckoutPage() {

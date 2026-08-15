@@ -40,7 +40,7 @@ export async function Header() {
 
         <form action="/catalogo" className="ml-auto hidden min-w-0 max-w-xl flex-1 items-center gap-2 rounded-md border border-[var(--line)] bg-[#faf9f7] px-3 py-2.5 md:flex lg:ml-8">
           <Search size={18} className="text-[var(--muted)]" />
-          <input name="q" placeholder="Buscar produtos..." className="min-w-0 w-full bg-transparent text-sm outline-none" />
+          <input name="q" aria-label="Buscar produtos" placeholder="Buscar produtos..." className="min-w-0 w-full bg-transparent text-sm outline-none" />
         </form>
 
         <Link href={user ? "/cliente" : "/login"} className="btn btn-secondary hidden shrink-0 px-3 md:inline-flex" aria-label="Minha conta">
@@ -96,7 +96,7 @@ export async function Header() {
       <form action="/catalogo" className="container-x flex pb-2 md:hidden">
         <div className="flex min-h-10 w-full items-center gap-2 rounded-md border border-[var(--line)] bg-[#faf9f7] px-3">
           <Search size={17} className="text-[var(--muted)]" />
-          <input name="q" placeholder="Buscar produtos..." className="min-w-0 w-full bg-transparent text-[16px] outline-none" />
+          <input name="q" aria-label="Buscar produtos" placeholder="Buscar produtos..." className="min-w-0 w-full bg-transparent text-[16px] outline-none" />
         </div>
       </form>
     </header>

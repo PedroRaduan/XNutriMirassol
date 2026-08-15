@@ -1022,7 +1022,7 @@ async function main() {
         bestSeller: product.bestSeller ?? false,
         promotion: product.promotion ?? false,
         weightGrams: product.weightGrams,
-        metaTitle: `${product.name} | XNutri`,
+        metaTitle: product.name,
         metaDescription: product.shortDescription,
         images: {
           create: [

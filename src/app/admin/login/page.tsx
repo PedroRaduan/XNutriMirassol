@@ -10,6 +10,7 @@ import { isDemoModeAllowed } from "@/lib/db/errors";
 export const metadata = {
   title: "Login Admin | XNutri",
   description: "Acesso ao painel administrativo da XNutri.",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminLoginPage({

@@ -22,15 +22,22 @@ test.describe("PDV", () => {
     await expect(page.getByText("Pagamento misto criado. Ajuste os valores se precisar.")).toBeVisible();
     await expect(mixed).toBeDisabled();
 
-    await page.getByRole("button", { name: "Finalizar venda" }).click();
+    const salesBefore = await queryTestDatabase<{ count: string }>(
+      'SELECT COUNT(*)::text AS count FROM "pos_sales"',
+    );
+    const finalize = page.getByRole("button", { name: "Finalizar venda" });
+    await finalize.evaluate((button) => {
+      (button as HTMLButtonElement).click();
+      (button as HTMLButtonElement).click();
+    });
     await expect(page.getByText("Venda finalizada.")).toBeVisible();
     await expect(page.getByRole("link", { name: "Abrir comprovante" })).toBeVisible();
 
-    const sale = await queryTestDatabase<{ count: string }>(
-      'SELECT COUNT(*)::text AS count FROM "pos_sales" WHERE status = $1',
-      ["COMPLETED"],
+    const sale = await queryTestDatabase<{ count: string; idempotent: string }>(
+      'SELECT COUNT(*)::text AS count, COUNT("idempotencyKey")::text AS idempotent FROM "pos_sales"',
     );
-    expect(Number(sale.rows[0].count)).toBeGreaterThanOrEqual(1);
+    expect(Number(sale.rows[0].count) - Number(salesBefore.rows[0].count)).toBe(1);
+    expect(Number(sale.rows[0].idempotent)).toBeGreaterThanOrEqual(1);
   });
 
   test("venda acima do estoque e desconto acima do total são limitados no cliente", async ({ page }) => {

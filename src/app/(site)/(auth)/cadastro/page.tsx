@@ -4,6 +4,7 @@ import { RegisterForm } from "@/components/forms/register-form";
 export const metadata = {
   title: "Cadastro",
   description: "Crie sua conta na XNutri para comprar suplementos e acompanhar pedidos.",
+  robots: { index: false, follow: false },
 };
 
 export default function RegisterPage() {

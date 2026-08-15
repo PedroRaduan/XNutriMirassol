@@ -444,7 +444,7 @@ export function CheckoutForm({
       return;
     }
 
-    const digits = onlyDigits(watchedZipCode ?? "");
+    const digits = currentCepDigits;
 
     if (digits.length !== 8) {
       lastCepLookupRef.current = "";
@@ -456,6 +456,7 @@ export function CheckoutForm({
     }
 
     const controller = new AbortController();
+    let completed = false;
     const handle = window.setTimeout(async () => {
       lastCepLookupRef.current = digits;
       setCepLookup({ status: "loading", message: "Buscando endereço pelo CEP...", digits });
@@ -474,6 +475,7 @@ export function CheckoutForm({
         }
 
         const address = payload as CepApiResponse;
+        completed = true;
         form.setValue("zipCode", address.zipCode, { shouldDirty: true, shouldValidate: true });
         if (address.street) form.setValue("street", address.street, { shouldDirty: true, shouldValidate: true });
         if (address.district) form.setValue("district", address.district, { shouldDirty: true, shouldValidate: true });
@@ -487,7 +489,11 @@ export function CheckoutForm({
           digits,
         });
       } catch (error) {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          if (lastCepLookupRef.current === digits) lastCepLookupRef.current = "";
+          return;
+        }
+        completed = true;
         lastCepLookupRef.current = "";
         setCepLookup({
           status: "error",
@@ -500,22 +506,24 @@ export function CheckoutForm({
     return () => {
       controller.abort();
       window.clearTimeout(handle);
+      if (!completed && lastCepLookupRef.current === digits) lastCepLookupRef.current = "";
     };
-  }, [form, shippingType, watchedZipCode]);
+  }, [currentCepDigits, form, shippingType]);
 
   useEffect(() => {
     if (shippingType !== "DELIVERY") return;
 
-    const digits = onlyDigits(watchedZipCode ?? "");
+    const digits = currentCepDigits;
     if (digits.length !== 8) {
       lastShippingQuoteRef.current = "";
       return;
     }
 
-    const requestKey = `${digits}:${shippingQuoteAttempt}`;
+    const requestKey = `${digits}:${subtotal}:${shippingQuoteAttempt}`;
     if (lastShippingQuoteRef.current === requestKey) return;
 
     const controller = new AbortController();
+    let completed = false;
     const handle = window.setTimeout(async () => {
       lastShippingQuoteRef.current = requestKey;
       setShippingQuoteState({ status: "loading", message: "Calculando as melhores opções de frete...", digits });
@@ -538,6 +546,7 @@ export function CheckoutForm({
         }
 
         const quotes = payload?.quotes ?? [];
+        completed = true;
         setShippingQuotes(quotes);
 
         if (quotes.length === 0) {
@@ -560,7 +569,11 @@ export function CheckoutForm({
           digits,
         });
       } catch (error) {
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) {
+          if (lastShippingQuoteRef.current === requestKey) lastShippingQuoteRef.current = "";
+          return;
+        }
+        completed = true;
         setShippingQuotes([]);
         setShippingQuoteState({
           status: "error",
@@ -573,8 +586,9 @@ export function CheckoutForm({
     return () => {
       controller.abort();
       window.clearTimeout(handle);
+      if (!completed && lastShippingQuoteRef.current === requestKey) lastShippingQuoteRef.current = "";
     };
-  }, [clearSelectedShipping, selectedShippingMethodId, shippingQuoteAttempt, shippingType, subtotal, watchedZipCode]);
+  }, [clearSelectedShipping, currentCepDigits, selectedShippingMethodId, shippingQuoteAttempt, shippingType, subtotal]);
 
   useEffect(() => {
     submittingRef.current = false;

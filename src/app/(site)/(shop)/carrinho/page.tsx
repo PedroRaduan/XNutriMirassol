@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Carrinho",
   description: "Revise seus produtos, calcule frete, escolha retirada na loja e siga para o checkout da XNutri.",
+  robots: { index: false, follow: false },
 };
 
 export default async function CartPage() {

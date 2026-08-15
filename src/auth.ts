@@ -5,13 +5,13 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db/prisma";
+import { DUMMY_PASSWORD_HASH } from "@/lib/auth/password";
 import { getGoogleAuthCredentials } from "@/lib/auth/google";
 import { firstEnvironmentValue } from "@/lib/env";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { getClientIp } from "@/lib/security/request";
 import { loginSchema } from "@/lib/validations";
 
-const dummyPasswordHash = "$2b$12$grj3cjj2YFUb0EuKhKTmAOgjgyZZUyrr9DnXJt/TLHEepZDVyedbq";
 const configuredSessionMaxAge = Number(process.env.AUTH_SESSION_MAX_AGE_SECONDS ?? 28_800);
 const sessionMaxAge = Number.isFinite(configuredSessionMaxAge)
   ? Math.min(Math.max(Math.trunc(configuredSessionMaxAge), 900), 86_400)
@@ -70,7 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
 
         if (!user?.passwordHash) {
-          await bcrypt.compare(parsed.data.password, dummyPasswordHash);
+          await bcrypt.compare(parsed.data.password, DUMMY_PASSWORD_HASH);
           return null;
         }
 

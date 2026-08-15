@@ -457,6 +457,7 @@ model Order {
   notes                   String?
   paidAt                  DateTime?
   canceledAt              DateTime?
+  couponUsageReleasedAt   DateTime?
   createdAt               DateTime     @default(now())
   updatedAt               DateTime     @updatedAt
 
@@ -758,6 +759,7 @@ model POSSale {
   paymentStatus      POSPaymentStatus @default(PAID)
   cancellationReason String?
   receiptToken       String           @unique
+  idempotencyKey     String?          @unique @db.VarChar(64)
   fiscalStatus       String           @default("NOT_REQUESTED")
   fiscalProvider     String?
   fiscalPayload      Json?
