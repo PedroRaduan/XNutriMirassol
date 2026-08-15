@@ -16,6 +16,7 @@ import { marginPercent, roundMoney } from "@/lib/finance/calculations";
 import { getFinancialSettings } from "@/lib/finance/settings";
 import { validateAddressAgainstCep, validateCep } from "@/lib/shipping/cep";
 import { calculateShippingMethodPrice, supportsDeliveryAddress } from "@/lib/shipping/quote";
+import { releaseExpiredOrders } from "@/lib/ecommerce/expired-orders";
 
 function formString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -41,6 +42,11 @@ type DeliveryAddress = {
 
 export async function createOrderFromCheckout(formData: FormData) {
   const user = await getCurrentUser();
+  try {
+    await releaseExpiredOrders({ batchSize: 50, source: "checkout" });
+  } catch (error) {
+    if (!(isDatabaseUnavailable(error) && isDemoModeAllowed())) throw error;
+  }
   const cart = await getCartForDisplay();
   const financialSettings = await getFinancialSettings();
 

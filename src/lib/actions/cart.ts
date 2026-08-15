@@ -20,6 +20,7 @@ import { prisma } from "@/lib/db/prisma";
 import { cartItemSchema, couponSchema } from "@/lib/validations";
 import { quoteShipping } from "@/lib/shipping/quote";
 import { toNumber } from "@/lib/utils";
+import { releaseExpiredOrders } from "@/lib/ecommerce/expired-orders";
 
 export type CouponActionState = {
   ok: boolean;
@@ -89,6 +90,12 @@ async function performAddToCart(formData: FormData) {
 
   if (!parsed.success) {
     throw new Error("Produto inválido.");
+  }
+
+  try {
+    await releaseExpiredOrders({ batchSize: 20, source: "cart" });
+  } catch (error) {
+    if (!(isDatabaseUnavailable(error) && isDemoModeAllowed())) throw error;
   }
 
   if (parsed.data.productId.startsWith("fallback-")) {
@@ -217,6 +224,11 @@ async function performUpdateCartItem(formData: FormData) {
 
   if (!cartId || !itemId || !parsedQuantity.success) {
     throw new Error("Item do carrinho inválido.");
+  }
+  try {
+    await releaseExpiredOrders({ batchSize: 20, source: "cart" });
+  } catch (error) {
+    if (!(isDatabaseUnavailable(error) && isDemoModeAllowed())) throw error;
   }
   const quantity = parsedQuantity.data;
 

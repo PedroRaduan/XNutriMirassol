@@ -15,7 +15,7 @@ Conferência de código, banco isolado e testes locais realizada em 15/08/2026. 
 - Admin com produtos, categorias, estoque, cupons, pedidos, clientes, banners, entregas, financeiro, relatórios e auditoria.
 - PDV com caixa, vendas, pagamentos, comprovante e movimentação de estoque.
 - Prisma/PostgreSQL, migrations e conexão serverless com URL pooler.
-- Reserva de estoque durante pagamento, liberação por cron e baixa idempotente.
+- Reserva de estoque durante pagamento, liberação oportunista no carrinho/checkout, cron diário de segurança e baixa idempotente.
 - Checkout hospedado PagBank e webhook com validação de assinatura, valor, moeda e idempotência.
 - Retomada do pagamento para cliente autenticado ou visitante com token opaco; URL de retorno formada sem parâmetros duplicados.
 - Limite de cupom por cliente, liberação idempotente ao cancelar/expirar e trava transacional contra concorrência.
@@ -491,7 +491,7 @@ Sem estoque: não aparece nas vitrines principais, fica no fim da busca e mostra
 - Pagamento aprovado consome reserva e quantidade.
 - Cancelamento/expiração libera reserva.
 - Webhook repetido não baixa de novo.
-- Cron cancela pendência antiga e libera estoque.
+- A reserva vence após 30 minutos. Carrinho/checkout limpam pendências vencidas durante o uso normal; o cron diário funciona como garantia adicional.
 
 Teste o último item em dois navegadores.
 
@@ -531,7 +531,7 @@ E2E usa `xnutri_test`; nunca coloque Production em `TEST_DATABASE_URL`.
 
 Última evidência detalhada, com data, quantidade e limitações, está em `docs/AUDITORIA_COMPLETA_2026-08-15.md`. Não substitua a validação do Preview e dos serviços externos por resultados locais.
 
-Na rodada de 15/08/2026: audit com 0 vulnerabilidades conhecidas, Prisma/tipos/lint/build aprovados, 45/45 testes unitários/componentes e 33/33 execuções E2E aprovadas. Depois do último endurecimento do webhook, a suíte focal da loja também passou 9/9.
+Na rodada de 15/08/2026: audit com 0 vulnerabilidades conhecidas, Prisma/tipos/lint/build aprovados, 45/45 testes unitários/componentes e 33/33 execuções E2E aprovadas. Depois dos ajustes finais de webhook e Vercel Hobby, a suíte focal da loja passou 10/10.
 
 ### Loja
 
@@ -598,7 +598,7 @@ Não continue se aparecer `.env.local`, dump, chave ou arquivo desconhecido.
 5. Confira PagBank, pedido, estoque e auditoria.
 6. Monitore 5xx/webhook.
 
-O `vercel.json` usa `npm ci`, `npm run vercel-build` e cron de 10 minutos. Se o plano não aceitar a frequência, ajuste cron e prazo de reserva juntos.
+O `vercel.json` usa `npm ci`, `npm run vercel-build` e um cron diário às `06:00 UTC` (`0 6 * * *`), aceito no Hobby. Nesse plano a Vercel pode iniciar o cron em qualquer momento dentro dessa hora. A expiração comercial continua em 30 minutos porque carrinho e checkout executam limpeza oportunista; o cron diário é apenas a garantia para períodos sem tráfego. Não volte para `*/10 * * * *` sem mudar para o plano Pro.
 
 Rollback de código: Vercel > Deployments > anterior > Promote/Rollback. Banco exige migration/backup, nunca rollback cego.
 
@@ -637,7 +637,7 @@ Nunca registre senha, cookie, token, connection string, cartão ou CVV.
 | CEP/frete falha | Confira CEP, APIs, método ativo e cidades. |
 | Webhook PagBank `401` | Confira autenticidade/token e corpo bruto. |
 | Pagamento não atualiza | Confira ambiente, token, URL, referência, moeda/valor e logs. |
-| Estoque fica reservado | Confira Cron, `CRON_SECRET` e logs. |
+| Estoque fica reservado | Faça uma mutação de carrinho/checkout, confira o cron diário, `CRON_SECRET` e os eventos `order.reservation.expired`. |
 | E2E `ECONNREFUSED 5432` | Abra Docker e `docker compose up -d`. |
 | Site usa localhost | Corrija as três URLs HTTPS e faça Redeploy. |
 
@@ -661,7 +661,7 @@ npm run db:status
 - [ ] Cloudinary aprovado.
 - [ ] PagBank Sandbox/webhook/idempotência aprovados.
 - [ ] Compra real pequena aprovada em Production.
-- [ ] Cron libera reserva.
+- [ ] Limpeza no carrinho/checkout e cron diário liberam reservas vencidas.
 - [ ] Audit, Prisma, tipos, lint, unitários, E2E e build aprovados.
 - [ ] Mobile 360 px, tablet e desktop aprovados.
 - [ ] Preview aprovado antes de Production.

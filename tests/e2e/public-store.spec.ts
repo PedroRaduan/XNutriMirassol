@@ -244,6 +244,27 @@ test.describe("loja pública", () => {
     });
   });
 
+  test("plano Hobby libera reserva vencida ao próximo uso do carrinho", async ({ page }) => {
+    const orderNumber = await createPendingPickupOrder(page, "limpeza-oportunista.qa@xnutri.test");
+    await queryTestDatabase(
+      'UPDATE "orders" SET "createdAt" = NOW() - INTERVAL \'40 minutes\' WHERE "orderNumber" = $1',
+      [orderNumber],
+    );
+
+    await addMainProductToCart(page);
+
+    const state = await queryTestDatabase<{ status: string; releases: string }>(
+      `SELECT orders.status,
+              COUNT(movements.id) FILTER (WHERE movements.type = 'RELEASE')::text AS releases
+       FROM "orders" orders
+       LEFT JOIN "inventory_movements" movements ON movements."orderId" = orders.id
+       WHERE orders."orderNumber" = $1
+       GROUP BY orders.status`,
+      [orderNumber],
+    );
+    expect(state.rows[0]).toEqual({ status: "CANCELED", releases: "1" });
+  });
+
   test("webhook PagBank rejeita fraude, confirma uma vez e ignora regressão", async ({ page }) => {
     const orderNumber = await createPendingPickupOrder(page, "webhook.qa@xnutri.test");
     const order = await queryTestDatabase<{ totalCents: number }>(

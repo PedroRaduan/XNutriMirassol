@@ -42,7 +42,7 @@ O proxy faz bloqueio inicial, mas layouts, APIs e Server Actions repetem autoriz
 | `/api/admin/uploads/cloudinary` | Administrativa | Permissão no servidor, origem, MIME/magic bytes e 4 MB |
 | `/api/payments/pagbank/checkout` | Dono/visitante | Proprietário autenticado ou token opaco, origem e rate limit |
 | `/api/payments/pagbank/webhook` | Webhook | Corpo bruto, assinatura, referência, cobrança, valor, moeda e idempotência |
-| `/api/cron/release-expired-orders` | Interna | `CRON_SECRET`, cancelamento/liberação idempotentes |
+| `/api/cron/release-expired-orders` | Interna | `CRON_SECRET`, execução diária no Hobby e cancelamento/liberação idempotentes |
 | `/api/payments/mercado-pago/*` | Obsoleta | Retorna `410`, sem criar novos pagamentos |
 
 ## 3. Vulnerabilidades e bugs
@@ -60,6 +60,7 @@ O proxy faz bloqueio inicial, mas layouts, APIs e Server Actions repetem autoriz
 | Média | Checkout | Formatação automática do CEP cancelava a própria cotação e deixava loading infinito | Dependência estável pelo CEP numérico, chave inclui subtotal e controle de abort | Corrigido/testado componente + E2E |
 | Média | Admin local | Cookie demo antigo tentava apagar cookie durante render e derrubava `/admin` | Cookie inválido passou a ser ignorado sem mutação em Server Component | Corrigido/testado manualmente |
 | Média | Produção | Validador aceitava alguns placeholders como se fossem reais | Bloqueio adicional para banco, domínio e PagBank fictícios | Corrigido/testado por comando sintético |
+| Média | Vercel Hobby/estoque | Cron a cada 10 minutos bloqueava o deploy no Hobby; trocar apenas para diário prenderia estoque | Cron diário às 06:00 UTC e limpeza oportunista em carrinho/checkout, mantendo expiração de 30 minutos | Corrigido/testado E2E |
 | Média | Dependências | `nanoid` transitivo vulnerável | Atualização para 5.1.16; `npm audit` zerado | Corrigido/testado |
 | Baixa | Imagens | URL externa quebrada deixava card visualmente quebrado | Allowlist HTTPS e fallback acessível no erro | Corrigido/testado componente e navegador |
 | Baixa | Mobile | Cards muito estreitos e WhatsApp podiam disputar espaço abaixo de 380 px | Uma coluna no menor breakpoint e botão flutuante oculto nessa faixa | Corrigido/testado E2E/navegador |
@@ -118,13 +119,13 @@ Larguras verificadas manualmente no navegador: 320, 360, 375, 390, 430, 768, 102
 | `npm run lint` | Aprovado |
 | `npm run test` | 13 arquivos, 45 testes aprovados |
 | `npm run test:e2e` | 33 cenários aprovados em 2,1 min; banco `xnutri_test` |
-| Playwright focal da loja após hardening final | 9/9 cenários aprovados em 43,2 s |
+| Playwright focal após hardening e adaptação ao Hobby | 10/10 cenários aprovados em 44,9 s |
 | `npm run build` | Aprovado; Next.js 16.2.12 gerou 24 páginas estáticas e todas as rotas dinâmicas |
 | `npm run production:check` com valores sintéticos seguros | Aprovado sem expor valores; não valida o painel remoto |
 | Scanner defensivo de segredos | `.env.local` ignorado; 0 arquivo de chave; 0 padrão de segredo de alto risco rastreado |
 | Histórico Git, sem imprimir valores | URLs encontradas foram classificadas como exemplos/local; 0 commit classificado como credencial real pelo padrão seguro |
 
-Cobertura E2E: loja, busca, produto, esgotado, carrinho/quantidade/persistência, cupom, CEP/frete, checkout/duplo clique, pedido, cron, webhook falso/divergente/repetido/fora de ordem, retomada PagBank, login, RBAC, API sem sessão, admin CRUD/auditoria, PDV/pagamento misto/idempotência e responsividade.
+Cobertura E2E: loja, busca, produto, esgotado, carrinho/quantidade/persistência, cupom, CEP/frete, checkout/duplo clique, pedido, cron diário/limpeza oportunista, webhook falso/divergente/repetido/fora de ordem, retomada PagBank, login, RBAC, API sem sessão, admin CRUD/auditoria, PDV/pagamento misto/idempotência e responsividade.
 
 ### Não foi possível validar neste ambiente
 
