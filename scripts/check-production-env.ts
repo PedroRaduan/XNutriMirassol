@@ -4,8 +4,14 @@ loadEnv({ path: ".env.local", quiet: true });
 loadEnv({ path: ".env", quiet: true });
 
 const strict = process.argv.includes("--strict");
+const isVercelPreview = process.env.VERCEL_ENV === "preview";
 const errors: string[] = [];
 const warnings: string[] = [];
+
+function reportRequiredProductionIntegration(message: string) {
+  if (isVercelPreview) warnings.push(`${message} O Preview continuará com essa integração desativada.`);
+  else errors.push(message);
+}
 
 function firstValue(...values: Array<string | undefined>) {
   return values.find((value) => value?.trim())?.trim();
@@ -108,7 +114,9 @@ if (!authSecret) {
 
 const cronSecret = process.env.CRON_SECRET?.trim();
 if (!cronSecret) {
-  errors.push("CRON_SECRET não configurada. Ela é necessária para liberar reservas de estoque expiradas na Vercel.");
+  reportRequiredProductionIntegration(
+    "CRON_SECRET não configurada. Ela é necessária para liberar reservas de estoque expiradas na Vercel.",
+  );
 } else if (cronSecret.length < 32) {
   errors.push("CRON_SECRET deve ter pelo menos 32 caracteres aleatórios.");
 }
@@ -132,7 +140,9 @@ if (pagBankEnvironment === "production" && process.env.PAGBANK_TOKEN?.toLowerCas
 }
 
 if (!process.env.PAGBANK_TOKEN?.trim()) {
-  errors.push("PAGBANK_TOKEN não configurada. O checkout online não pode ser publicado sem ela.");
+  reportRequiredProductionIntegration(
+    "PAGBANK_TOKEN não configurada. O checkout online não pode ser publicado em produção sem ela.",
+  );
 } else if (isPlaceholderSecret(process.env.PAGBANK_TOKEN)) {
   errors.push("PAGBANK_TOKEN ainda contém um valor de exemplo.");
 }

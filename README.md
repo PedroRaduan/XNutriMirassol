@@ -6,6 +6,8 @@ E-commerce de suplementos e moda fitness, com loja pública, área do cliente, p
 
 Use somente [GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL.md](GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL.md). Ele começa pelo que ainda falta e reúne instalação, banco, Vercel, autenticação, PagBank, Cloudinary, Google, frete, admin, PDV, segurança, testes, operação e publicação.
 
+Se você está começando, inicie pela seção **0 — Como usar este guia se você está começando**. Ela explica a diferença entre terminal, arquivos, Docker, Neon, Preview e Production antes dos comandos.
+
 Evidências, correções, riscos residuais e limitações da revisão mais recente estão em [docs/AUDITORIA_COMPLETA_2026-08-15.md](docs/AUDITORIA_COMPLETA_2026-08-15.md).
 
 ## Comandos principais
