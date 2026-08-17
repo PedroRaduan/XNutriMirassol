@@ -66,7 +66,7 @@ Se você ainda não possui contas externas, faça primeiro as seções locais. A
 
 ## 1. O que falta fazer agora
 
-Última conferência prática: **16/08/2026**. O código, o banco isolado de testes, a conta Vercel, o projeto Neon, o Cloudinary e a configuração Google foram verificados. Nenhum valor secreto foi copiado para este documento.
+Última conferência prática: **16/08/2026**. O código, o banco isolado de testes, a conta Vercel, o projeto Neon, o Cloudinary e a configuração Google foram verificados. Também foi criado e validado um Preview real da Vercel com banco Neon isolado e dados fictícios. Nenhum valor secreto foi copiado para este documento.
 
 ### Situação atual comprovada
 
@@ -74,10 +74,12 @@ Se você ainda não possui contas externas, faça primeiro as seções locais. A
 - O último deploy de Production falhou antes do build porque faltavam `CRON_SECRET` e `PAGBANK_TOKEN`.
 - A versão antiga que ainda recebe o domínio da Vercel retorna `500/503` porque usava credenciais antigas do Neon (`P1000`). `DATABASE_URL` e `DIRECT_URL` já foram substituídas na configuração de Production, mas a correção só entra em vigor em um novo deploy.
 - `CRON_SECRET` e as credenciais já existentes do Cloudinary foram configuradas em Production. A conexão com o Cloudinary respondeu com sucesso.
-- O Neon está acessível e possui dados, porém existem **seis migrations não aplicadas**. Elas foram revisadas e não apagam tabelas nem registros; ainda precisam ser aplicadas com `npm run db:deploy` após backup/confirmação.
-- O Google Cloud já possui um cliente OAuth chamado XNutri. O callback ainda precisa incluir o domínio real da Vercel e um novo secret precisa ser armazenado na Vercel, pois o secret antigo não pode mais ser visualizado.
+- O Neon Production está acessível e possui dados. Foi criada uma branch temporária de segurança antes da atualização do schema, com exclusão automática após sete dias. Isso é um ponto de restauração emergencial, mas **não substitui** backup automático nem um teste periódico de restauração.
+- As **seis migrations que estavam pendentes em Production foram aplicadas em 16/08/2026**. O comando `npm run db:status` confirmou as 12 migrations do projeto e o schema atualizado. Não foi executado seed nem reset em Production.
+- Foi criada uma branch Neon `preview` e, dentro dela, o banco vazio `xnutri_preview`. Ele não contém dados reais de clientes, recebeu as migrations do projeto e foi populado apenas com o seed fictício de homologação.
+- As variáveis isoladas de Preview foram configuradas na Vercel. O Preview concluiu o build, `/api/health` respondeu `200` com o banco conectado e as páginas públicas principais responderam `200`; `/admin` sem sessão respondeu com redirecionamento, como esperado.
+- O Google Cloud já possui um cliente OAuth chamado XNutri. Os callbacks HTTPS da URL principal e da branch estável de Preview foram salvos, um novo secret foi criado sem ir para o Git e `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` foram armazenados como variáveis sensíveis de Preview e Production. O Redeploy do Preview ficou `Ready` e `/api/auth/providers` confirmou o provider Google. Ainda falta concluir um login humano real antes de desativar o secret antigo.
 - O portal PagBank não estava autenticado no navegador. `PAGBANK_TOKEN` continua pendente e impede corretamente um deploy novo de Production.
-- Preview ainda não possui variáveis. Crie uma branch Neon separada antes de preencher `DATABASE_URL` e `DIRECT_URL` de Preview.
 - Validação local de 16/08/2026: `npm audit` com 0 vulnerabilidades, Prisma válido, TypeScript e ESLint aprovados, 45/45 testes unitários/componentes, 34/34 E2E e build Next.js aprovado.
 
 ### Já está pronto no código
@@ -101,19 +103,16 @@ Se você ainda não possui contas externas, faça primeiro as seções locais. A
 
 ### Obrigatório antes de publicar para clientes
 
-1. Fazer backup do Neon e aplicar as seis migrations pendentes com `npm run db:deploy`.
-2. Rotacionar a senha do Neon, pois uma connection string real já foi compartilhada fora do painel seguro. Depois, atualizar `DATABASE_URL` e `DIRECT_URL` localmente e na Vercel.
-3. Criar um banco/branch Neon separado para Preview. Preview não deve usar o banco de Production.
-4. Configurar todas as variáveis de Preview e confirmar que elas não apontam para Production.
-5. Entrar no Portal do Desenvolvedor PagBank, obter a credencial Sandbox e configurar `PAGBANK_ENVIRONMENT=sandbox` e `PAGBANK_TOKEN` somente no Preview.
-6. Validar pagamento e webhook no PagBank Sandbox; depois obter/configurar credencial de Production.
-7. Corrigir o callback Google, criar novo secret do cliente e configurar `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` na Vercel.
-8. Fazer um Preview Deployment e testar loja, admin, PDV, checkout, estoque, upload e PagBank.
-9. Confirmar domínio final e deixar `NEXT_PUBLIC_APP_URL`, `AUTH_URL` e `NEXTAUTH_URL` iguais ao domínio HTTPS.
-10. Cadastrar/revisar produtos, imagens, endereço, horários, fretes, retirada e dados reais da loja.
-11. Promover para Production somente depois do Preview aprovado; conferir `/api/health` e fazer uma compra pequena controlada.
-10. Ativar backup automático no Neon e executar pelo menos um teste de restauração em ambiente separado.
-11. Ativar MFA nas contas Vercel, GitHub, Neon, PagBank, Cloudinary e Google.
+1. Rotacionar a senha do Neon, pois uma connection string real já foi compartilhada fora do painel seguro. Depois, atualizar `DATABASE_URL` e `DIRECT_URL` localmente e na Vercel.
+2. Fazer um login real com **Continuar com Google** no Preview; somente depois, desativar e excluir o secret OAuth antigo.
+3. Entrar pessoalmente no Portal do Desenvolvedor PagBank, obter a credencial Sandbox e configurar `PAGBANK_ENVIRONMENT=sandbox` e `PAGBANK_TOKEN` somente no Preview.
+4. Validar pagamento e webhook no PagBank Sandbox; depois obter/configurar a credencial de Production.
+5. Finalizar os testes manuais autenticados do Preview: dono fictício, admin, PDV, estoque e upload. Carrinho, persistência de quantidade, retirada e mensagens de validação do checkout já foram conferidos no Preview.
+6. Confirmar o domínio final e deixar `NEXT_PUBLIC_APP_URL`, `AUTH_URL` e `NEXTAUTH_URL` iguais ao domínio HTTPS.
+7. Cadastrar/revisar produtos, imagens, endereço, horários, fretes, retirada e dados reais da loja.
+8. Ativar backup automático no Neon e executar pelo menos um teste de restauração em ambiente separado.
+9. Ativar MFA nas contas Vercel, GitHub, Neon, PagBank, Cloudinary e Google.
+10. Promover para Production somente depois do Preview aprovado e do `PAGBANK_TOKEN` de Production configurado; conferir `/api/health` e fazer uma compra pequena controlada.
 
 ### Opcional ou melhoria posterior
 
@@ -413,6 +412,8 @@ Pense no banco como a planilha principal da loja. A Vercel executa o site, mas n
 4. Copie cada URL sem publicar. Em geral elas terminam com `sslmode=require`; o projeto aceita essa forma, mas recomenda `sslmode=verify-full` quando o painel oferecer.
 5. Teste primeiro localmente com o banco Preview, nunca com o banco de clientes.
 
+**Estado deste projeto em 16/08/2026:** esses cinco passos já foram realizados. A branch `preview` possui o banco isolado `xnutri_preview`, todas as migrations e somente dados fictícios. Não recrie esse banco nem troque suas URLs pelas de Production. Foi criada também uma branch temporária antes das migrations de Production; ela é uma proteção adicional por sete dias, não um substituto para backup automático e restore testado.
+
 ### O que é uma migration
 
 Migration é uma mudança versionada no formato do banco, como adicionar uma coluna para idempotência. O comando seguro em Preview/Production é:
@@ -454,7 +455,7 @@ npm run db:status
 
 O deploy executa `production:check`, `prisma generate`, `prisma migrate deploy` e `next build`.
 
-Isso significa que o build da Vercel bloqueia uma publicação com banco/Auth/PagBank incompletos e aplica migrations pendentes. Não rode `npm run vercel-build` apontando acidentalmente para o banco Production no seu computador: para desenvolvimento use `npm run build`; migrations Production devem acontecer pelo deploy controlado após backup.
+Isso significa que o build da Vercel aplica migrations pendentes. Em **Production**, ele também bloqueia a publicação quando banco, Auth, Cron ou PagBank estão incompletos. Em **Preview**, integrações externas opcionais ainda ausentes são avisadas sem impedir o build, para permitir homologação parcial. Não rode `npm run vercel-build` apontando acidentalmente para o banco Production no seu computador: para desenvolvimento use `npm run build`; migrations Production devem acontecer pelo deploy controlado após backup.
 
 Antes de migration em Production: backup, teste em Preview, revisão do SQL e plano de rollback. Nunca use `prisma migrate reset`, `db push --force-reset` ou seed em Production.
 
@@ -483,7 +484,7 @@ A Vercel é onde o site ficará publicado. O banco, PagBank e Cloudinary continu
 7. Para começar, marque **Preview** com banco Preview e PagBank Sandbox.
 8. Faça o primeiro deploy e abra a URL `.vercel.app` gerada.
 
-O primeiro deploy pode falhar propositalmente se faltar banco, `AUTH_SECRET`, `CRON_SECRET` ou `PAGBANK_TOKEN`. Isso significa que a proteção de produção funcionou; configure a variável indicada e faça Redeploy.
+Um deploy de **Production** falha propositalmente se faltar banco, `AUTH_SECRET`, `CRON_SECRET` ou `PAGBANK_TOKEN`. Em **Preview**, banco e `AUTH_SECRET` continuam obrigatórios, mas integrações externas ainda não configuradas geram aviso para permitir a homologação parcial. Um Preview sem `PAGBANK_TOKEN` não está apto a testar nem aprovar pagamentos; configure a variável e faça Redeploy antes desse teste.
 
 ### Adicionar variáveis pelo painel
 
@@ -541,7 +542,7 @@ O primeiro resultado será o `AUTH_SECRET`; o segundo será o `CRON_SECRET`. Cop
 
 ### Conferência remota obrigatória
 
-O código não consegue provar quais valores estão hoje no painel remoto. Confira em **Settings > Environments > Production** e em **Preview**. No histórico do projeto, banco e Auth já haviam sido adicionados; trate isso como informação a reconfirmar, não como validação atual.
+Durante a conferência de 16/08/2026, as variáveis essenciais de banco/Auth/Cron/Cloudinary do Preview foram verificadas no painel e o banco isolado respondeu em `/api/health`. As URLs de banco e o `CRON_SECRET` de Production também foram atualizados, mas só serão usados em um novo deploy. Mesmo assim, confira novamente em **Settings > Environments > Production** e em **Preview** antes de cada publicação: uma variável pode ser alterada depois desta documentação.
 
 Confirme especialmente:
 
@@ -554,6 +555,8 @@ Confirme especialmente:
 
 Para Preview sem domínio estável, use a URL `.vercel.app` mostrada no deployment e configure as URLs correspondentes quando o projeto exigir domínio público. Para Google em Preview, cadastre o callback exato. Nunca use banco Production no Preview.
 
+**Pendências confirmadas nesta conferência:** `PAGBANK_TOKEN` ainda não existe porque o Portal do Desenvolvedor exige login pessoal do responsável. O Google OAuth já possui callbacks, novo secret, variáveis na Vercel e Redeploy validado; resta apenas o login humano real e, depois dele, a remoção do secret antigo. Não promova o Preview para Production enquanto PagBank e esse login não tiverem sido validados.
+
 ## 9. PagBank
 
 Novos pagamentos usam PagBank. As rotas antigas de Mercado Pago retornam `410` para impedir uso acidental.
@@ -565,7 +568,7 @@ O cliente paga em uma página hospedada pelo PagBank; o navegador não envia car
 1. Crie/abra uma aplicação PagBank e escolha o ambiente Sandbox.
 2. Copie o token Sandbox para um local privado; nunca o coloque no código.
 3. Configure `PAGBANK_ENVIRONMENT=sandbox` e `PAGBANK_TOKEN` no ambiente Preview da Vercel.
-2. Configure no Preview:
+4. Configure no Preview:
 
 ```env
 PAGBANK_ENVIRONMENT=sandbox
@@ -573,16 +576,16 @@ PAGBANK_TOKEN=TOKEN_SANDBOX
 PAGBANK_WEBHOOK_TOKEN=SEGREDO_SEPARADO_SE_EXISTIR
 ```
 
-3. Publique Preview.
-4. Endpoint do webhook:
+5. Publique Preview.
+6. Endpoint do webhook:
 
 ```text
 https://SEU-DOMINIO/api/payments/pagbank/webhook
 ```
 
-5. Faça pedido fictício e pague com dados Sandbox.
-6. Confirme pagamento, pedido, estoque e auditoria.
-7. Reenvie o mesmo evento e confirme que estoque não baixa duas vezes.
+7. Faça pedido fictício e pague com dados Sandbox.
+8. Confirme pagamento, pedido, estoque e auditoria.
+9. Reenvie o mesmo evento e confirme que estoque não baixa duas vezes.
 
 Se o PagBank pedir um token/segredo de autenticidade, coloque-o em `PAGBANK_WEBHOOK_TOKEN`. Se ele não fornecer um segredo separado, o código usa `PAGBANK_TOKEN` como fallback. O endpoint exige o cabeçalho `x-authenticity-token`.
 
@@ -648,6 +651,8 @@ https://SEU-DOMINIO.com.br/api/auth/callback/google
 7. Teste `/login` > **Continuar com Google**.
 
 Somente e-mail Google verificado é aceito. Conta local existente com o mesmo e-mail não é vinculada silenciosamente; entre por senha até existir fluxo explícito de vínculo.
+
+**Estado em 16/08/2026:** os callbacks da URL principal e da branch estável de Preview foram salvos, o novo secret está protegido nas variáveis de Preview e Production, o Redeploy terminou em `Ready` e o endpoint do Auth.js anunciou o provider Google com o callback correto. Falta apenas um login humano real. Depois que ele funcionar, desative e exclua o secret antigo no Google Cloud.
 
 ## 12. Frete, CEP e retirada
 
@@ -845,6 +850,8 @@ Não continue se aparecer `.env.local`, dump, chave ou arquivo desconhecido.
 4. Teste com dados fictícios.
 5. Valide banco Preview, PagBank Sandbox e Cloudinary.
 
+**Resultado já obtido em 16/08/2026:** a branch `codex/finish-production-setup` gerou um Preview `Ready`; `/api/health`, home, catálogo, carrinho e checkout responderam, e `/admin` bloqueou o visitante sem sessão. O banco usado foi o `xnutri_preview`, com seed fictício. Também foram validados aumento e persistência da quantidade no carrinho, seleção de retirada, frete grátis e mensagens de erro por campo no checkout. O provider Google aparece ativo após o Redeploy. Isso valida infraestrutura e páginas básicas, mas ainda não substitui os testes autenticados do admin/PDV, um login Google humano nem o pagamento/webhook PagBank Sandbox.
+
 Para abrir uma branch pelo terminal:
 
 ```powershell
@@ -905,7 +912,7 @@ Nunca registre senha, cookie, token, connection string, cartão ou CVV.
 | `DATABASE_URL não foi configurada` | Adicione no ambiente correto e faça Redeploy. |
 | `AUTH_SECRET não foi configurada` | Gere o valor pelo comando desta seção, cole somente o resultado em **Value** e faça Redeploy. |
 | `Configuração de produção inválida` | Leia cada linha iniciada por `ERRO:`; o script está dizendo exatamente qual variável falta ou contém exemplo. |
-| `Hobby accounts are limited to daily cron jobs` | Este projeto já usa `0 6 * * *`; confirme que o commit com [vercel.json](../vercel.json) foi enviado e faça um novo deploy. |
+| `Hobby accounts are limited to daily cron jobs` | Este projeto já usa `0 6 * * *`; confirme que o commit com [vercel.json](vercel.json) foi enviado e faça um novo deploy. |
 | `CRON_SECRET não configurada` | Crie segredo diferente do Auth. |
 | `PAGBANK_TOKEN não configurada` | Adicione token compatível com ambiente. |
 | Variável continua ausente | Confira ambiente marcado e gere novo deployment. |
@@ -939,7 +946,10 @@ npm run db:status
 
 ## 19. Checklist antes de vender
 
-- [ ] Neon rotacionado, Preview separado, backup e restore testados.
+- [x] Preview usa branch/banco Neon isolado, com migrations e seed fictício.
+- [x] Branch temporária de segurança criada antes das migrations de Production.
+- [ ] Credencial Neon Production rotacionada; backup automático e restore testados.
+- [x] Seis migrations aplicadas e confirmadas em Production; 12/12 migrations atualizadas.
 - [ ] Variáveis obrigatórias na Vercel e domínio HTTPS correto.
 - [ ] MFA nos provedores e apenas dono com `ADMIN`.
 - [ ] Nenhum segredo/dump no Git.
@@ -951,22 +961,21 @@ npm run db:status
 - [ ] Limpeza no carrinho/checkout e cron diário liberam reservas vencidas.
 - [ ] Audit, Prisma, tipos, lint, unitários, E2E e build aprovados.
 - [ ] Mobile 360 px, tablet e desktop aprovados.
-- [ ] Preview aprovado antes de Production.
+- [x] Preview básico com banco conectado e rotas públicas validado.
+- [ ] Preview completo, incluindo login Google humano, admin/PDV autenticado e PagBank Sandbox, aprovado antes de Production.
 
 ## 20. Ordem curta para terminar
 
 ```text
-1. Fazer backup e aplicar as 6 migrations pendentes no Neon.
-2. Rotacionar a senha do Neon e atualizar as duas URLs sem mostrá-las.
-3. Criar uma branch Neon exclusiva para Preview.
-4. Configurar as variáveis Preview na Vercel.
-5. Corrigir Google OAuth e guardar ID/secret na Vercel.
-6. Entrar no PagBank, configurar Sandbox no Preview e validar webhook.
-7. Publicar e aprovar o Preview.
-8. Configurar o PagBank Production e o domínio definitivo.
-9. Revisar o primeiro ADMIN e os dados reais da loja.
-10. Promover para Production, conferir /api/health e fazer compra controlada.
-11. Rotacionar periodicamente segredos, testar backup/restore e monitorar logs.
+1. Rotacionar a senha do Neon e atualizar as duas URLs sem mostrá-las (as migrations já estão atualizadas).
+2. Fazer um login Google humano no Preview e então remover o secret OAuth antigo.
+3. Entrar pessoalmente no PagBank, configurar Sandbox no Preview e validar pagamento/webhook.
+4. Testar no Preview o ADMIN fictício, PDV, estoque e upload; carrinho e validações básicas do checkout já passaram.
+5. Configurar o PagBank Production e o domínio definitivo.
+6. Revisar o primeiro ADMIN e os dados reais da loja.
+7. Ativar backup automático, testar restore e habilitar MFA nos provedores.
+8. Promover para Production, conferir /api/health e fazer compra controlada.
+9. Rotacionar periodicamente segredos e monitorar logs.
 ```
 
 Os tutoriais antigos contraditórios foram removidos; este é o único passo a passo operacional. Os documentos em `docs/` descrevem arquitetura, regras, testes e auditoria, mas não substituem este guia. Segurança absoluta não existe: mantenha dependências, backups, permissões, logs e integrações sob revisão contínua.
