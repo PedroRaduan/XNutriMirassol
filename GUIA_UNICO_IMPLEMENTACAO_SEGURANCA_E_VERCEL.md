@@ -10,14 +10,17 @@ Este é o único tutorial operacional que você precisa seguir daqui para frente
 - Preview da Vercel funcionando.
 - Banco Neon de Preview separado do banco Production.
 - Banco Production com 12/12 migrations aplicadas.
+- Domínio Production restaurado em 17/08/2026, com `/api/health` confirmando o banco conectado.
 - Prisma Client, migrations, build e cron diário configurados.
 - Cloudinary configurado.
 - Google OAuth configurado tecnicamente na Vercel e no Google Cloud.
 - Carrinho, quantidade, CEP, frete, retirada e validações do checkout conferidos.
 - Lint, TypeScript, Prisma e build aprovados.
-- 45/45 testes unitários e 35/35 testes E2E aprovados, incluindo permissões e segurança dos dois PWAs.
+- 50/50 testes unitários aprovados. Na última bateria E2E completa, 37 testes passaram e 2 cenários não aplicáveis foram ignorados, incluindo permissões e segurança dos dois PWAs.
 - PWA privado da Administração preparado para o dono.
 - PWA privado do PDV preparado para a funcionária do caixa.
+
+A versão pública restaurada é a última versão estável da branch `main`. A versão mais recente continua no Preview e só deve ser promovida depois da configuração real do PagBank, pois o build de Production bloqueia corretamente um checkout sem `PAGBANK_TOKEN`.
 
 Não recrie o projeto Vercel, o banco Neon, as migrations, o cliente Google, o Cloudinary ou o seed.
 
@@ -33,7 +36,7 @@ Siga nesta ordem:
 6. Testar os PWAs da Administração e do PDV no Preview.
 7. Ativar MFA e backup.
 8. Aprovar o Preview.
-9. Trocar a credencial Production do Neon imediatamente antes da publicação.
+9. Rotacionar a credencial Production do Neon imediatamente antes da publicação definitiva.
 10. Deixar o Codex configurar PagBank Production, domínio e deployment.
 11. Cadastrar/revisar os dados reais no Production e fazer uma compra controlada.
 12. Instalar novamente os PWAs usando o domínio definitivo.
@@ -92,6 +95,8 @@ Somente depois que o login funcionar:
 ## 5. Trocar a credencial Production do Neon
 
 Uma URL real do Neon já foi compartilhada anteriormente. Por segurança, ela precisa ser rotacionada antes da publicação.
+
+Em 17/08/2026, as URLs válidas que já estavam guardadas no cofre do Neon foram reaplicadas na Vercel e o site Production voltou a conectar normalmente. Isso resolveu o erro `P1000`, mas **não substitui a rotação final da senha**, porque a credencial antiga já apareceu fora do cofre. Faça os passos abaixo somente quando PagBank e Preview estiverem aprovados; depois da rotação será necessário atualizar as duas URLs e gerar outro deployment.
 
 Faça esta etapa imediatamente antes do deployment Production. O banco Preview é separado e não valida a senha do banco Production. Como a loja ainda não foi aberta oficialmente, uma breve interrupção do deployment Production antigo não afeta clientes reais.
 
