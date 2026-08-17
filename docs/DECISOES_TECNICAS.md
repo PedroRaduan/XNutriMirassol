@@ -12,3 +12,4 @@
 - Token de pedido de visitante é opaco e persistido somente como hash.
 - Rate limit em memória é proteção complementar; produção requer Vercel Firewall/Bot Protection ou rate limit distribuído conforme volume.
 - CSP foi mantida compatível com framework e integrações; endurecimento com nonce exige teste de regressão específico.
+- Administração e PDV são PWAs distintos, autenticados e com service workers network-only. Nenhuma página, resposta de API, venda ou dado pessoal é armazenado em cache offline.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LogOut, ReceiptText, Store, WalletCards } from "lucide-react";
 import { POSTerminal } from "@/components/pdv/pos-terminal";
 import { POSCashMovementForm, POSCloseSessionForm, POSOpenSessionForm } from "@/components/pdv/pos-session-forms";
+import { PDVAppInstall } from "@/components/pdv/pdv-app-install";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
 import { logout } from "@/lib/actions/auth";
 import { cancelPOSSaleFromForm } from "@/lib/actions/pos";
@@ -168,39 +169,45 @@ function PDVShell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-[#f4f4f5] pb-24 md:pb-8">
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#101115]/95 text-white backdrop-blur">
-        <div className="container-x flex min-h-16 items-center justify-between gap-3 py-3">
-          <Link href="/pdv" className="inline-flex">
-            <XNutriLogo tone="light" subtitle={false} />
-          </Link>
-          <div className="hidden min-w-0 text-right sm:block">
-            <p className="truncate text-sm font-black">{adminName}</p>
-            <p className="text-xs font-bold uppercase text-white/60">{role}{isDemo ? " demo" : ""}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link className="btn border border-white/15 bg-white/10 px-3 text-white hover:bg-white/15" href="/admin">
-              <Store size={17} />
-              Admin
+    <>
+      <link rel="manifest" href="/pdv/manifest.webmanifest" crossOrigin="use-credentials" />
+      <main className="min-h-screen bg-[#f4f4f5] pb-24 md:pb-8">
+        <header className="sticky top-0 z-30 border-b border-white/10 bg-[#101115]/95 text-white backdrop-blur">
+          <div className="container-x flex min-h-16 items-center justify-between gap-3 py-3">
+            <Link href="/pdv" className="inline-flex">
+              <XNutriLogo tone="light" subtitle={false} />
             </Link>
-            <form action={logout}>
-              <button className="btn border border-white/15 bg-white/10 px-3 text-white hover:bg-white/15">
-                <LogOut size={17} />
-                Sair
-              </button>
-            </form>
+            <div className="hidden min-w-0 text-right sm:block">
+              <p className="truncate text-sm font-black">{adminName}</p>
+              <p className="text-xs font-bold uppercase text-white/60">{role}{isDemo ? " demo" : ""}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {role === "ADMIN" ? (
+                <Link className="btn border border-white/15 bg-white/10 px-3 text-white hover:bg-white/15" href="/admin">
+                  <Store size={17} />
+                  Admin
+                </Link>
+              ) : null}
+              <form action={logout}>
+                <button className="btn border border-white/15 bg-white/10 px-3 text-white hover:bg-white/15">
+                  <LogOut size={17} />
+                  Sair
+                </button>
+              </form>
+            </div>
           </div>
+        </header>
+        <div className="container-x py-5">
+          {!isDemo ? <PDVAppInstall /> : null}
+          {isDemo && (
+            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-800">
+              Modo de treinamento: a tela funciona para simular vendas, mas vendas, estoque e relatórios reais só são gravados quando o PostgreSQL estiver ligado e migrado.
+            </div>
+          )}
+          {children}
         </div>
-      </header>
-      <div className="container-x py-5">
-        {isDemo && (
-          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-800">
-            Modo de treinamento: a tela funciona para simular vendas, mas vendas, estoque e relatórios reais só são gravados quando o PostgreSQL estiver ligado e migrado.
-          </div>
-        )}
-        {children}
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
 

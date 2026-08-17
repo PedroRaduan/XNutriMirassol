@@ -66,7 +66,7 @@ export default async function PDVLoginPage({
 
               <div className="mb-5 flex items-center gap-3 rounded-lg bg-[#f6f7f9] p-3 text-sm font-semibold text-[var(--muted)]">
                 <ShieldCheck size={19} className="text-[var(--brand)]" />
-                Acesso reservado para ADMIN, MANAGER e CASHIER.
+                Acesso reservado para o dono (ADMIN) e funcionárias do caixa (CASHIER).
               </div>
 
               <AdminLoginForm callbackUrl={params.callbackUrl?.startsWith("/pdv") ? params.callbackUrl : "/pdv"} submitLabel="Entrar no PDV" />

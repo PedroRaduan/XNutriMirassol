@@ -1,7 +1,6 @@
 /*
- * Administrative PWA service worker. Requests stay network-only:
- * administrative pages, API responses and customer data are never kept in an
- * offline cache.
+ * PDV PWA service worker. Requests stay network-only: sales, customer data,
+ * inventory and API responses are never stored in an offline cache.
  */
 self.addEventListener("install", () => {
   void self.skipWaiting();

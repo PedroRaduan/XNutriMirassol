@@ -8,5 +8,6 @@ Fonte complementar: [guia único](../GUIA_UNICO_IMPLEMENTACAO_SEGURANCA_E_VERCEL
 - **Domínios:** loja pública, conta do cliente, `/admin`, `/pdv`, APIs de CEP/frete/upload/pagamento e Server Actions.
 - **Integrações:** PagBank Checkout hospedado, Cloudinary, Google OAuth e frete configurável.
 - **Estado:** carrinho e dados persistidos no banco/cookies; nenhum fluxo de produção exige disco local ou processo residente.
+- **PWAs privados:** Administração (`/admin`) e PDV (`/pdv`) possuem manifests, ícones e service workers network-only separados. A instalação não armazena dados offline nem substitui autenticação/RBAC.
 
 O browser nunca calcula valores financeiros definitivos. Checkout cria pedido e reserva de estoque em transação; o webhook PagBank assinado conclui o pagamento.

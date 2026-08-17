@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Administração XNutri">
+  <rect width="512" height="512" rx="96" fill="#101115"/>
+  <path d="M76 345 186 150h75L150 345H76Z" fill="#f2382f"/>
+  <path d="M233 345 123 150h76l110 195h-76Z" fill="#f2382f"/>
+  <path d="M306 179c14-18 34-28 59-28 35 0 57 21 57 55 0 12-3 24-8 38l-36 101h-58l34-95c3-8 4-15 4-20 0-12-7-19-19-19-17 0-30 12-38 33l-36 101h-58l69-190h55l-25 24Z" fill="#fff"/>
+  <circle cx="398" cy="398" r="78" fill="#d6332c" stroke="#fff" stroke-width="14"/>
+  <path d="m398 345-49 105h27l10-23h25l10 23h27l-50-105Zm0 45 9 21h-18l9-21Z" fill="#fff"/>
+</svg>

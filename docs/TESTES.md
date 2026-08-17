@@ -12,7 +12,7 @@ npm run test:e2e
 npm run build
 ```
 
-E2E usa `xnutri_test`, nunca produção. Inicie Docker antes de `npm run test:db:reset`. Cobrir carrinho, checkout, token de pedido, estoque concorrente, PagBank sandbox/webhook, administração, PDV e telas mobile. Consulte o guia único para critérios e limitações registradas.
+E2E usa `xnutri_test`, nunca produção. Inicie Docker antes de `npm run test:db:reset`. Cobrir carrinho, checkout, token de pedido, estoque concorrente, PagBank sandbox/webhook, administração, PDV, manifests privados, service workers network-only e telas mobile. Consulte o guia único para critérios e limitações registradas.
 
 ## Evidência mais recente
 

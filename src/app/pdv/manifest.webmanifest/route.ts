@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
-import { getCurrentAdmin } from "@/lib/auth/session";
+import { canAccessAdminModule, getCurrentAdmin } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 /**
- * The manifest is intentionally served only to the store owner. A manifest or
- * a service worker is not an access-control boundary; all admin routes still
- * perform their usual authentication and role checks on the server.
+ * Only authenticated staff with POS permission receives this manifest. The
+ * installed PWA is only a launcher: every PDV page and API remains protected
+ * by server-side authentication and RBAC.
  */
 export async function GET() {
   const admin = await getCurrentAdmin();
   const isDemo = admin && "isDemo" in admin && admin.isDemo;
 
-  if (!admin || isDemo || admin.adminRole !== "ADMIN") {
+  if (!admin || isDemo || !canAccessAdminModule(admin.adminRole, "pos")) {
     return new NextResponse(null, {
       status: 404,
       headers: {
@@ -25,28 +25,40 @@ export async function GET() {
 
   return NextResponse.json(
     {
-      id: "/admin",
-      name: "Administração XNutri",
-      short_name: "XNutri Admin",
-      description: "Painel administrativo privado da XNutri.",
-      start_url: "/admin",
-      scope: "/admin",
+      id: "/pdv",
+      name: "PDV XNutri",
+      short_name: "XNutri PDV",
+      description: "Aplicativo privado do caixa da loja XNutri.",
+      start_url: "/pdv",
+      scope: "/pdv",
       display: "standalone",
       lang: "pt-BR",
-      background_color: "#f5f6f8",
-      theme_color: "#d6332c",
+      background_color: "#101115",
+      theme_color: "#101115",
       icons: [
         {
-          src: "/xnutri-admin-192.png",
+          src: "/xnutri-pdv-192.png",
           sizes: "192x192",
           type: "image/png",
           purpose: "any",
         },
         {
-          src: "/xnutri-admin-512.png",
+          src: "/xnutri-pdv-512.png",
           sizes: "512x512",
           type: "image/png",
           purpose: "any maskable",
+        },
+      ],
+      shortcuts: [
+        {
+          name: "Abrir caixa",
+          short_name: "Caixa",
+          url: "/pdv",
+        },
+        {
+          name: "Relatórios do PDV",
+          short_name: "Relatórios",
+          url: "/pdv/relatorios",
         },
       ],
     },
