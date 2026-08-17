@@ -2,6 +2,18 @@ import { expect, test } from "@playwright/test";
 import { loginBackoffice, queryTestDatabase } from "./helpers";
 
 test.describe("PDV", () => {
+  test("mantém os controles do caixa identificáveis no celular", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await loginBackoffice(page, "pdv", "caixa@xnutri.com.br", "Caixa@12345");
+
+    if (await page.getByRole("heading", { name: "Abrir caixa" }).isVisible()) {
+      await page.getByRole("button", { name: "Abrir caixa" }).click();
+    }
+
+    await expect(page.getByRole("button", { name: "Gerenciar caixa" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Abrir relatórios do PDV" })).toBeVisible();
+  });
+
   test("abre caixa, busca por SKU, bloqueia pagamento misto repetido e finaliza venda", async ({ page }) => {
     await loginBackoffice(page, "pdv", "caixa@xnutri.com.br", "Caixa@12345");
 
@@ -11,7 +23,7 @@ test.describe("PDV", () => {
       await expect(page.getByRole("heading", { name: "Venda presencial" })).toBeVisible();
     }
 
-    const search = page.getByPlaceholder("Escaneie ou digite...");
+    const search = page.getByLabel("Buscar produto, SKU ou código de barras");
     await search.fill("XN-WHEY-ISO-900-1");
     await search.press("Enter");
     await expect(page.getByText(/Whey Protein Isolado XNutri 900g/i).first()).toBeVisible();
@@ -46,7 +58,7 @@ test.describe("PDV", () => {
       await page.getByRole("button", { name: "Abrir caixa" }).click();
     }
 
-    const search = page.getByPlaceholder("Escaneie ou digite...");
+    const search = page.getByLabel("Buscar produto, SKU ou código de barras");
     await search.fill("XN-WHEY-ISO-900-2");
     await search.press("Enter");
     await expect(page.getByText("1 item(ns) na venda")).toBeVisible();

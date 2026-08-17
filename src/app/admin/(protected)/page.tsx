@@ -200,7 +200,7 @@ export default async function AdminDashboardPage() {
       Icon: Store,
     },
     {
-      href: "/admin/produtos",
+      href: "/admin/produtos?new=1",
       title: "Cadastrar produto",
       text: "Adicione suplementos ou moda fitness com preço, imagem e estoque.",
       Icon: Package,
@@ -224,7 +224,7 @@ export default async function AdminDashboardPage() {
       Icon: DollarSign,
     },
     {
-      href: "/admin/cupons",
+      href: "/admin/cupons?new=1",
       title: "Criar desconto",
       text: "Monte cupons para campanhas, boas-vindas e ofertas.",
       Icon: TicketPercent,
@@ -232,8 +232,8 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div>
-      <div className="admin-page-heading mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div className="flex flex-col">
+      <div className="admin-page-heading order-1 mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <span className="admin-eyebrow">Admin XNutri</span>
           <h1 className="mt-3 text-3xl font-black md:text-4xl">Painel da loja</h1>
@@ -245,19 +245,19 @@ export default async function AdminDashboardPage() {
           <Link href={isDemo ? "/admin?demo=1" : "/admin/financeiro"} className="btn btn-secondary">
             Ver análise financeira <ArrowUpRight size={17} />
           </Link>
-          <Link href={isDemo ? "/admin?demo=1" : "/admin/produtos"} className="btn btn-primary">
+          <Link href={isDemo ? "/admin?demo=1" : "/admin/produtos?new=1"} className="btn btn-primary">
             Novo produto <ArrowUpRight size={17} />
           </Link>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="order-3 mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}
       </div>
 
-      <section className="admin-help-card mt-6 p-5">
+      <section className="admin-help-card order-2 p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <span className="text-xs font-black uppercase text-[var(--brand-dark)]">Comece por aqui</span>
@@ -280,7 +280,7 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+      <div className="order-4 mt-6 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
         <section className="surface overflow-hidden">
           <div className="flex items-center justify-between border-b border-[var(--line)] p-5">
             <div>

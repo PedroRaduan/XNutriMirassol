@@ -2,8 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Pencil, Plus, Search } from "lucide-react";
 import { AdminActionForm } from "@/components/admin/admin-action-form";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { AdminSubmitButton, ConfirmSubmitButton } from "@/components/admin/admin-submit";
+import { StatePanel } from "@/components/ui/state-panel";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { calculateSuggestedPrice, calculateUnitFinance } from "@/lib/finance/calculations";
@@ -11,7 +13,7 @@ import { formatCurrency, toNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-type ProductSearchParams = Promise<{ q?: string; status?: string }>;
+type ProductSearchParams = Promise<{ q?: string; status?: string; new?: string }>;
 
 function attributesToText(value: unknown) {
   if (!value || typeof value !== "object") return "tipo=Padrão";
@@ -60,6 +62,7 @@ function ProductForm({
     <AdminActionForm
       actionName="upsertProduct"
       closeDetailsOnSuccess
+      closeDialogOnSuccess={!product}
       resetOnSuccess={!product}
       className="grid gap-4"
     >
@@ -250,26 +253,22 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 
   return (
     <div>
-      <div className="admin-page-heading mb-6">
-        <span className="admin-eyebrow">Catálogo</span>
-        <h1 className="mt-2 text-3xl font-black md:text-4xl">Produtos</h1>
-        <p className="admin-page-copy mt-2 text-sm">Cadastre e edite produtos com imagens, preços, estoque, status, sabores, cores e opções.</p>
-      </div>
-
-      <details className="admin-disclosure surface mb-5 overflow-hidden">
-        <summary className="flex cursor-pointer items-center gap-2 px-4 py-4 font-black text-white bg-[var(--brand)] sm:px-5">
-          <Plus size={18} />
-          Adicionar produto
-          <ChevronDown className="admin-disclosure-chevron ml-auto" size={18} />
-        </summary>
-        <div className="admin-edit-panel border-t border-[var(--line)] p-4 sm:p-6">
-          <div className="mb-5">
-            <h2 className="text-xl font-black">Novo produto</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">Cadastre as informações principais. Depois, adicione sabores, cores ou outras variações.</p>
-          </div>
-          <ProductForm categories={categories} />
+      <div className="admin-page-heading mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="admin-eyebrow">Catálogo</span>
+          <h1 className="mt-2 text-3xl font-black md:text-4xl">Produtos</h1>
+          <p className="admin-page-copy mt-2 text-sm">Cadastre e edite produtos, preços, estoque, imagens e opções.</p>
         </div>
-      </details>
+        <AdminDrawer
+          title="Novo produto"
+          description="Cadastre o essencial agora. O painel fecha automaticamente depois de salvar."
+          triggerLabel="Adicionar produto"
+          defaultOpen={params.new === "1"}
+          size="wide"
+        >
+          <ProductForm categories={categories} />
+        </AdminDrawer>
+      </div>
 
       <form className="surface mb-5 grid gap-3 p-4 md:grid-cols-[1fr_220px_auto]">
         <div className="field flex items-center gap-2">
@@ -282,8 +281,15 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
           <option value="DRAFT">Rascunhos</option>
           <option value="ARCHIVED">Arquivados</option>
         </select>
-        <button className="btn btn-secondary">Filtrar</button>
+        <div className="flex gap-2">
+          {q || status !== "ALL" ? <Link className="btn btn-secondary flex-1 px-3" href="/admin/produtos">Limpar</Link> : null}
+          <button className="btn btn-secondary flex-1">Filtrar</button>
+        </div>
       </form>
+
+      <p className="mb-3 text-sm font-semibold text-[var(--muted)]" aria-live="polite">
+        {products.length} produto(s) encontrado(s)
+      </p>
 
       <section className="grid gap-4">
           {products.map((product, index) => {
@@ -308,7 +314,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
                       {product.promotion && <span className="badge border-transparent bg-[var(--brand)] text-white">Promo</span>}
                       {product.featured && <span className="badge">Destaque</span>}
                     </div>
-                    <p className="mt-1 text-sm text-[var(--muted)]">{product.category.name} · {product.sku}</p>
+                    <p className="mt-1 text-sm text-[var(--muted)]">{product.category?.name ?? "Categoria não informada"} · {product.sku}</p>
                     <p className="mt-2 flex flex-wrap items-center gap-2">
                       <span className={low ? "stock-pill stock-pill-low" : "stock-pill"}>{stock} disponível</span>
                       <span className="text-sm font-black">{formatCurrency(product.price)}</span>
@@ -360,7 +366,11 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
             );
           })}
           {products.length === 0 && (
-            <div className="surface p-8 text-center text-[var(--muted)]">Nenhum produto encontrado.</div>
+            <StatePanel
+              title={q || status !== "ALL" ? "Nenhum produto corresponde aos filtros" : "Nenhum produto cadastrado"}
+              description={q || status !== "ALL" ? "Tente outro nome, código ou status." : "Use o botão Adicionar produto para começar o catálogo."}
+              action={q || status !== "ALL" ? <Link className="btn btn-secondary" href="/admin/produtos">Limpar filtros</Link> : undefined}
+            />
           )}
       </section>
     </div>

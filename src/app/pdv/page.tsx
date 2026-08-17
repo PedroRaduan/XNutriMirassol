@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { LogOut, ReceiptText, Store, WalletCards } from "lucide-react";
+import { LogOut, ReceiptText, Store } from "lucide-react";
 import { POSTerminal } from "@/components/pdv/pos-terminal";
-import { POSCashMovementForm, POSCloseSessionForm, POSOpenSessionForm } from "@/components/pdv/pos-session-forms";
+import { POSOpenSessionForm, POSSessionManager } from "@/components/pdv/pos-session-forms";
 import { PDVAppInstall } from "@/components/pdv/pdv-app-install";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
 import { logout } from "@/lib/actions/auth";
@@ -21,7 +21,7 @@ export default async function PDVPage() {
   if (isDemo) {
     const demoName = admin.name ?? admin.email ?? "Equipe XNutri";
     return (
-      <PDVShell adminName={demoName} role={admin.adminRole} isDemo>
+      <PDVShell adminName={demoName} role={admin.adminRole} isDemo saleMode>
         <POSTerminal sessionId="demo-session" cashierName={demoName} expectedAmount={150} isDemo />
       </PDVShell>
     );
@@ -53,7 +53,7 @@ export default async function PDVPage() {
   const todayProfit = todaySales.reduce((sum, sale) => sum + toNumber(sale.netProfit), 0);
 
   return (
-    <PDVShell adminName={admin.name ?? admin.email ?? "Equipe XNutri"} role={admin.adminRole}>
+    <PDVShell adminName={admin.name ?? admin.email ?? "Equipe XNutri"} role={admin.adminRole} saleMode={Boolean(session)}>
       {!session ? (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <section className="surface overflow-hidden">
@@ -61,7 +61,7 @@ export default async function PDVPage() {
               <p className="text-xs font-black uppercase tracking-[0.16em] text-white/70">Caixa fechado</p>
               <h1 className="mt-2 text-3xl font-black">Abra o caixa para vender</h1>
               <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/78">
-                Toda venda presencial baixa o mesmo estoque usado no site e aparece nos relatorios da empresa.
+                Toda venda presencial baixa o mesmo estoque usado no site e aparece nos relatórios da empresa.
               </p>
             </div>
             <div className="grid gap-4 p-5 sm:grid-cols-3">
@@ -73,40 +73,32 @@ export default async function PDVPage() {
           <POSOpenSessionForm />
         </div>
       ) : (
-        <div className="grid gap-5">
+        <div className="grid gap-5 lg:h-full lg:min-h-0">
           <POSTerminal
             sessionId={session.id}
             cashierName={admin.name ?? admin.email ?? "Equipe XNutri"}
             expectedAmount={toNumber(session.expectedAmount)}
+            sessionTools={
+              <POSSessionManager
+                sessionId={session.id}
+                openedAt={session.openedAt}
+                openingAmount={toNumber(session.openingAmount)}
+                expectedAmount={toNumber(session.expectedAmount)}
+              />
+            }
           />
-
-          <section className="grid gap-4 lg:grid-cols-[1fr_1fr_1.2fr]">
-            <div className="surface p-4">
-              <div className="flex items-center gap-2">
-                <WalletCards size={18} className="text-[var(--brand)]" />
-                <h2 className="text-lg font-black">Caixa aberto</h2>
-              </div>
-              <dl className="mt-3 grid gap-2 text-sm">
-                <div className="flex justify-between"><dt>Abertura</dt><dd className="font-black">{formatDate(session.openedAt)}</dd></div>
-                <div className="flex justify-between"><dt>Valor inicial</dt><dd className="font-black">{formatCurrency(session.openingAmount)}</dd></div>
-                <div className="flex justify-between"><dt>Dinheiro esperado</dt><dd className="font-black text-[var(--brand)]">{formatCurrency(session.expectedAmount)}</dd></div>
-              </dl>
-            </div>
-            <POSCashMovementForm sessionId={session.id} />
-            <POSCloseSessionForm sessionId={session.id} expectedAmount={toNumber(session.expectedAmount)} />
-          </section>
         </div>
       )}
 
-      <section className="surface mt-5 p-4">
+      {!session ? <section className="surface mt-5 p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-black">Ultimas vendas</h2>
+            <h2 className="text-lg font-black">Últimas vendas</h2>
             <p className="text-sm font-semibold text-[var(--muted)]">Online e PDV compartilham estoque; aqui aparecem as vendas presenciais recentes.</p>
           </div>
           <Link className="btn btn-secondary px-3" href="/pdv/relatorios">
             <ReceiptText size={17} />
-            Ver relatorios
+            Ver relatórios
           </Link>
         </div>
         <div className="overflow-x-auto">
@@ -152,7 +144,7 @@ export default async function PDVPage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </section> : null}
     </PDVShell>
   );
 }
@@ -161,19 +153,21 @@ function PDVShell({
   adminName,
   role,
   isDemo = false,
+  saleMode = false,
   children,
 }: {
   adminName: string;
   role: string;
   isDemo?: boolean;
+  saleMode?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <>
       <link rel="manifest" href="/pdv/manifest.webmanifest" crossOrigin="use-credentials" />
-      <main className="min-h-screen bg-[#f4f4f5] pb-24 md:pb-8">
+      <main className={`min-h-screen bg-[#f4f4f5] pb-24 lg:pb-8 ${saleMode ? "lg:h-dvh lg:overflow-hidden lg:pb-0" : ""}`}>
         <header className="sticky top-0 z-30 border-b border-white/10 bg-[#101115]/95 text-white backdrop-blur">
-          <div className="container-x flex min-h-16 items-center justify-between gap-3 py-3">
+          <div className={`${saleMode ? "mx-auto w-[calc(100%-24px)] max-w-[1600px]" : "container-x"} flex min-h-16 items-center justify-between gap-3 py-3`}>
             <Link href="/pdv" className="inline-flex">
               <XNutriLogo tone="light" subtitle={false} />
             </Link>
@@ -197,14 +191,14 @@ function PDVShell({
             </div>
           </div>
         </header>
-        <div className="container-x py-5">
-          {!isDemo ? <PDVAppInstall /> : null}
+        <div className={`${saleMode ? "mx-auto flex w-[calc(100%-16px)] max-w-[1600px] flex-col py-3 lg:h-[calc(100dvh-64px)]" : "container-x py-5"}`}>
+          {!isDemo && !saleMode ? <PDVAppInstall /> : null}
           {isDemo && (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-800">
               Modo de treinamento: a tela funciona para simular vendas, mas vendas, estoque e relatórios reais só são gravados quando o PostgreSQL estiver ligado e migrado.
             </div>
           )}
-          {children}
+          <div className={saleMode ? "lg:min-h-0 lg:flex-1" : ""}>{children}</div>
         </div>
       </main>
     </>

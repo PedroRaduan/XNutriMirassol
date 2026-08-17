@@ -66,4 +66,39 @@ test.describe("responsividade sem rolagem lateral", () => {
     await expect(page).not.toHaveURL(/\/pdv\/login/);
     await expectNoDocumentOverflow(page);
   });
+
+  test("PDV mantém toda a operação principal visível no notebook e desktop sem scroll da página", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chromium", "Validação específica do desktop compacto.");
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await loginBackoffice(page, "pdv", "caixa@xnutri.com.br", "Caixa@12345");
+
+    if (await page.getByRole("heading", { name: "Abrir caixa" }).isVisible()) {
+      await page.getByRole("button", { name: "Abrir caixa" }).click();
+    }
+
+    for (const viewport of [{ width: 1024, height: 768 }, { width: 1280, height: 720 }]) {
+      await page.setViewportSize(viewport);
+      const workspace = page.locator("[data-pdv-sale-workspace]");
+      await expect(workspace).toBeVisible();
+      for (const panel of ["products", "cart", "customer", "payment", "summary"]) {
+        await expect(page.locator(`[data-pdv-panel="${panel}"]`)).toBeInViewport();
+      }
+      await expect(page.locator("[data-pdv-finalize]")).toBeInViewport();
+
+      const dimensions = await page.evaluate(() => {
+        const element = document.querySelector("[data-pdv-sale-workspace]");
+        const bounds = element?.getBoundingClientRect();
+        return {
+          documentHeight: document.documentElement.scrollHeight,
+          viewportHeight: window.innerHeight,
+          workspaceTop: bounds?.top ?? -1,
+          workspaceBottom: bounds?.bottom ?? Number.POSITIVE_INFINITY,
+        };
+      });
+
+      expect(dimensions.workspaceTop).toBeGreaterThanOrEqual(0);
+      expect(dimensions.workspaceBottom).toBeLessThanOrEqual(dimensions.viewportHeight + 1);
+      expect(dimensions.documentHeight).toBeLessThanOrEqual(dimensions.viewportHeight + 1);
+    }
+  });
 });

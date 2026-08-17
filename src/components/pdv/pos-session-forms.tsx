@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
-import { Banknote, DoorOpen, Plus, WalletCards } from "lucide-react";
+import { useActionState, useRef } from "react";
+import { Banknote, DoorOpen, Plus, WalletCards, X } from "lucide-react";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { closePOSSession, createCashMovement, openPOSSession, type POSActionState } from "@/lib/actions/pos";
 
 const initialState: POSActionState = { ok: false, message: "" };
@@ -17,7 +18,7 @@ export function POSOpenSessionForm() {
         </span>
         <div>
           <h2 className="text-xl font-black">Abrir caixa</h2>
-          <p className="text-sm font-semibold text-[var(--muted)]">Informe o valor inicial em dinheiro para comecar a vender.</p>
+          <p className="text-sm font-semibold text-[var(--muted)]">Informe o valor inicial em dinheiro para começar a vender.</p>
         </div>
       </div>
       <label className="text-sm font-black">
@@ -25,7 +26,7 @@ export function POSOpenSessionForm() {
         <input className="field mt-2 text-lg font-black" name="openingAmount" type="number" min={0} step="0.01" defaultValue="0.00" />
       </label>
       <label className="text-sm font-black">
-        Observacao
+        Observação
         <textarea className="field mt-2 min-h-20" name="notes" placeholder="Opcional" />
       </label>
       {state.message && (
@@ -51,7 +52,7 @@ export function POSCashMovementForm({ sessionId }: { sessionId: string }) {
         <label className="text-xs font-black uppercase text-[var(--muted)]">
           Tipo
           <select className="field mt-1" name="type" defaultValue="CASH_IN">
-            <option value="CASH_IN">Reforco</option>
+            <option value="CASH_IN">Reforço</option>
             <option value="CASH_OUT">Sangria</option>
           </select>
         </label>
@@ -64,7 +65,7 @@ export function POSCashMovementForm({ sessionId }: { sessionId: string }) {
       {state.message && <p className={`text-xs font-bold ${state.ok ? "text-green-700" : "text-red-700"}`}>{state.message}</p>}
       <button className="btn btn-secondary min-h-11" disabled={pending}>
         <Plus size={16} />
-        {pending ? "Registrando..." : "Registrar movimentacao"}
+        {pending ? "Registrando..." : "Registrar movimentação"}
       </button>
     </form>
   );
@@ -82,11 +83,71 @@ export function POSCloseSessionForm({ sessionId, expectedAmount }: { sessionId: 
       </div>
       <p className="text-xs font-semibold text-[var(--muted)]">Esperado em dinheiro: R$ {expectedAmount.toFixed(2).replace(".", ",")}</p>
       <input className="field" name="closingAmount" type="number" min={0} step="0.01" placeholder="Valor contado no caixa" />
-      <textarea className="field min-h-16" name="notes" placeholder="Observacoes do fechamento" />
+      <textarea className="field min-h-16" name="notes" placeholder="Observações do fechamento" />
       {state.message && <p className={`text-xs font-bold ${state.ok ? "text-green-700" : "text-red-700"}`}>{state.message}</p>}
       <button className="btn btn-dark min-h-11" disabled={pending}>
         {pending ? "Fechando..." : "Fechar caixa"}
       </button>
     </form>
+  );
+}
+
+export function POSSessionManager({
+  sessionId,
+  openedAt,
+  openingAmount,
+  expectedAmount,
+}: {
+  sessionId: string;
+  openedAt: Date;
+  openingAmount: number;
+  expectedAmount: number;
+}) {
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
+
+  return (
+    <>
+      <button
+        type="button"
+        className="btn min-h-9 border border-white/15 bg-white/10 px-2.5 py-2 text-xs text-white hover:bg-white/15"
+        onClick={() => dialogRef.current?.showModal()}
+        aria-label="Gerenciar caixa"
+      >
+        <WalletCards size={15} />
+        <span className="hidden sm:inline">Gerenciar caixa</span>
+      </button>
+      <dialog
+        ref={dialogRef}
+        className="fixed inset-0 m-auto max-h-[calc(100dvh-32px)] w-[min(760px,calc(100%-24px))] overflow-y-auto bg-transparent p-0 backdrop:bg-black/45"
+        aria-labelledby="pos-session-manager-title"
+      >
+        <section className="surface overflow-hidden shadow-xl">
+          <header className="flex items-start justify-between gap-3 border-b border-[var(--line)] p-4">
+            <div>
+              <h2 id="pos-session-manager-title" className="text-xl font-black">Gerenciar caixa</h2>
+              <p className="mt-1 text-sm font-semibold text-[var(--muted)]">Movimentações e fechamento ficam separados da venda para evitar ações acidentais.</p>
+            </div>
+            <button type="button" className="grid size-9 shrink-0 place-items-center rounded-md hover:bg-[#f3f2f0]" onClick={() => dialogRef.current?.close()} aria-label="Fechar gerenciamento do caixa">
+              <X size={18} />
+            </button>
+          </header>
+          <dl className="grid gap-2 border-b border-[var(--line)] bg-[#fafafa] p-4 text-sm sm:grid-cols-3">
+            <div><dt className="text-xs font-black uppercase text-[var(--muted)]">Aberto em</dt><dd className="mt-1 font-black">{formatDate(openedAt)}</dd></div>
+            <div><dt className="text-xs font-black uppercase text-[var(--muted)]">Valor inicial</dt><dd className="mt-1 font-black">{formatCurrency(openingAmount)}</dd></div>
+            <div><dt className="text-xs font-black uppercase text-[var(--muted)]">Dinheiro esperado</dt><dd className="mt-1 font-black text-[var(--brand)]">{formatCurrency(expectedAmount)}</dd></div>
+          </dl>
+          <div className="grid gap-4 p-4 md:grid-cols-2">
+            <div>
+              <h3 className="mb-2 text-sm font-black">Reforço ou sangria</h3>
+              <POSCashMovementForm sessionId={sessionId} />
+            </div>
+            <div>
+              <h3 className="mb-2 text-sm font-black">Encerrar expediente</h3>
+              <POSCloseSessionForm sessionId={sessionId} expectedAmount={expectedAmount} />
+            </div>
+          </div>
+        </section>
+      </dialog>
+    </>
   );
 }

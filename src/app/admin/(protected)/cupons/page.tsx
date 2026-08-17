@@ -1,5 +1,7 @@
 import { AdminActionForm } from "@/components/admin/admin-action-form";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { AdminSubmitButton, ConfirmSubmitButton } from "@/components/admin/admin-submit";
+import { StatePanel } from "@/components/ui/state-panel";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -20,7 +22,13 @@ function CouponForm({
   categories: Array<{ id: string; name: string }>;
 }) {
   return (
-    <AdminActionForm actionName="upsertCoupon" className="grid gap-3">
+    <AdminActionForm
+      actionName="upsertCoupon"
+      className="grid gap-3"
+      closeDetailsOnSuccess={Boolean(coupon)}
+      closeDialogOnSuccess={!coupon}
+      resetOnSuccess={!coupon}
+    >
       {coupon && <input type="hidden" name="id" value={coupon.id} />}
       <div className="grid gap-3 sm:grid-cols-2">
         <input className="field" name="code" placeholder="XNUTRI10" defaultValue={coupon?.code} required />
@@ -62,8 +70,9 @@ async function getCoupons() {
   return prisma.coupon.findMany({ orderBy: { createdAt: "desc" } });
 }
 
-export default async function AdminCouponsPage() {
+export default async function AdminCouponsPage({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
   await requireAdmin("coupons");
+  const params = await searchParams;
   const [coupons, products, categories] = await Promise.all([
     getCoupons(),
     prisma.product.findMany({ where: { status: { not: "ARCHIVED" } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
@@ -72,13 +81,23 @@ export default async function AdminCouponsPage() {
 
   return (
     <div>
-      <div className="admin-page-heading mb-6">
-        <span className="admin-eyebrow">Marketing</span>
-        <h1 className="mt-2 text-3xl font-black md:text-4xl">Cupons</h1>
-        <p className="admin-page-copy mt-2 text-sm">Crie descontos simples para campanhas, boas-vindas, combos e frete grátis.</p>
+      <div className="admin-page-heading mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="admin-eyebrow">Marketing</span>
+          <h1 className="mt-2 text-3xl font-black md:text-4xl">Cupons</h1>
+          <p className="admin-page-copy mt-2 text-sm">Crie descontos simples para campanhas, boas-vindas, combos e frete grátis.</p>
+        </div>
+        <AdminDrawer
+          title="Novo cupom"
+          description="Defina o código, o desconto, a validade e os limites de uso."
+          triggerLabel="Criar cupom"
+          defaultOpen={params.new === "1"}
+        >
+          <CouponForm products={products} categories={categories} />
+        </AdminDrawer>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_430px]">
+      <div className="grid gap-6">
         <section className="grid gap-4">
           {coupons.map((coupon) => (
             <article key={coupon.id} className="surface overflow-hidden">
@@ -105,7 +124,7 @@ export default async function AdminCouponsPage() {
                   <ConfirmSubmitButton message="Desativar este cupom?">Desativar</ConfirmSubmitButton>
                 </AdminActionForm>
               </div>
-              <details className="border-t border-[var(--line)]">
+              <details className="admin-disclosure border-t border-[var(--line)]">
                 <summary className="cursor-pointer p-4 font-black text-[var(--brand)]">Editar regras</summary>
                 <div className="border-t border-[var(--line)] p-4">
                   <CouponForm coupon={coupon} products={products} categories={categories} />
@@ -113,16 +132,13 @@ export default async function AdminCouponsPage() {
               </details>
             </article>
           ))}
-          {coupons.length === 0 && <div className="surface p-8 text-center text-[var(--muted)]">Nenhum cupom cadastrado.</div>}
+          {coupons.length === 0 && (
+            <StatePanel
+              title="Nenhum cupom cadastrado"
+              description="Crie um cupom apenas quando houver uma campanha ou benefício definido."
+            />
+          )}
         </section>
-
-        <aside className="surface self-start p-5 xl:sticky xl:top-8">
-          <h2 className="text-xl font-black">Novo cupom</h2>
-          <p className="mt-1 text-sm text-[var(--muted)]">Exemplo: XNUTRI10 com 10% acima de R$ 100.</p>
-          <div className="mt-4">
-            <CouponForm products={products} categories={categories} />
-          </div>
-        </aside>
       </div>
     </div>
   );

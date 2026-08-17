@@ -1,12 +1,14 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { LoaderCircle } from "lucide-react";
 
 export function AdminSubmitButton({ children, pendingText = "Salvando..." }: { children: React.ReactNode; pendingText?: string }) {
   const { pending } = useFormStatus();
 
   return (
-    <button className="btn btn-primary" disabled={pending} type="submit">
+    <button className="btn btn-primary" disabled={pending} type="submit" aria-disabled={pending}>
+      {pending ? <LoaderCircle className="motion-safe:animate-spin" size={17} aria-hidden="true" /> : null}
       {pending ? pendingText : children}
     </button>
   );
@@ -27,6 +29,7 @@ export function ConfirmSubmitButton({
     <button
       className={className}
       disabled={pending}
+      aria-disabled={pending}
       type="submit"
       onClick={(event) => {
         if (!window.confirm(message)) {
@@ -34,6 +37,7 @@ export function ConfirmSubmitButton({
         }
       }}
     >
+      {pending ? <LoaderCircle className="motion-safe:animate-spin" size={17} aria-hidden="true" /> : null}
       {pending ? "Processando..." : children}
     </button>
   );

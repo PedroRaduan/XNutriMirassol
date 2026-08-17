@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { ImageUp } from "lucide-react";
 
 type ImageUploadFieldProps = {
@@ -23,12 +23,26 @@ export function ImageUploadField({
   label,
 }: ImageUploadFieldProps) {
   const fieldId = useId();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [url, setUrl] = useState(defaultValue);
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
 
+  useEffect(() => {
+    const form = containerRef.current?.closest("form");
+    if (!form) return;
+
+    const handleReset = () => {
+      setUrl(defaultValue);
+      setMessage("");
+    };
+
+    form.addEventListener("reset", handleReset);
+    return () => form.removeEventListener("reset", handleReset);
+  }, [defaultValue]);
+
   return (
-    <div className="grid gap-2">
+    <div ref={containerRef} className="grid gap-2">
       {label && <label className="text-sm font-black" htmlFor={fieldId}>{label}</label>}
       {multiline ? (
         <textarea

@@ -23,11 +23,39 @@ test.describe("painel administrativo", () => {
     }
   });
 
+  test("menu e cadastro permanecem rápidos e sem overflow no celular", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto("/admin/produtos");
+
+    const mobileMenu = page.locator("details.admin-mobile-nav");
+    await expect(mobileMenu.locator("summary")).toContainText("Produtos");
+    await mobileMenu.locator("summary").click();
+    await expect(mobileMenu.getByRole("link", { name: /Produtos/ })).toHaveAttribute("aria-current", "page");
+    await mobileMenu.getByRole("link", { name: /Pedidos/ }).click();
+    await expect(page).toHaveURL(/\/admin\/pedidos$/);
+    await expect(page.locator("details.admin-mobile-nav")).not.toHaveAttribute("open", "");
+
+    await page.goto("/admin/produtos");
+
+    const hasOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    expect(hasOverflow).toBe(false);
+
+    await page.getByRole("button", { name: "Adicionar produto" }).click();
+    const dialog = page.getByRole("dialog", { name: "Novo produto" });
+    await expect(dialog).toBeVisible();
+    const bounds = await dialog.boundingBox();
+    expect(bounds?.x ?? -1).toBeGreaterThanOrEqual(0);
+    expect(bounds?.width ?? 999).toBeLessThanOrEqual(360);
+    await dialog.getByRole("button", { name: "Fechar Novo produto" }).click();
+    await expect(dialog).not.toBeVisible();
+  });
+
   test("cria e edita produto, fecha o painel e registra auditoria", async ({ page }) => {
     await page.goto("/admin/produtos");
-    const createDetails = page.locator("details").filter({ hasText: "Adicionar produto" }).first();
-    await createDetails.locator("summary").click();
-    const form = createDetails.locator("form").first();
+    await page.getByRole("button", { name: "Adicionar produto" }).click();
+    const createDialog = page.getByRole("dialog", { name: "Novo produto" });
+    await expect(createDialog).toBeVisible();
+    const form = createDialog.locator("form").first();
 
     await form.getByLabel("Categoria").selectOption({ label: "Suplementos" });
     await form.getByLabel("Nome").fill("Produto QA Automatizado");
@@ -56,7 +84,12 @@ test.describe("painel administrativo", () => {
     await form.getByRole("button", { name: "Cadastrar produto" }).click();
 
     await expect(page.getByRole("status").filter({ hasText: "Produto salvo com sucesso." })).toBeVisible();
-    await expect(createDetails).not.toHaveAttribute("open", "");
+    await expect(createDialog).not.toBeVisible();
+
+    await page.getByRole("button", { name: "Adicionar produto" }).click();
+    await expect(createDialog.getByRole("textbox", { name: "Imagens" })).toHaveValue("");
+    await expect(createDialog.getByText("Imagem enviada.")).toHaveCount(0);
+    await createDialog.getByRole("button", { name: "Fechar Novo produto" }).click();
 
     await page.goto("/admin/produtos?q=QA-PRODUTO-001");
     const productCard = page.locator("article").filter({ hasText: "Produto QA Automatizado" });
@@ -66,6 +99,14 @@ test.describe("painel administrativo", () => {
     const editForm = editDetails.locator("form").first();
     await editForm.getByLabel("Preço", { exact: true }).fill("109.90");
     await editForm.getByRole("button", { name: "Salvar e fechar" }).click();
+    const editToast = page.getByRole("status").filter({ hasText: "Produto salvo com sucesso." });
+    await expect(editToast).toBeVisible();
+    await expect(editDetails).not.toHaveAttribute("open", "");
+    await expect(editToast).not.toBeVisible({ timeout: 5_000 });
+
+    await editDetails.locator("summary").click();
+    await editForm.getByLabel("Preço", { exact: true }).fill("119.90");
+    await editForm.getByRole("button", { name: "Salvar e fechar" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Produto salvo com sucesso." })).toBeVisible();
     await expect(editDetails).not.toHaveAttribute("open", "");
 
@@ -73,7 +114,7 @@ test.describe("painel administrativo", () => {
       'SELECT p.price::text AS price, SUM(i.quantity)::int AS quantity FROM "products" p JOIN "inventory" i ON i."productId" = p.id WHERE p.sku = $1 GROUP BY p.id, p.price',
       ["QA-PRODUTO-001"],
     );
-    expect(databaseProduct.rows[0]).toEqual({ price: "109.90", quantity: 12 });
+    expect(databaseProduct.rows[0]).toEqual({ price: "119.90", quantity: 12 });
 
     const audit = await queryTestDatabase<{ count: string }>(
       'SELECT COUNT(*)::text AS count FROM "audit_logs" WHERE entity = $1',
@@ -84,18 +125,20 @@ test.describe("painel administrativo", () => {
 
   test("cria cupom e impede SKU duplicado com mensagem amigável", async ({ page }) => {
     await page.goto("/admin/cupons");
-    const couponForm = page.locator("aside form").first();
+    await page.getByRole("button", { name: "Criar cupom" }).click();
+    const couponDialog = page.getByRole("dialog", { name: "Novo cupom" });
+    const couponForm = couponDialog.locator("form").first();
     await couponForm.getByPlaceholder("XNUTRI10").fill("QA15");
     await couponForm.locator('select[name="type"]').selectOption("PERCENTAGE");
     await couponForm.getByPlaceholder("Descrição interna").fill("Cupom da bateria QA");
     await couponForm.getByPlaceholder("Valor").fill("15");
     await couponForm.getByRole("button", { name: "Criar cupom" }).click();
-    await expect(couponForm.getByRole("status")).toContainText("Cupom salvo com sucesso.");
+    await expect(page.getByRole("status").filter({ hasText: "Cupom salvo com sucesso." })).toBeVisible();
+    await expect(couponDialog).not.toBeVisible();
 
     await page.goto("/admin/produtos");
-    const createDetails = page.locator("details").filter({ hasText: "Adicionar produto" }).first();
-    await createDetails.locator("summary").click();
-    const form = createDetails.locator("form").first();
+    await page.getByRole("button", { name: "Adicionar produto" }).click();
+    const form = page.getByRole("dialog", { name: "Novo produto" }).locator("form").first();
     await form.getByLabel("Categoria").selectOption({ label: "Suplementos" });
     await form.getByLabel("Nome").fill("Produto com SKU repetido");
     await form.getByLabel("Descrição curta").fill("Validação de duplicidade.");

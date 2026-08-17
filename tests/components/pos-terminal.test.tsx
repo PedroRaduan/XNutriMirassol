@@ -14,7 +14,10 @@ vi.mock("@/lib/actions/pos", () => ({
 }));
 
 describe("PDV - pagamento misto", () => {
-  beforeEach(() => refresh.mockReset());
+  beforeEach(() => {
+    refresh.mockReset();
+    vi.unstubAllGlobals();
+  });
 
   it("cria uma única divisão e impede cliques repetidos quando o total já está distribuído", async () => {
     const user = userEvent.setup();
@@ -40,5 +43,40 @@ describe("PDV - pagamento misto", () => {
     expect(finalizeButtons.length).toBeGreaterThan(0);
     await user.click(finalizeButtons[0]);
     expect(screen.getByText(/Modo de treinamento/i)).toBeInTheDocument();
+  });
+
+  it("filtra por categoria e mantém produtos e carrinho na mesma estação", async () => {
+    const user = userEvent.setup();
+    render(<POSTerminal sessionId="demo-session" cashierName="Caixa QA" expectedAmount={0} isDemo />);
+
+    expect(document.querySelector('[data-pdv-panel="products"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-pdv-panel="cart"]')).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Roupas Fitness" }));
+
+    expect(screen.queryByRole("button", { name: /Creatina XNutri 300g/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Legging Compression XNutri/i })).toBeInTheDocument();
+  });
+
+  it("pede confirmação antes de limpar uma venda", async () => {
+    const user = userEvent.setup();
+    render(<POSTerminal sessionId="demo-session" cashierName="Caixa QA" expectedAmount={0} isDemo />);
+
+    await user.click(screen.getByRole("button", { name: /Creatina XNutri 300g/i }));
+    await user.click(screen.getByRole("button", { name: "Limpar" }));
+    expect(screen.getByText("1 item(ns) na venda")).toBeInTheDocument();
+    expect(screen.getByRole("alertdialog", { name: "Limpar a venda atual?" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Limpar venda" }));
+    expect(screen.getByText("0 item(ns) na venda")).toBeInTheDocument();
+    expect(screen.getByText(/Nenhum estoque foi alterado/i)).toBeInTheDocument();
+  });
+
+  it("mostra skeleton localizado enquanto os produtos carregam", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)));
+    render(<POSTerminal sessionId="session" cashierName="Caixa QA" expectedAmount={0} />);
+
+    await waitFor(() => expect(document.querySelector('[data-pdv-skeleton="products"]')).toBeInTheDocument());
+    expect(document.querySelector('[data-pdv-panel="cart"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-pdv-panel="payment"]')).toBeInTheDocument();
   });
 });

@@ -345,6 +345,14 @@ a {
   background: #f5f6f8;
 }
 
+.admin-mobile-nav > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-mobile-nav[open] > summary {
+  background: #fff8f7;
+}
+
 .admin-topbar {
   border: 1px solid var(--line);
   background: rgb(255 255 255 / 96%);
@@ -449,7 +457,75 @@ a {
 
 .admin-row:hover {
   background: #fafafa;
-  transform: translateX(2px);
+}
+
+.admin-drawer {
+  inset: 0 0 0 auto;
+  width: min(100%, 34rem);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.admin-drawer-wide {
+  width: min(100%, 58rem);
+}
+
+.admin-drawer::backdrop {
+  background: rgb(17 17 17 / 48%);
+  backdrop-filter: blur(2px);
+}
+
+.admin-drawer-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  background: #f7f8fa;
+  box-shadow: -20px 0 55px rgb(17 17 17 / 18%);
+}
+
+.admin-drawer-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  background: rgb(255 255 255 / 97%);
+  padding: 1rem;
+}
+
+.admin-drawer-content {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .admin-drawer-header,
+  .admin-drawer-content {
+    padding: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .admin-drawer[open] .admin-drawer-panel {
+    animation: admin-drawer-enter 160ms ease-out;
+  }
+
+  @keyframes admin-drawer-enter {
+    from { transform: translateX(1.5rem); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
 }
 
 .admin-chart-bar {
