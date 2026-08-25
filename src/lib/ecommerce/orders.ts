@@ -10,6 +10,7 @@ import { checkoutSchema } from "@/lib/validations";
 import { generateOrderNumber, toNumber } from "@/lib/utils";
 import { sanitizeOptionalText, sanitizeText } from "@/lib/security/sanitize";
 import { createPagBankCheckout } from "@/lib/payments/pagbank";
+import { isPagBankCheckoutEnabled, pagBankUnavailableMessage } from "@/lib/payments/config";
 import { createOrderAccessToken } from "@/lib/ecommerce/order-access";
 import { reserveInventoryForOrder } from "@/lib/ecommerce/inventory";
 import { marginPercent, roundMoney } from "@/lib/finance/calculations";
@@ -41,6 +42,10 @@ type DeliveryAddress = {
 };
 
 export async function createOrderFromCheckout(formData: FormData) {
+  if (!isPagBankCheckoutEnabled()) {
+    throw new Error(pagBankUnavailableMessage);
+  }
+
   const user = await getCurrentUser();
   try {
     await releaseExpiredOrders({ batchSize: 50, source: "checkout" });

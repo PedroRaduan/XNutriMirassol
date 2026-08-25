@@ -15,6 +15,7 @@ import { checkoutSchema } from "@/lib/validations";
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 type CheckoutFormProps = {
+  pagBankCheckoutEnabled?: boolean;
   shippingMethodId?: string | null;
   shippingZipCode?: string | null;
   pickupLocationId?: string | null;
@@ -208,6 +209,7 @@ function StepTitle({ number, title, text }: { number: string; title: string; tex
 }
 
 export function CheckoutForm({
+  pagBankCheckoutEnabled = true,
   shippingMethodId,
   shippingZipCode,
   pickupLocationId,
@@ -366,7 +368,7 @@ export function CheckoutForm({
   async function handleCheckoutSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (submittingRef.current) return;
+    if (submittingRef.current || !pagBankCheckoutEnabled) return;
 
     const formElement = event.currentTarget;
     const valid = await form.trigger(undefined, { shouldFocus: true });
@@ -825,8 +827,12 @@ export function CheckoutForm({
       </section>
 
       <section className="surface grid gap-5 p-5 md:p-6">
-        <StepTitle number="3" title="Pagamento PagBank" text="PIX ou cartão com retorno automático de status." />
-        <div className="grid gap-3 sm:grid-cols-2">
+        <StepTitle
+          number="3"
+          title={pagBankCheckoutEnabled ? "Pagamento PagBank" : "Pagamento online"}
+          text={pagBankCheckoutEnabled ? "PIX ou cartão com retorno automático de status." : "A integração está sendo finalizada antes da abertura das vendas online."}
+        />
+        {pagBankCheckoutEnabled ? <div className="grid gap-3 sm:grid-cols-2">
           <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition hover:border-[var(--brand)] ${paymentMethod === "PIX" ? "border-[var(--brand)] bg-[#fff7f6]" : "border-[var(--line)] bg-white"}`}>
             <input className="accent-[var(--brand)]" type="radio" value="PIX" name="paymentMethod" checked={paymentMethod === "PIX"} onChange={() => form.setValue("paymentMethod", "PIX", { shouldDirty: true, shouldValidate: true })} />
             <span>
@@ -841,7 +847,11 @@ export function CheckoutForm({
               <span className="text-xs font-semibold text-[var(--muted)]">Processado pelo PagBank</span>
             </span>
           </label>
-        </div>
+        </div> : (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900" role="status">
+            O pagamento pelo site está temporariamente indisponível. Seus produtos permanecem no carrinho; fale com a XNutri pelo WhatsApp ou tente novamente mais tarde.
+          </div>
+        )}
       </section>
 
       <section className="surface grid gap-4 p-5 md:p-6">
@@ -890,12 +900,12 @@ export function CheckoutForm({
           <ShieldCheck size={18} className="text-[var(--brand)]" />
           Pedido protegido e status atualizado automaticamente.
         </span>
-        <button className="btn btn-primary min-h-12 px-6" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Finalizando..." : "Finalizar pedido"}
+        <button className="btn btn-primary min-h-12 px-6" type="submit" disabled={isSubmitting || !pagBankCheckoutEnabled}>
+          {!pagBankCheckoutEnabled ? "Pagamento indisponível" : isSubmitting ? "Finalizando..." : "Finalizar pedido"}
         </button>
       </div>
 
-      {showStickySubmit && (
+      {showStickySubmit && pagBankCheckoutEnabled && (
       <div className="mobile-sticky-action md:hidden">
         <div className="min-w-0">
           <span className="block text-xs font-semibold uppercase text-[var(--muted)]">Total do pedido</span>

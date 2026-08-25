@@ -7,6 +7,7 @@ import { getDemoOrder } from "@/lib/ecommerce/demo-cart";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canAccessOrder } from "@/lib/ecommerce/order-access";
 import { formatCurrency, formatDate, statusLabel } from "@/lib/utils";
+import { isPagBankCheckoutEnabled } from "@/lib/payments/config";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,7 @@ export default async function OrderPage({
   }
 
   const payment = order.payments[0];
+  const pagBankCheckoutEnabled = isPagBankCheckoutEnabled();
 
   return (
     <div className="container-x py-10">
@@ -64,7 +66,7 @@ export default async function OrderPage({
             <h1 className="mt-4 text-3xl font-bold tracking-tight md:text-4xl">Pedido {order.orderNumber}</h1>
             <p className="mt-2 text-[var(--muted)]">Criado em {formatDate(order.createdAt)}</p>
           </div>
-          {payment && order.status === "PENDING" && (
+          {payment && order.status === "PENDING" && pagBankCheckoutEnabled && (
             <PagBankCheckoutButton orderNumber={order.orderNumber} accessToken={access} checkoutUrl={payment.checkoutUrl} />
           )}
         </div>
@@ -72,7 +74,9 @@ export default async function OrderPage({
         <div className="mt-8 grid gap-5 lg:grid-cols-3">
           <div className="rounded-md border border-[var(--line)] p-4">
             <h2 className="font-bold">Status</h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">Atualização automática por webhook PagBank.</p>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              {pagBankCheckoutEnabled ? "Atualização automática por webhook PagBank." : "Pagamento online temporariamente indisponível."}
+            </p>
           </div>
           <div className="rounded-md border border-[var(--line)] p-4">
             <h2 className="font-bold">{order.shippingType === "PICKUP" ? "Retirada" : "Entrega"}</h2>

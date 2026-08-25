@@ -85,4 +85,19 @@ describe("Checkout - CEP e frete", () => {
       expect.any(Object),
     );
   });
+
+  it("bloqueia a finalização quando o pagamento online está desativado", () => {
+    render(
+      <CheckoutForm
+        pagBankCheckoutEnabled={false}
+        pickupOptions={[{ id: "loja", name: "XNutri Mirassol", instructions: "Retire com documento." }]}
+        subtotal={100}
+        total={100}
+        shippingCost={0}
+      />,
+    );
+
+    expect(screen.getByText(/pagamento pelo site está temporariamente indisponível/i)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Pagamento indisponível" })).toBeDisabled();
+  });
 });

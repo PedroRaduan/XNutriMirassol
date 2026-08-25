@@ -41,6 +41,8 @@ const authSecret = firstValue(process.env.AUTH_SECRET, process.env.NEXTAUTH_SECR
 const googleClientId = firstValue(process.env.GOOGLE_CLIENT_ID, process.env.AUTH_GOOGLE_ID);
 const googleClientSecret = firstValue(process.env.GOOGLE_CLIENT_SECRET, process.env.AUTH_GOOGLE_SECRET);
 const pagBankEnvironment = process.env.PAGBANK_ENVIRONMENT ?? "sandbox";
+const pagBankCheckoutSetting = process.env.PAGBANK_CHECKOUT_ENABLED?.trim().toLowerCase();
+const pagBankCheckoutEnabled = pagBankCheckoutSetting !== "false";
 const authSessionMaxAge = Number(process.env.AUTH_SESSION_MAX_AGE_SECONDS ?? 28_800);
 
 function parseUrl(name: string, value: string | undefined) {
@@ -135,11 +137,17 @@ if (!["sandbox", "production"].includes(pagBankEnvironment)) {
   errors.push("PAGBANK_ENVIRONMENT deve ser sandbox ou production.");
 }
 
+if (pagBankCheckoutSetting && !["true", "false"].includes(pagBankCheckoutSetting)) {
+  errors.push("PAGBANK_CHECKOUT_ENABLED deve ser true ou false.");
+}
+
 if (pagBankEnvironment === "production" && process.env.PAGBANK_TOKEN?.toLowerCase().includes("sandbox")) {
   errors.push("PAGBANK_ENVIRONMENT está em production, mas o token parece ser de sandbox.");
 }
 
-if (!process.env.PAGBANK_TOKEN?.trim()) {
+if (!pagBankCheckoutEnabled) {
+  warnings.push("PAGBANK_CHECKOUT_ENABLED=false; a loja será publicada com o pagamento online bloqueado no frontend e no servidor.");
+} else if (!process.env.PAGBANK_TOKEN?.trim()) {
   reportRequiredProductionIntegration(
     "PAGBANK_TOKEN não configurada. O checkout online não pode ser publicado em produção sem ela.",
   );

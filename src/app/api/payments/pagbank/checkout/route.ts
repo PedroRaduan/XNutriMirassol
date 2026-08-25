@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { createPagBankCheckout } from "@/lib/payments/pagbank";
+import { isPagBankCheckoutEnabled, pagBankUnavailableMessage } from "@/lib/payments/config";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canAccessOrder } from "@/lib/ecommerce/order-access";
 import { assertSameOrigin, getClientIp } from "@/lib/security/request";
@@ -14,6 +15,11 @@ const checkoutRequestSchema = z.object({
 
 export async function POST(request: Request) {
   await assertSameOrigin();
+
+  if (!isPagBankCheckoutEnabled()) {
+    return NextResponse.json({ error: pagBankUnavailableMessage }, { status: 503 });
+  }
+
   const ip = await getClientIp();
   if (!rateLimit(`pagbank-checkout:${ip}`, 12, 60_000).ok) {
     return NextResponse.json({ error: "Muitas tentativas. Aguarde alguns instantes." }, { status: 429 });

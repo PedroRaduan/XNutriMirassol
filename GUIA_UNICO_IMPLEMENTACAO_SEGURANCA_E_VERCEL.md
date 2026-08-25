@@ -10,7 +10,8 @@ Este é o único tutorial operacional que você precisa seguir daqui para frente
 - Preview da Vercel funcionando.
 - Banco Neon de Preview separado do banco Production.
 - Banco Production com 12/12 migrations aplicadas.
-- Domínio Production restaurado em 17/08/2026, com `/api/health` confirmando o banco conectado.
+- Domínio Production com `/api/health` confirmando o banco conectado.
+- Versão visual simples e atual preparada para Production, sem depender do antigo layout vermelho.
 - Prisma Client, migrations, build e cron diário configurados.
 - Cloudinary configurado.
 - Google OAuth configurado tecnicamente na Vercel e no Google Cloud.
@@ -20,7 +21,7 @@ Este é o único tutorial operacional que você precisa seguir daqui para frente
 - PWA privado da Administração preparado para o dono.
 - PWA privado do PDV preparado para a funcionária do caixa.
 
-A versão pública restaurada é a última versão estável da branch `main`. A versão mais recente continua no Preview e só deve ser promovida depois da configuração real do PagBank, pois o build de Production bloqueia corretamente um checkout sem `PAGBANK_TOKEN`.
+Enquanto a conta PagBank ainda não estiver configurada, Production usa `PAGBANK_CHECKOUT_ENABLED=false`. Isso permite publicar a loja, o Admin e o PDV com o visual atual, mas bloqueia a criação de pedidos pagos tanto na tela quanto no servidor. Não mude essa variável para `true` antes de cadastrar e testar o token real.
 
 Não recrie o projeto Vercel, o banco Neon, as migrations, o cliente Google, o Cloudinary ou o seed.
 
@@ -37,7 +38,7 @@ Siga nesta ordem:
 7. Ativar MFA e backup.
 8. Aprovar o Preview.
 9. Rotacionar a credencial Production do Neon imediatamente antes da publicação definitiva.
-10. Deixar o Codex configurar PagBank Production, domínio e deployment.
+10. Deixar o Codex configurar PagBank Production e habilitar o checkout online.
 11. Cadastrar/revisar os dados reais no Production e fazer uma compra controlada.
 12. Instalar novamente os PWAs usando o domínio definitivo.
 
@@ -53,7 +54,7 @@ Esta é a primeira pendência. O Codex não deve receber nem digitar sua senha o
 Depois que você disser `Entrei no PagBank`, o Codex fará a parte técnica no Preview:
 
 1. Obter o token Sandbox.
-2. Configurar `PAGBANK_ENVIRONMENT=sandbox` e `PAGBANK_TOKEN` somente no ambiente Preview da Vercel.
+2. Configurar `PAGBANK_CHECKOUT_ENABLED=true`, `PAGBANK_ENVIRONMENT=sandbox` e `PAGBANK_TOKEN` somente no ambiente Preview da Vercel.
 3. Usar `PAGBANK_WEBHOOK_TOKEN` somente se o próprio PagBank fornecer uma credencial de autenticidade separada. Não invente um valor: quando ela não existir, o código usa `PAGBANK_TOKEN` para validar a assinatura.
 4. Encontrar o endereço atual em Vercel → projeto XNutri → **Deployments** → primeiro deployment **Ready** → **Visit**.
 5. Configurar o webhook Sandbox apontando para:
@@ -317,17 +318,18 @@ Siga esta ordem:
 https://SEU-DOMINIO/api/auth/callback/google
 ```
 
-5. Obtenha o token PagBank Production.
-6. Configure `PAGBANK_ENVIRONMENT=production` e `PAGBANK_TOKEN` em Production.
-7. Cadastre o webhook PagBank do domínio final.
-8. Confirme que as novas URLs do Neon estão em Production.
-9. Faça merge da branch aprovada para `main` ou promova o deployment aprovado.
-10. Abra `/api/health`.
-11. Faça uma compra real controlada de valor baixo.
-12. Confira pagamento, pedido, estoque, auditoria e webhook.
-13. Teste `/admin` e `/pdv`.
-14. Instale novamente Administração e PDV usando o domínio final.
-15. Monitore os logs da Vercel e PagBank nas primeiras horas.
+5. Enquanto o PagBank não estiver pronto, mantenha `PAGBANK_CHECKOUT_ENABLED=false`. A vitrine, o carrinho, o Admin e o PDV continuam disponíveis, mas o site não cria pedidos online.
+6. Obtenha o token PagBank Production.
+7. Configure `PAGBANK_CHECKOUT_ENABLED=true`, `PAGBANK_ENVIRONMENT=production` e `PAGBANK_TOKEN` em Production.
+8. Cadastre o webhook PagBank do domínio final.
+9. Confirme que as novas URLs do Neon estão em Production.
+10. Faça merge da branch aprovada para `main` ou gere um novo deployment Production com as variáveis de Production. Nunca promova um artefato compilado com o banco Preview.
+11. Abra `/api/health`.
+12. Faça uma compra real controlada de valor baixo.
+13. Confira pagamento, pedido, estoque, auditoria e webhook.
+14. Teste `/admin` e `/pdv`.
+15. Instale novamente Administração e PDV usando o domínio final.
+16. Monitore os logs da Vercel e PagBank nas primeiras horas.
 
 Se o deployment Production falhar, pare os testes de venda e use **Vercel → Deployments → deployment anterior → Promote/Rollback**. Isso reverte o código, mas não desfaz migrations do banco. Nunca rode `prisma migrate reset`, `db push --force-reset` ou restaure um backup por cima de Production para tentar corrigir sozinho; informe o erro ao Codex.
 
@@ -378,7 +380,7 @@ Não continue vendendo. Confirme que a conta possui `AdminUser.role = CASHIER`, 
 
 ### Deploy Production fica bloqueado
 
-Confira primeiro `PAGBANK_TOKEN`, `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET` e `CRON_SECRET`. O bloqueio é intencional quando uma configuração crítica de Production está ausente.
+Confira primeiro `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET` e `CRON_SECRET`. Para publicar sem abrir vendas online, configure explicitamente `PAGBANK_CHECKOUT_ENABLED=false`. Para vender pelo site, use `PAGBANK_CHECKOUT_ENABLED=true` e configure também `PAGBANK_TOKEN`; o bloqueio é intencional quando a integração está habilitada sem a credencial.
 
 ## 14. Checklist final
 

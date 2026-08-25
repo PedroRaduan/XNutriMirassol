@@ -4,6 +4,7 @@ import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCartForDisplay } from "@/lib/ecommerce/cart";
 import { getPickupOptions } from "@/lib/shipping/quote";
+import { isPagBankCheckoutEnabled } from "@/lib/payments/config";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ export const metadata = {
 
 export default async function CheckoutPage() {
   const [cart, pickupOptions, user] = await Promise.all([getCartForDisplay(), getPickupOptions(), getCurrentUser()]);
+  const pagBankCheckoutEnabled = isPagBankCheckoutEnabled();
 
   if (!cart.id || cart.items.length === 0) {
     return (
@@ -55,6 +57,7 @@ export default async function CheckoutPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px] lg:gap-8">
         <CheckoutForm
+          pagBankCheckoutEnabled={pagBankCheckoutEnabled}
           shippingMethodId={cart.shippingMethod?.id}
           shippingZipCode={cart.shippingZipCode}
           pickupLocationId={cart.pickupLocation?.id}
@@ -103,7 +106,7 @@ export default async function CheckoutPage() {
           </div>
 
           <div className="mt-4 grid gap-2 text-xs font-bold text-[var(--muted)]">
-            <span className="inline-flex items-center gap-2"><ShieldCheck size={15} className="text-[var(--brand)]" /> Pagamento processado com PagBank</span>
+            <span className="inline-flex items-center gap-2"><ShieldCheck size={15} className="text-[var(--brand)]" /> {pagBankCheckoutEnabled ? "Pagamento processado com PagBank" : "Pagamento online em configuração"}</span>
             <span className="inline-flex items-center gap-2"><LockKeyhole size={15} className="text-[var(--brand)]" /> Dados validados antes do pedido</span>
           </div>
         </aside>
