@@ -1,15 +1,21 @@
 import type { NextConfig } from "next";
 
 const isProduction = process.env.NODE_ENV === "production";
+const isVercelPreview = process.env.VERCEL_ENV === "preview";
+const vercelPreviewSource = isVercelPreview ? " https://vercel.live" : "";
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"}`,
+  `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"}${vercelPreviewSource}`,
   "script-src-attr 'none'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://images.unsplash.com https://res.cloudinary.com",
-  "font-src 'self' data:",
-  `connect-src 'self'${isProduction ? "" : " ws://localhost:* ws://127.0.0.1:*"}`,
-  "frame-src 'self' https://*.pagseguro.com https://*.pagseguro.uol.com.br",
+  `style-src 'self' 'unsafe-inline'${vercelPreviewSource}`,
+  `img-src 'self' data: blob: https://images.unsplash.com https://res.cloudinary.com${
+    isVercelPreview ? " https://vercel.live https://vercel.com" : ""
+  }`,
+  `font-src 'self' data:${isVercelPreview ? " https://vercel.live https://assets.vercel.com" : ""}`,
+  `connect-src 'self'${isProduction ? "" : " ws://localhost:* ws://127.0.0.1:*"}${
+    isVercelPreview ? " https://vercel.live wss://ws-us3.pusher.com" : ""
+  }`,
+  `frame-src 'self' https://*.pagseguro.com https://*.pagseguro.uol.com.br${vercelPreviewSource}`,
   "form-action 'self' https://*.pagseguro.com https://*.pagseguro.uol.com.br",
   "base-uri 'self'",
   "object-src 'none'",
