@@ -14,13 +14,15 @@ type Variant = {
 };
 
 export function ProductPurchase({ productId, basePrice, variants }: { productId: string; basePrice: number; variants: Variant[] }) {
-  const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
+  const [variantId, setVariantId] = useState(() => variants.find((variant) =>
+    (variant.inventory?.quantity ?? 0) > (variant.inventory?.reserved ?? 0),
+  )?.id ?? variants[0]?.id ?? "");
   const [quantity, setQuantity] = useState(1);
   const [showSticky, setShowSticky] = useState(false);
   const purchaseRef = useRef<HTMLDivElement>(null);
   const selected = useMemo(() => variants.find((variant) => variant.id === variantId) ?? variants[0], [variantId, variants]);
   const available = Math.max((selected?.inventory?.quantity ?? 0) - (selected?.inventory?.reserved ?? 0), 0);
-  const maxQuantity = Math.max(available, 1);
+  const maxQuantity = Math.max(Math.min(available, 99), 1);
   const unitPrice = basePrice + toNumber(selected?.priceAdjustment ?? 0);
   const itemTotal = unitPrice * quantity;
 
@@ -86,13 +88,13 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
           >
             {variants.map((variant) => (
               <option key={variant.id} value={variant.id}>
-                {variant.name} - {variant.sku}
+                {variant.name} - {variant.sku}{(variant.inventory?.quantity ?? 0) <= (variant.inventory?.reserved ?? 0) ? " — Sem estoque" : ""}
               </option>
             ))}
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 min-[400px]:grid-cols-2">
           <label className="text-sm font-semibold">
             Quantidade
             <span className="mt-2 grid min-h-12 grid-cols-[48px_1fr_48px] overflow-hidden rounded-lg border border-[var(--line)] bg-white">
@@ -107,7 +109,7 @@ export function ProductPurchase({ productId, basePrice, variants }: { productId:
               </button>
               <input
                 aria-label="Quantidade do produto"
-                className="w-full border-0 bg-white text-center text-base font-bold outline-none"
+                className="min-w-0 w-full border-0 bg-white text-center text-base font-bold outline-none"
                 type="number"
                 min={1}
                 max={maxQuantity}

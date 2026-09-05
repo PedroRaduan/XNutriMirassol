@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle2, CircleAlert } from "lucide-react";
 import {
@@ -82,8 +82,12 @@ export function AdminActionForm({
         action={action}
         className={className}
         aria-busy={pending}
-        onSubmit={() => {
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (pending) return;
+          const data = new FormData(event.currentTarget);
           setSubmissionVersion((current) => current + 1);
+          startTransition(() => action(data));
         }}
       >
         {state.message && !state.ok && (

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Menu, Search, ShoppingCart, UserRound } from "lucide-react";
 import { XNutriLogo } from "@/components/layout/xnutri-logo";
+import { MobileMenu } from "@/components/layout/mobile-menu";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { getCartForDisplay } from "@/lib/ecommerce/cart";
@@ -58,7 +59,7 @@ export async function Header() {
           )}
         </Link>
 
-        <details className="mobile-menu relative shrink-0 lg:hidden">
+        <MobileMenu>
           <summary className="btn btn-secondary size-10 min-h-10 cursor-pointer p-0 sm:size-11" aria-label="Abrir menu de navegação">
             <Menu size={18} />
           </summary>
@@ -77,7 +78,7 @@ export async function Header() {
               </a>
             </nav>
           </div>
-        </details>
+        </MobileMenu>
       </div>
 
       <div className="hidden border-t border-[var(--line)] bg-white lg:block">

@@ -79,4 +79,16 @@ describe("PDV - pagamento misto", () => {
     expect(document.querySelector('[data-pdv-panel="cart"]')).toBeInTheDocument();
     expect(document.querySelector('[data-pdv-panel="payment"]')).toBeInTheDocument();
   });
+
+  it("distingue falha de conexão de cliente inexistente", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.includes("customers")) return new Response(null, { status: 503 });
+      return new Response(JSON.stringify({ products: [], exactCount: 0 }));
+    }));
+    const user = userEvent.setup();
+    render(<POSTerminal sessionId="session" cashierName="Caixa QA" expectedAmount={0} />);
+    await user.type(screen.getByRole("textbox", { name: /Buscar cliente por/ }), "Maria");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível buscar clientes");
+    expect(screen.queryByText(/Nenhum cliente encontrado/)).not.toBeInTheDocument();
+  });
 });

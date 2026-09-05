@@ -152,6 +152,7 @@ export function POSTerminal({
   const [customerQuery, setCustomerQuery] = useState("");
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [customerError, setCustomerError] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
   const [quickCustomer, setQuickCustomer] = useState({ name: "", phone: "", document: "", email: "" });
   const [quickCustomerApplied, setQuickCustomerApplied] = useState(false);
@@ -234,13 +235,17 @@ export function POSTerminal({
     const controller = new AbortController();
     const handle = window.setTimeout(async () => {
       setLoadingCustomers(true);
+      setCustomerError("");
       try {
         const response = await fetch(`/api/pdv/customers?q=${encodeURIComponent(customerQuery)}`, { signal: controller.signal });
         if (!response.ok) throw new Error("Busca indisponível.");
         const data = (await response.json()) as { customers: CustomerRow[] };
-        setCustomers(data.customers);
+        if (!controller.signal.aborted) setCustomers(data.customers);
       } catch {
-        if (!controller.signal.aborted) setCustomers([]);
+        if (!controller.signal.aborted) {
+          setCustomers([]);
+          setCustomerError("Não foi possível buscar clientes. Verifique a conexão e tente novamente.");
+        }
       } finally {
         if (!controller.signal.aborted) setLoadingCustomers(false);
       }
@@ -773,6 +778,9 @@ export function POSTerminal({
                     onChange={(event) => {
                       const nextQuery = event.target.value;
                       setCustomerQuery(nextQuery);
+                      setCustomers([]);
+                      setCustomerError("");
+                      setLoadingCustomers(nextQuery.trim().length >= 2 && !isDemo);
                       if (nextQuery.trim().length < 2) {
                         setLoadingCustomers(false);
                         setCustomers([]);
@@ -787,6 +795,8 @@ export function POSTerminal({
                     <div className="absolute inset-x-0 top-[calc(100%+4px)] z-30 max-h-48 overflow-y-auto rounded-md border border-[var(--line)] bg-white p-1 shadow-lg">
                       {loadingCustomers ? (
                         <CustomerListSkeleton />
+                      ) : customerError ? (
+                        <p role="alert" className="p-2 text-xs font-semibold text-red-700">{customerError}</p>
                       ) : visibleCustomers.length > 0 ? visibleCustomers.map((customer) => (
                         <button key={customer.id} type="button" onClick={() => { setSelectedCustomer(customer); setQuickCustomerApplied(false); setCustomerQuery(""); }} className="block w-full rounded p-2 text-left text-xs hover:bg-[#f5f4f2]">
                           <strong className="block truncate">{customer.name ?? customer.email}</strong>
@@ -920,7 +930,7 @@ export function POSTerminal({
 
       <dialog
         ref={quickCustomerDialogRef}
-        className="fixed inset-0 z-50 m-auto w-[min(448px,calc(100%-24px))] bg-transparent p-0 backdrop:bg-black/45"
+        className="fixed inset-0 z-50 m-auto max-h-[calc(100dvh-24px)] overflow-y-auto w-[min(448px,calc(100%-24px))] bg-transparent p-0 backdrop:bg-black/45"
         aria-labelledby="quick-customer-title"
         onMouseDown={(event) => { if (event.currentTarget === event.target) closeDialog(quickCustomerDialogRef.current); }}
       >

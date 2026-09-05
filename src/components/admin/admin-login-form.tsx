@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -18,11 +18,15 @@ export function AdminLoginForm({ callbackUrl, submitLabel = "Entrar no admin" }:
   });
 
   return (
-    <form action={action} className="grid gap-4" onSubmit={() => form.trigger()}>
+    <form action={action} className="grid gap-4" onSubmit={(event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        void form.handleSubmit(() => startTransition(() => action(data)))(event);
+      }}>
       <input type="hidden" name="callbackUrl" value={callbackUrl ?? "/admin"} />
       <label className="text-sm font-black text-[var(--graphite)]">
         E-mail administrativo
-        <input className="field mt-2" type="email" autoComplete="email" {...form.register("email")} name="email" />
+        <input className="field mt-2" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} {...form.register("email")} name="email" />
         {form.formState.errors.email && <span className="mt-1 block text-xs text-red-700">{form.formState.errors.email.message}</span>}
       </label>
       <label className="text-sm font-black text-[var(--graphite)]">
@@ -31,7 +35,7 @@ export function AdminLoginForm({ callbackUrl, submitLabel = "Entrar no admin" }:
         {form.formState.errors.password && <span className="mt-1 block text-xs text-red-700">{form.formState.errors.password.message}</span>}
       </label>
       {state.message && (
-        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+        <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
           {state.message}
         </p>
       )}
